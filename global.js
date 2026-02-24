@@ -6,7 +6,7 @@
 
 // ─── IMPORTANT: Replace this with your actual Render backend URL ──────────────
 // After deploying on Render, copy your URL and paste it here
-const API_BASE = 'https://idonate-backend.onrender.com';
+const API_BASE = 'https://idonate-backend-hy7w.onrender.com';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBsg7HK7O1FCTv9UZRIt1e4Q_56XG9Rkgw",
