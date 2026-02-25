@@ -1,13 +1,13 @@
 {
   "id": "/",
-  "name": "iDonate - Blood Donation App",
+  "name": "iDonate - Every Drop Matters",
   "short_name": "iDonate",
   "description": "Connecting blood donors with patients in need",
   "start_url": "/Login.html?v=2",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color":  "#e6d6db",
-  "theme_color": "#e6d6db",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
   "icons": [
 
     { "src": "/icons/icon-72x72.png",   "sizes": "72x72",   "type": "image/png" },
