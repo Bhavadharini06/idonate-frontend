@@ -5,7 +5,9 @@ import sys
 ICON_SIZES = [72, 96, 128, 144, 152, 192, 384, 512]
 SOURCE = "logo.png"
 OUTPUT_DIR = "icons"
-PADDING_PERCENT = 0.10
+
+# 🔥 Increased padding for cleaner splash look
+PADDING_PERCENT = 0.20  
 
 def main():
 
@@ -19,8 +21,8 @@ def main():
 
     for size in ICON_SIZES:
 
-        # 🔥 Transparent background instead of white
-        bg = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+        # ✅ Pure white background
+        bg = Image.new("RGBA", (size, size), (255, 255, 255, 255))
 
         padding = int(size * PADDING_PERCENT)
         inner_size = size - padding * 2
@@ -36,7 +38,7 @@ def main():
         out_path = os.path.join(OUTPUT_DIR, f"icon-{size}x{size}.png")
         bg.save(out_path, "PNG")
 
-    print("Done!")
+    print("Icons regenerated successfully!")
 
 if __name__ == "__main__":
     main()
