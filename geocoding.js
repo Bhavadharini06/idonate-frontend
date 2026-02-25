@@ -138,6 +138,3 @@ function enableManualLocationSelection() {
         alert('✅ Location selected on map');
     });
 }
-
-// Usage:
-// <button onclick="locateHospital()" class="locate-btn">🔍 Locate Hospital</button>

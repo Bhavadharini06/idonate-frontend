@@ -1,11 +1,3 @@
-// global.js - Auto-online, FCM, and shared utilities
-// UPDATED: Safe foreground/background notification control
-//   - Syncs page visibility state to service worker on load + every change
-//   - Foreground FCM messages → show in-app banner only (SW skips OS push)
-//   - Background FCM messages → SW shows OS push only (no in-app banner)
-
-// ─── IMPORTANT: Replace this with your actual Render backend URL ──────────────
-// After deploying on Render, copy your URL and paste it here
 const API_BASE = 'https://idonate-backend-hy7w.onrender.com';
 
 const firebaseConfig = {
