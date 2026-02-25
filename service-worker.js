@@ -6,10 +6,9 @@ importScripts('https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-comp
 
 // ─── Cache Config ─────────────────────────────────────────────────────────────
 const CACHE_NAME = 'idonate-v1';
-const OFFLINE_FALLBACK = '/Home.html';
+const OFFLINE_FALLBACK = '/Login.html';
 
 const PRE_CACHE_ASSETS = [
-  '/Home.html',
   '/Login.html',
   '/Register.html',
   '/Dashboard.html',
