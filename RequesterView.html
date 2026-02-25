@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>iDonate - My Blood Requests</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#dc2626">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="iDonate">
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -734,7 +741,7 @@ body {
 </nav>
 <div class="container">
 <div class="header">
-<h2>📋 My Blood Requests</h2>
+<h2>&#128203; My Blood Requests</h2>
 <button class="btn-create" onclick="openCreateModal()">+ Create Request</button>
 </div>
 <div id="requestsList"></div>
@@ -743,13 +750,13 @@ body {
 <div id="createModal" class="modal" style="display: none;">
 <div class="modal-content">
 <div class="modal-header">
-<h3><span class="modal-header-icon">🩸</span>Create Blood Request</h3>
+<h3><span class="modal-header-icon">&#129656;</span> Create Blood Request</h3>
 </div>
 
 <div class="modal-body">
 <form id="createRequestForm">
 <div class="form-section">
-<h4 class="form-section-title">Patient & Blood Information</h4>
+<h4 class="form-section-title">Patient &amp; Blood Information</h4>
 <div class="form-grid">
 <div class="form-group">
 <label>Patient Name <span class="required">*</span></label>
@@ -784,7 +791,7 @@ body {
 <div class="form-section">
 <div class="location-section">
 <div class="location-section-header">
-<h4><span class="location-icon">🏥</span> Hospital Location</h4>
+<h4><span class="location-icon">&#127973;</span> Hospital Location</h4>
 <span class="smart-badge">AI Powered</span>
 </div>
 <div class="location-inputs">
@@ -805,12 +812,12 @@ body {
 </div>
 </div>
 <button type="button" class="btn-locate" id="locateBtn" onclick="autoLocateHospital()">
-<span class="btn-locate-icon">📍</span>
+<span class="btn-locate-icon">&#128205;</span>
 <span>Auto-Locate Hospital</span>
 </button>
 <div id="locationInfo" class="location-info">
 <div class="location-info-header">
-<h5>✅ Hospital Located</h5>
+<h5>&#x2705; Hospital Located</h5>
 <span id="confidenceBadge" class="confidence-badge confidence-high">High Confidence</span>
 </div>
 <div id="locationDetails" class="location-details"></div>
@@ -819,13 +826,13 @@ body {
 
 <div class="map-section">
 <div class="map-section-header">
-<span class="map-section-icon">🗺️</span>
+<span class="map-section-icon">&#128506;&#65039;</span>
 <h5>Hospital Location on Map</h5>
 </div>
 <div class="map-overlay">
 <div id="map"></div>
 <div id="mapLockMessage" class="map-lock-message">
-🔒 Map will activate after locating hospital
+&#128274; Map will activate after locating hospital
 </div>
 </div>
 </div>
@@ -883,7 +890,7 @@ function openCreateModal() {
         setTimeout(() => {
             map = L.map('map').setView([13.0827, 80.2707], 13);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors'
+                attribution: '&copy; OpenStreetMap contributors'
             }).addTo(map);
         }, 100);
     }
@@ -926,7 +933,7 @@ async function autoLocateHospital() {
     const locateBtn = document.getElementById('locateBtn');
     const originalText = locateBtn.innerHTML;
     locateBtn.disabled = true;
-    locateBtn.innerHTML = '<span class="btn-locate-icon">⏳</span><span>Locating Hospital...</span>';
+    locateBtn.innerHTML = '<span class="btn-locate-icon">&#x23F3;</span><span>Locating Hospital...</span>';
     
     try {
         let searchQuery = hospitalName;
@@ -976,7 +983,7 @@ async function autoLocateHospital() {
         document.getElementById('mapLockMessage').style.display = 'none';
         document.getElementById('map').classList.add('active');
         
-        locateBtn.innerHTML = '<span class="btn-locate-icon">✅</span><span>Hospital Located</span>';
+        locateBtn.innerHTML = '<span class="btn-locate-icon">&#x2705;</span><span>Hospital Located</span>';
         setTimeout(() => {
             locateBtn.innerHTML = originalText;
             locateBtn.disabled = false;
@@ -1019,7 +1026,7 @@ document.getElementById('createRequestForm').addEventListener('submit', async (e
         
         closeCreateModal();
         await loadData();
-        alert('✅ Blood request created successfully!');
+        alert('Blood request created successfully!');
     } catch (err) {
         alert('Failed to create request: ' + err.message);
         submitBtn.disabled = false;
@@ -1080,15 +1087,7 @@ async function deleteRequest(id) {
 }
 
 function generateShareText(r) {
-    return `🩸BLOOD REQUEST
-
-Blood Group: ${r.bloodgroup || 'N/A'}
-Patient: ${r.patient_name || 'N/A'}
-Hospital: ${r.hospital_name || 'N/A'}
-Location: ${r.hospital_address || 'N/A'}
-
-If you are eligible, please consider donating.
-Kindly share this message.`;
+    return `\uD83E\uDE78 BLOOD REQUEST\n\nBlood Group: ${r.bloodgroup || 'N/A'}\nPatient: ${r.patient_name || 'N/A'}\nHospital: ${r.hospital_name || 'N/A'}\nLocation: ${r.hospital_address || 'N/A'}\n\nIf you are eligible, please consider donating.\nKindly share this message.`;
 }
 
 function shareRequest(r) {
@@ -1126,7 +1125,7 @@ async function renderRequests() {
                             ${(req.urgency || 'LOW').toUpperCase()}
                         </span>
                         <button class="btn-share" onclick='shareRequest(${reqJSON})'>
-                            📤
+                            &#128228;
                         </button>
                     </div>
                 </div>
@@ -1143,10 +1142,10 @@ async function renderRequests() {
                         <div class="acceptor-category donor-category" id="donors-${req.id}">
                             <div class="acceptor-category-header" onclick="toggleAcceptorCategory('donors-${req.id}')">
                                 <div class="acceptor-category-title">
-                                    <span>💉 Donors</span>
+                                    <span>&#128137; Donors</span>
                                     <span class="acceptor-count-badge">${donors.length}</span>
                                 </div>
-                                <span class="expand-arrow">›</span>
+                                <span class="expand-arrow">&#x203A;</span>
                             </div>
                             <div class="acceptor-list-container">
                                 <div class="acceptor-list">
@@ -1160,10 +1159,10 @@ async function renderRequests() {
                         <div class="acceptor-category helper-category" id="helpers-${req.id}">
                             <div class="acceptor-category-header" onclick="toggleAcceptorCategory('helpers-${req.id}')">
                                 <div class="acceptor-category-title">
-                                    <span>🤝 Helpers</span>
+                                    <span>&#129309; Helpers</span>
                                     <span class="acceptor-count-badge">${helpers.length}</span>
                                 </div>
-                                <span class="expand-arrow">›</span>
+                                <span class="expand-arrow">&#x203A;</span>
                             </div>
                             <div class="acceptor-list-container">
                                 <div class="acceptor-list">
@@ -1178,7 +1177,7 @@ async function renderRequests() {
                 
                 <div>
                     <button class="btn-delete" onclick="deleteRequest('${req.id}')">
-                        🗑️ Delete Request
+                        &#128465;&#65039; Delete Request
                     </button>
                 </div>
             </div>
@@ -1191,5 +1190,6 @@ async function renderRequests() {
 
 window.addEventListener('load', loadData);
 </script>
+    <script src="/pwa-register.js"></script>
 </body>
 </html>

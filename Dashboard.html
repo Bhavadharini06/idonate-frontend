@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>iDonate - Dashboard</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#dc2626">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="iDonate">
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
     <style>
         * {
             margin: 0;
@@ -211,18 +218,11 @@
                 user = userData;
                 render();
 
-                // ✅ FIX: Explicitly trigger FCM AFTER user is confirmed authenticated.
-                // global.js fires initializeAutoOnline() before apiRequest('auth/me')
-                // resolves, so FCM may initialize before the session is confirmed valid.
-                // Calling here guarantees token registration happens for real sessions.
                 if (Notification.permission === 'default') {
-                    // Not yet asked — show permission prompt
                     requestNotificationPermission().catch(err =>
                         console.error('⚠️ FCM setup failed:', err)
                     );
                 } else if (Notification.permission === 'granted') {
-                    // Already granted — re-run to ensure token is registered
-                    // (covers page refresh, new browser session, token expiry)
                     requestNotificationPermission().catch(err =>
                         console.error('⚠️ FCM token refresh failed:', err)
                     );
@@ -249,10 +249,9 @@
             window.location.href = './RequesterView.html';
         }
 
-        // Called by the Enable Notifications banner button
         async function enableNotifications() {
             const success = await requestNotificationPermission();
-            render(); // re-render to update or hide banner
+            render();
         }
 
         function render() {
@@ -270,7 +269,6 @@
                 ? '✅ You are online and will receive blood request notifications nearby'
                 : '⚫ You are offline. Blood requests will still be available in Donate Blood section';
 
-            // Notification permission banner
             let notifBanner = '';
             if (Notification.permission === 'denied') {
                 notifBanner = `
@@ -326,7 +324,6 @@
 
         loadDashboard();
 
-        // Refresh user status every 10 seconds to update online badge
         setInterval(() => {
             if (user) {
                 apiRequest('auth/me').then(userData => {
@@ -338,5 +335,6 @@
             }
         }, 10000);
     </script>
+    <script src="/pwa-register.js"></script>
 </body>
 </html>

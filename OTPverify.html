@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>iDonate - Verify OTP</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#dc2626">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="iDonate">
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
     <style>
         * {
             margin: 0;
@@ -185,7 +192,7 @@
         <div class="logo-container">
             <img src="logo.png" alt="iDonate Logo">
         </div>
-        
+
         <div class="header">
             <h2>Verify Your Account</h2>
             <p>Enter the 6-digit OTP sent to your email</p>
@@ -210,7 +217,7 @@
         <button type="button" id="verifyBtn">Verify OTP</button>
 
         <div class="resend-section">
-            <p>Didn't receive the code? 
+            <p>Didn't receive the code?
                 <button type="button" class="resend-btn" id="resendBtn">Resend OTP</button>
             </p>
             <p id="timerText" style="margin-top: 0.5rem; display: none;">
@@ -239,14 +246,14 @@
         otpInputs.forEach((input, index) => {
             input.addEventListener("input", (e) => {
                 const value = e.target.value;
-                
+
                 if (value.match(/[^0-9A-Fa-f]/)) {
                     e.target.value = "";
                     return;
                 }
-                
+
                 e.target.value = value.toUpperCase();
-                
+
                 if (value) {
                     e.target.classList.add("filled");
                     if (index < otpInputs.length - 1) {
@@ -268,12 +275,12 @@
             input.addEventListener("paste", (e) => {
                 e.preventDefault();
                 const pastedData = e.clipboardData.getData("text").toUpperCase().replace(/[^0-9A-F]/g, "");
-                
+
                 for (let i = 0; i < Math.min(pastedData.length, otpInputs.length); i++) {
                     otpInputs[i].value = pastedData[i];
                     otpInputs[i].classList.add("filled");
                 }
-                
+
                 if (pastedData.length >= otpInputs.length) {
                     otpInputs[otpInputs.length - 1].focus();
                 } else {
@@ -318,14 +325,14 @@
             const timerText = document.getElementById("timerText");
             const timerSpan = document.getElementById("timer");
             const resendBtn = document.getElementById("resendBtn");
-            
+
             timerText.style.display = "block";
             resendBtn.disabled = true;
-            
+
             timerInterval = setInterval(() => {
                 timeLeft--;
                 timerSpan.textContent = timeLeft;
-                
+
                 if (timeLeft <= 0) {
                     clearInterval(timerInterval);
                     timerText.style.display = "none";
@@ -336,9 +343,9 @@
 
         document.getElementById("verifyBtn").addEventListener("click", async () => {
             hideMessages();
-            
+
             const otp = getOTP();
-            
+
             if (otp.length !== 6) {
                 showError("Please enter the complete 6-digit OTP");
                 return;
@@ -354,10 +361,7 @@
                     headers: {
                         "Content-Type": "application/json",
                     },
-                    body: JSON.stringify({
-                        email,
-                        otp
-                    }),
+                    body: JSON.stringify({ email, otp }),
                 });
 
                 if (!response.ok) {
@@ -366,12 +370,12 @@
                 }
 
                 const data = await response.json();
-                
+
                 localStorage.setItem("token", data.access_token);
                 localStorage.removeItem("pending_email");
-                
+
                 showSuccess("Account verified successfully! Redirecting...");
-                
+
                 setTimeout(() => {
                     window.location.href = "./Dashboard.html";
                 }, 1500);
@@ -386,7 +390,7 @@
 
         document.getElementById("resendBtn").addEventListener("click", async () => {
             hideMessages();
-            
+
             const resendBtn = document.getElementById("resendBtn");
             const originalText = resendBtn.textContent;
             resendBtn.disabled = true;
@@ -394,7 +398,7 @@
 
             try {
                 showSuccess("Resending OTP... Please wait.");
-                
+
                 setTimeout(() => {
                     showSuccess("New OTP has been sent to your email!");
                     clearOTP();
@@ -411,5 +415,6 @@
         otpInputs[0].focus();
         startResendTimer();
     </script>
+    <script src="/pwa-register.js"></script>
 </body>
 </html>

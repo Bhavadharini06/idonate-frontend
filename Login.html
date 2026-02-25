@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>iDonate - Login</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#dc2626">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="iDonate">
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
     <style>
         * {
             margin: 0;
@@ -139,14 +146,10 @@
             document.getElementById("error").style.display = "none";
         }
 
-        // FIX: Set a flag to force FCM re-registration after login.
-        // The backend wipes all FCM tokens from DB on every login.
-        // Without this flag, global.js sees "token unchanged" and skips
-        // /fcm/register, leaving the DB with 0 tokens → donor never notified.
         function clearPreviousUserSession() {
-            localStorage.removeItem('fcm_last_token');  // force token re-check
-            localStorage.removeItem('fcm_device_id');   // get fresh device ID
-            localStorage.setItem('fcm_needs_reregister', 'true'); // force DB re-register
+            localStorage.removeItem('fcm_last_token');
+            localStorage.removeItem('fcm_device_id');
+            localStorage.setItem('fcm_needs_reregister', 'true');
         }
 
         document.getElementById("loginForm").addEventListener("submit", async (e) => {
@@ -181,10 +184,6 @@
 
                 const data = await response.json();
 
-                // FIX: Clear the previous user's FCM keys BEFORE saving new token.
-                // This ensures global.js sees no existing fcm_last_token and
-                // registers a brand-new FCM token for this user, so the backend
-                // has a valid token ready when the next blood request is created.
                 clearPreviousUserSession();
 
                 localStorage.setItem("token", data.access_token);
@@ -197,5 +196,6 @@
             }
         });
     </script>
+    <script src="/pwa-register.js"></script>
 </body>
 </html>

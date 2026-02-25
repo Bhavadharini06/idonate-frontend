@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>iDonate - Donate Blood</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#dc2626">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="iDonate">
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
@@ -674,14 +681,14 @@
     <div id="mapModal" class="map-modal">
         <div class="map-container">
             <div class="map-header">
-                <h3>🗺️ Navigate to Hospital</h3>
-                <button class="close-map" onclick="closeMapModal()">✕</button>
+                <h3>&#128506;&#65039; Navigate to Hospital</h3>
+                <button class="close-map" onclick="closeMapModal()">&#x2715;</button>
             </div>
             
             <!-- Turn-by-turn instruction panel -->
             <div class="nav-instruction-panel" id="navInstructionPanel" style="display: none;">
                 <div class="nav-instruction">
-                    <div class="nav-icon" id="navIcon">⬆️</div>
+                    <div class="nav-icon" id="navIcon">&#x2B06;&#xFE0F;</div>
                     <div class="nav-text-container">
                         <div class="nav-distance" id="navDistance">--</div>
                         <div class="nav-instruction-text" id="navInstructionText">Calculating route...</div>
@@ -694,7 +701,7 @@
             
             <!-- Recenter button -->
             <button class="recenter-btn active" id="recenterBtn" onclick="toggleAutoCenter()" title="Auto-center">
-                🎯
+                &#127919;
             </button>
             
             <!-- Navigation stats bar -->
@@ -757,22 +764,22 @@
                 const app = document.getElementById('app');
                 app.innerHTML = '<div class="loading">Loading...</div>';
                 
-                console.log('🔄 Loading user data...');
+                console.log('Loading user data...');
                 const userData = await apiRequest('auth/me');
                 user = userData;
-                console.log('✅ User loaded:', user);
+                console.log('User loaded:', user);
                 
-                console.log('🔄 Loading blood requests...');
+                console.log('Loading blood requests...');
                 try {
                     const myBlood = await apiRequest('requests/my-blood-requests');
                     const otherBlood = await apiRequest('requests/other-blood-requests');
                     allRequests = [...(myBlood || []), ...(otherBlood || [])];
-                    console.log('✅ Loaded from my-blood-requests + other-blood-requests:', allRequests.length);
+                    console.log('Loaded from my-blood-requests + other-blood-requests:', allRequests.length);
                 } catch (e) {
-                    console.warn('⚠️ Trying fallback endpoint /requests/');
+                    console.warn('Trying fallback endpoint /requests/');
                     const allReqs = await apiRequest('requests/');
                     allRequests = (allReqs || []).filter(r => r.requester_id !== userData.id);
-                    console.log('✅ Loaded from /requests/ (filtered):', allRequests.length);
+                    console.log('Loaded from /requests/ (filtered):', allRequests.length);
                 }
                 
                 acceptedRequestsMap.clear();
@@ -782,7 +789,7 @@
                     }
                 });
                 
-                console.log('📊 Stats:', {
+                console.log('Stats:', {
                     total: allRequests.length,
                     accepted: acceptedRequestsMap.size,
                     userBlood: user.bloodgroup
@@ -790,7 +797,7 @@
                 
                 render();
             } catch (err) {
-                console.error('❌ Load data error:', err);
+                console.error('Load data error:', err);
                 document.getElementById('app').innerHTML = `
                     <div class="loading">
                         <div style="text-align: center;">
@@ -965,7 +972,7 @@
                             justify-content: center;
                             font-size: 24px;
                             box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
-                        ">🏥</div>
+                        ">&#127973;</div>
                     `,
                     iconSize: [40, 40],
                     iconAnchor: [20, 40]
@@ -1150,7 +1157,7 @@
             
             // Check if arrived
             if (distanceToDestination < 0.05) { // Less than 50 meters
-                document.getElementById('navIcon').textContent = '🎯';
+                document.getElementById('navIcon').textContent = '&#127919;';
                 document.getElementById('navDistance').textContent = 'Arrived!';
                 document.getElementById('navInstructionText').textContent = 'You have reached your destination';
                 return;
@@ -1190,35 +1197,35 @@
         function getManeuverIcon(type, modifier) {
             const icons = {
                 'turn': {
-                    'left': '↰',
-                    'slight left': '↖️',
-                    'sharp left': '↰',
-                    'right': '↱',
-                    'slight right': '↗️',
-                    'sharp right': '↱',
-                    'straight': '⬆️'
+                    'left': '\u21B0',
+                    'slight left': '\u2196\uFE0F',
+                    'sharp left': '\u21B0',
+                    'right': '\u21B1',
+                    'slight right': '\u2197\uFE0F',
+                    'sharp right': '\u21B1',
+                    'straight': '\u2B06\uFE0F'
                 },
-                'new name': '⬆️',
-                'depart': '🚗',
-                'arrive': '🎯',
-                'merge': '↗️',
-                'on ramp': '↗️',
-                'off ramp': '↘️',
-                'fork': '🔀',
-                'end of road': '⬆️',
-                'continue': '⬆️',
-                'roundabout': '🔄',
-                'rotary': '🔄',
-                'exit roundabout': '➡️'
+                'new name': '\u2B06\uFE0F',
+                'depart': '\uD83D\uDE97',
+                'arrive': '\uD83C\uDFAF',
+                'merge': '\u2197\uFE0F',
+                'on ramp': '\u2197\uFE0F',
+                'off ramp': '\u2198\uFE0F',
+                'fork': '\uD83D\uDD00',
+                'end of road': '\u2B06\uFE0F',
+                'continue': '\u2B06\uFE0F',
+                'roundabout': '\uD83D\uDD04',
+                'rotary': '\uD83D\uDD04',
+                'exit roundabout': '\u27A1\uFE0F'
             };
             
             if (icons[type] && icons[type][modifier]) {
                 return icons[type][modifier];
             } else if (icons[type]) {
-                return typeof icons[type] === 'string' ? icons[type] : '⬆️';
+                return typeof icons[type] === 'string' ? icons[type] : '\u2B06\uFE0F';
             }
             
-            return '⬆️';
+            return '\u2B06\uFE0F';
         }
         
         function formatDistance(meters) {
@@ -1334,16 +1341,16 @@
                 <div class="compact-request-card ${typeClass}">
                     <div class="compact-title">${r.bloodgroup} Blood Needed</div>
                     <div class="compact-details">
-                        ${r.patient_name ? `👤 ${r.patient_name}<br>` : ''}
-                        ${r.hospital_name ? `🏥 <span class="compact-hospital">${r.hospital_name}</span><br>` : ''}
-                        ${showNotes ? `📝 ${r.notes}<br>` : ''}
+                        ${r.patient_name ? `&#128100; ${r.patient_name}<br>` : ''}
+                        ${r.hospital_name ? `&#127973; <span class="compact-hospital">${r.hospital_name}</span><br>` : ''}
+                        ${showNotes ? `&#128221; ${r.notes}<br>` : ''}
                     </div>
                     <span class="compact-urgency ${urgencyClass(r.urgency)}">
                         ${(r.urgency || 'LOW').toUpperCase()}
                     </span>
                     <div class="compact-actions">
                         <button class="btn-compact btn-compact-undo" onclick="handleAccept('${r.id}')">
-                            ✕ Undo Accept
+                            &#x2715; Undo Accept
                         </button>
                         <button class="btn-compact btn-compact-map" onclick='showMapModal(${JSON.stringify(r).replace(/'/g, "&#39;")})'>
                             View Map
@@ -1362,7 +1369,7 @@
             const locationText = await reverseGeocode(r.hospitalLatitude, r.hospitalLongitude);
             
             // Build share message with location
-            let shareMessage = `🩸 BLOOD REQUEST\n\nBlood Group: ${r.bloodgroup}\nPatient: ${r.patient_name || 'N/A'}\nHospital: ${r.hospital_name || 'N/A'}\nLocation: ${locationText}`;
+            let shareMessage = `\uD83E\uDE78 BLOOD REQUEST\n\nBlood Group: ${r.bloodgroup}\nPatient: ${r.patient_name || 'N/A'}\nHospital: ${r.hospital_name || 'N/A'}\nLocation: ${locationText}`;
             if (showNotes) {
                 shareMessage += `\n\nNotes: ${r.notes}`;
             }
@@ -1375,7 +1382,7 @@
                     <div class="card-header">
                         <!-- Circular blood badge -->
                         <div class="blood-badge-circle">
-                            <div class="blood-icon">🩸</div>
+                            <div class="blood-icon">&#129656;</div>
                             <div class="blood-type">${r.bloodgroup}</div>
                         </div>
                         
@@ -1391,7 +1398,7 @@
                                 ${urgencyText}
                             </span>
                             <a href="whatsapp://send?text=${shareText}" class="share-btn" title="Share on WhatsApp" onclick="event.stopPropagation();">
-                                <span class="share-icon">📤</span>
+                                <span class="share-icon">&#128228;</span>
                             </a>
                         </div>
                     </div>
@@ -1412,10 +1419,10 @@
                     <div class="card-footer">
                         <div class="request-actions">
                             <button class="btn ${canDonate ? 'btn-accept' : 'btn-help'}" onclick="handleAccept('${r.id}')">
-                                <span></span> ${canDonate ? 'Ready to Donate' : 'Ready to Help'}
+                                ${canDonate ? 'Ready to Donate' : 'Ready to Help'}
                             </button>
                             <button class="btn btn-map" onclick='showMapModal(${JSON.stringify(r).replace(/'/g, "&#39;")})'>
-                                <span></span> View Map
+                                View Map
                             </button>
                         </div>
                     </div>
@@ -1432,12 +1439,12 @@
             if (!confirm(confirmMessage)) return;
             
             try {
-                console.log(`🔄 ${isAlreadyAccepted ? 'Removing' : 'Accepting'} request:`, id);
+                console.log(`${isAlreadyAccepted ? 'Removing' : 'Accepting'} request:`, id);
                 const response = await apiRequest(`requests/${id}/accept`, { method: 'POST' });
-                console.log('✅ Response:', response);
+                console.log('Response:', response);
                 
                 if (response.action === 'accepted') {
-                    alert('✅ Request accepted successfully!');
+                    alert('Request accepted successfully!');
                     const request = allRequests.find(r => r.id === id);
                     if (request) {
                         acceptedRequestsMap.set(id, request);
@@ -1449,7 +1456,7 @@
                 
                 render();
             } catch (err) {
-                console.error('❌ Accept error:', err);
+                console.error('Accept error:', err);
                 alert(`Failed to process request: ${err.message}`);
             }
         }
@@ -1486,13 +1493,13 @@
                     <div class="my-commitments">
                         <div class="header">
                             <h2>My Commitments</h2>
-                            <p>Your small actions can make a big impact😇</p>
+                            <p>Your small actions can make a big impact &#128519;</p>
                         </div>
                         <div class="commitments-grid${showBothColumns ? '' : ' single-column'}">
                             ${hasAcceptedDonating ? `
                                 <div class="commitment-column">
                                     <div class="commitment-header donating-header">
-                                        <span>🤍Ready to Donate </span>
+                                        <span>&#129293; Ready to Donate</span>
                                         <span class="commitment-count">${acceptedDonating.length}</span>
                                     </div>
                                     <div class="commitment-body ${donatingScrollClass}">
@@ -1504,7 +1511,7 @@
                             ${hasAcceptedHelping ? `
                                 <div class="commitment-column">
                                     <div class="commitment-header helping-header">
-                                        <span>🤍Ready to Help</span>
+                                        <span>&#129293; Ready to Help</span>
                                         <span class="commitment-count">${acceptedHelping.length}</span>
                                     </div>
                                     <div class="commitment-body ${helpingScrollClass}">
@@ -1531,7 +1538,7 @@
                     
                     <div class="header">
                         <h2>Available Requests</h2>
-                        <p>Requests waiting for someone like you to step in❤️‍🩹</p>
+                        <p>Requests waiting for someone like you to step in &#10084;&#65039;&#8205;&#129657;</p>
                     </div>
                     
                     <div class="tabs">
@@ -1555,5 +1562,6 @@
         
         loadData();
     </script>
+    <script src="/pwa-register.js"></script>
 </body>
 </html>

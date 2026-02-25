@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>iDonate - Register</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#dc2626">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="iDonate">
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
     <style>
         * {
             margin: 0;
@@ -131,6 +138,7 @@
             Already have an account? <a href="./Login.html">Sign In</a>
         </p>
     </div>
+
     <script>
         const API_BASE = 'https://idonate-backend-hy7w.onrender.com';
 
@@ -204,15 +212,15 @@
                 }
 
                 const data = await response.json();
-                
+
                 localStorage.setItem("pending_email", email);
-                
+
                 showSuccess("OTP sent to your email! Check your inbox.");
-                
+
                 setTimeout(() => {
                     window.location.href = "./OTPverify.html";
                 }, 1500);
-                
+
             } catch (err) {
                 showError(err.message);
                 submitBtn.disabled = false;
@@ -220,5 +228,6 @@
             }
         });
     </script>
+    <script src="/pwa-register.js"></script>
 </body>
 </html>

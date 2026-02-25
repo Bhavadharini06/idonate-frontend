@@ -25,12 +25,12 @@ const PRE_CACHE_ASSETS = [
 //         The config must be hardcoded directly here.
 //         Replace every value below with your actual Firebase project values.
 firebase.initializeApp({
-  apiKey:            "YOUR_FIREBASE_API_KEY",
+  apiKey:            "AIzaSyBsg7HK7O1FCTv9UZRIt1e4Q_56XG9Rkgw",
   authDomain:        "idonate-9f055.firebaseapp.com",
   projectId:         "idonate-9f055",
-  storageBucket:     "idonate-9f055.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId:             "YOUR_FIREBASE_APP_ID",
+  storageBucket:     "idonate-9f055.firebasestorage.app",
+  messagingSenderId: "303354735816",
+  appId:             "1:303354735816:web:33c2fc8138cb063e75c9fd",
 });
 
 const messaging = firebase.messaging();
@@ -71,7 +71,7 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   if (url.origin !== self.location.origin && !url.hostname.includes('firebase')) return;
 
-  // API / backend calls → network-first, offline fallback
+  // API / backend calls -> network-first, offline fallback
   if (
     url.pathname.startsWith('/api/') ||
     url.hostname.includes('render.com') ||
@@ -88,7 +88,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // HTML pages → network-first, then cache, then offline fallback
+  // HTML pages -> network-first, then cache, then offline fallback
   if (event.request.headers.get('accept')?.includes('text/html')) {
     event.respondWith(
       fetch(event.request)
@@ -106,7 +106,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Static assets → cache-first
+  // Static assets -> cache-first
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) return cached;
@@ -130,7 +130,7 @@ messaging.onBackgroundMessage((payload) => {
 
   const data = payload.data || {};
 
-  // Silent dismiss — close any matching notification banner
+  // Silent dismiss -- close any matching notification banner
   if (data.type === 'dismiss_notification') {
     self.registration.getNotifications({ tag: data.request_id }).then((notifications) => {
       notifications.forEach((n) => n.close());
@@ -138,7 +138,7 @@ messaging.onBackgroundMessage((payload) => {
     return;   // no notification to show
   }
 
-  const title     = data.title     || '🩸 Blood Request';
+  const title     = data.title     || 'Blood Request';
   const body      = data.body      || 'Someone needs blood near you.';
   const requestId = data.request_id || '';
 
@@ -151,12 +151,12 @@ messaging.onBackgroundMessage((payload) => {
     requireInteraction:  false,
     data:                { url: `/DonorView.html?request=${requestId}`, ...data },
     actions: [
-      { action: 'view',    title: '👁 View Request' },
+      { action: 'view',    title: 'View Request' },
       { action: 'dismiss', title: 'Dismiss' },
     ],
   };
 
-  // FIX 2 (cont): Return the Promise — do NOT call event.waitUntil here.
+  // FIX 2 (cont): Return the Promise -- do NOT call event.waitUntil here.
   return self.registration.showNotification(title, options);
 });
 
@@ -182,7 +182,7 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
-// ─── Message Handler (page → SW) ─────────────────────────────────────────────
+// ─── Message Handler (page -> SW) ─────────────────────────────────────────────
 self.addEventListener('message', (event) => {
   if (event.data?.type === 'SHOW_NOTIFICATION') {
     const { title, options } = event.data;
