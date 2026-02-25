@@ -763,7 +763,9 @@
             try {
                 const app = document.getElementById('app');
                 app.innerHTML = '<div class="loading">Loading...</div>';
-                
+
+                await restoreOnlineStatus();
+
                 console.log('Loading user data...');
                 const userData = await apiRequest('auth/me');
                 user = userData;
@@ -811,6 +813,7 @@
         }
         
         function handleLogout() {
+            localStorage.removeItem('user_is_online');
             localStorage.removeItem('token');
             window.location.href = './Home.html';
         }

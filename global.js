@@ -1,534 +1,381 @@
-const API_BASE = 'https://idonate-backend-hy7w.onrender.com';
+// global.js
+// Core shared functions for all iDonate pages.
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBsg7HK7O1FCTv9UZRIt1e4Q_56XG9Rkgw",
-  authDomain: "idonate-9f055.firebaseapp.com",
-  projectId: "idonate-9f055",
-  storageBucket: "idonate-9f055.firebasestorage.app",
-  messagingSenderId: "303354735816",
-  appId: "1:303354735816:web:33c2fc8138cb063e75c9fd",
-  measurementId: "G-JCBK24BW1E"
+const API_BASE  = 'https://idonate-backend-hy7w.onrender.com';
+const VAPID_KEY = 'BLBz4g3zPEzRmBJNOhFnNwjlPPAMBCv8yOEtGCWGWkDivmJnNpGHUvT5xXTHOEqwJQFjIBR4gCcI0-VZ_hRVUyk';
+
+const ONLINE_KEY = 'user_is_online';
+
+// Called once when any page loads (after token check confirms user is logged in)
+async function restoreOnlineStatus() {
+    const stored = localStorage.getItem(ONLINE_KEY);
+    // If the user was online before navigating, re-assert it to the backend
+    if (stored === 'true') {
+        try {
+            await apiRequest('users/online', {
+                method: 'PUT',
+                body: JSON.stringify({ is_online: true })
+            });
+        } catch (err) {
+            console.warn('[iDonate] Could not restore online status:', err);
+        }
+    }
+}
+
+// ════════════════════════════════════════════════════════════════════════════════
+// SW + BroadcastChannel listeners — registered IMMEDIATELY so they are ready
+// before any FCM push arrives (critical for standalone PWA mode).
+// ════════════════════════════════════════════════════════════════════════════════
+
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('message', (event) => {
+        if (!event.data) return;
+        const { type, title, body, data } = event.data;
+        if (type === 'BLOOD_REQUEST_NOTIFICATION') showInAppNotification({ title, body, ...(data || {}) });
+        if (type === 'DISMISS_NOTIFICATION')       _dismissBanner(event.data.request_id);
+    });
+}
+
+const _notifBC = new BroadcastChannel('idonate_notifications');
+_notifBC.onmessage = (event) => {
+    if (!event.data) return;
+    const { type, title, body, data } = event.data;
+    if (type === 'BLOOD_REQUEST_NOTIFICATION') showInAppNotification({ title, body, ...(data || {}) });
+    if (type === 'DISMISS_NOTIFICATION')       _dismissBanner(event.data.request_id);
 };
 
-let messaging = null;
-let fcmInitialized = false;
-let foregroundHandlerSetup = false;
-let idleTimer = null;
-let isUserOnline = false;
-const IDLE_TIMEOUT = 30000;
-
-// ─── In-Page Notification Banner ──────────────────────────────────────────────
-(function injectNotificationStyles() {
-  if (document.getElementById('idonate-notif-style')) return;
-  const style = document.createElement('style');
-  style.id = 'idonate-notif-style';
-  style.textContent = `
-    #idonate-notif-container {
-      position: fixed;
-      top: 16px;
-      right: 16px;
-      z-index: 999999;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      pointer-events: none;
-    }
-    .idonate-notif-banner {
-      pointer-events: all;
-      background: #ffffff;
-      border-left: 5px solid #dc2626;
-      border-radius: 10px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(220,38,38,0.12);
-      padding: 14px 18px 14px 14px;
-      min-width: 300px;
-      max-width: 380px;
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      animation: idonate-slide-in 0.35s cubic-bezier(.4,0,.2,1);
-      cursor: pointer;
-    }
-    .idonate-notif-banner:hover {
-      box-shadow: 0 12px 36px rgba(0,0,0,0.22), 0 4px 12px rgba(220,38,38,0.18);
-      transform: translateY(-1px);
-      transition: all 0.15s ease;
-    }
-    .idonate-notif-icon {
-      font-size: 28px;
-      line-height: 1;
-      flex-shrink: 0;
-      margin-top: 2px;
-    }
-    .idonate-notif-content { flex: 1; min-width: 0; }
-    .idonate-notif-title {
-      font-weight: 700;
-      font-size: 14px;
-      color: #dc2626;
-      margin-bottom: 3px;
-      line-height: 1.3;
-    }
-    .idonate-notif-body {
-      font-size: 13px;
-      color: #374151;
-      line-height: 1.4;
-    }
-    .idonate-notif-close {
-      background: none;
-      border: none;
-      font-size: 18px;
-      color: #9ca3af;
-      cursor: pointer;
-      padding: 0;
-      line-height: 1;
-      flex-shrink: 0;
-      margin-top: -2px;
-    }
-    .idonate-notif-close:hover { color: #dc2626; }
-    @keyframes idonate-slide-in {
-      from { opacity: 0; transform: translateX(120%); }
-      to   { opacity: 1; transform: translateX(0); }
-    }
-    @keyframes idonate-slide-out {
-      from { opacity: 1; transform: translateX(0); }
-      to   { opacity: 0; transform: translateX(120%); }
-    }
-  `;
-  if (document.head) {
-    document.head.appendChild(style);
-  } else {
-    document.addEventListener('DOMContentLoaded', () => document.head.appendChild(style));
-  }
-})();
-
-function getOrCreateNotifContainer() {
-  let container = document.getElementById('idonate-notif-container');
-  if (!container) {
-    container = document.createElement('div');
-    container.id = 'idonate-notif-container';
-    document.body.appendChild(container);
-  }
-  return container;
+function _dismissBanner(requestId) {
+    if (!requestId) return;
+    document.querySelectorAll(`.notification-banner[data-request-id="${requestId}"]`)
+            .forEach(el => el.remove());
 }
 
-// ─── Dismiss a specific notification banner by request ID ─────────────────────
-function dismissNotificationBanner(requestId) {
-  if (!requestId) return;
-  const container = document.getElementById('idonate-notif-container');
-  if (!container) return;
-  container.querySelectorAll('.idonate-notif-banner').forEach(banner => {
-    if (banner.dataset.requestId === String(requestId)) {
-      banner.style.animation = 'idonate-slide-out 0.3s cubic-bezier(.4,0,.2,1) forwards';
-      banner.addEventListener('animationend', () => banner.remove(), { once: true });
-      console.log('🗑️ Dismissed in-page banner for request:', requestId);
-    }
-  });
-}
-
-function showInPageNotification(title, body, data) {
-  const container = getOrCreateNotifContainer();
-  const banner = document.createElement('div');
-  banner.className = 'idonate-notif-banner';
-  banner.style.position = 'relative';
-  banner.style.overflow = 'hidden';
-  const requestId = data && data.request_id;
-  if (requestId) banner.dataset.requestId = requestId;
-
-  banner.innerHTML = `
-    <div class="idonate-notif-icon">🩸</div>
-    <div class="idonate-notif-content">
-      <div class="idonate-notif-title">${title}</div>
-      <div class="idonate-notif-body">${body}</div>
-    </div>
-    <button class="idonate-notif-close" title="Dismiss">✕</button>
-  `;
-
-  banner.addEventListener('click', (e) => {
-    if (e.target.classList.contains('idonate-notif-close')) return;
-    if (requestId) {
-      window.location.href = `./DonorView.html?request=${requestId}`;
-    } else {
-      window.location.href = './DonorView.html';
-    }
-  });
-
-  banner.querySelector('.idonate-notif-close').addEventListener('click', () => {
-    dismissBanner(banner);
-  });
-
-  container.appendChild(banner);
-
-  function dismissBanner(el) {
-    el.style.animation = 'idonate-slide-out 0.3s cubic-bezier(.4,0,.2,1) forwards';
-    el.addEventListener('animationend', () => el.remove(), { once: true });
-  }
-
-  console.log('✅ In-page notification banner shown:', title);
-}
-
-// ─── BroadcastChannel Listener ────────────────────────────────────────────────
-// Receives messages from the SW. SW only sends here when pageIsVisible=true,
-// so this always maps to the in-app banner — never a duplicate.
-(function setupBroadcastListener() {
-  try {
-    const bc = new BroadcastChannel('idonate_notifications');
-    bc.addEventListener('message', (event) => {
-      const msg = event.data;
-      if (!msg) return;
-
-      if (msg.type === 'BLOOD_REQUEST_NOTIFICATION') {
-        console.log('📬 BroadcastChannel notification received:', msg);
-        showInPageNotification(msg.title, msg.body, msg.data || {});
-      }
-
-      if (msg.type === 'DISMISS_NOTIFICATION') {
-        console.log('🗑️ BroadcastChannel dismiss received for request:', msg.request_id);
-        dismissNotificationBanner(msg.request_id);
-      }
-    });
-    console.log('✅ BroadcastChannel listener active');
-  } catch (e) {
-    console.warn('⚠️ BroadcastChannel not supported:', e);
-  }
-})();
-
-// ─── Visibility Sync to Service Worker ────────────────────────────────────────
-// KEY mechanism that prevents duplicate notifications.
-// The SW reads pageIsVisible before deciding: in-app banner OR OS push.
-(function syncVisibilityToSW() {
-  function sendVisibility() {
-    if (!navigator.serviceWorker || !navigator.serviceWorker.controller) return;
-    navigator.serviceWorker.controller.postMessage({
-      type: 'PAGE_VISIBILITY',
-      visible: document.visibilityState === 'visible'
-    });
-    console.log('👁️ Visibility synced to SW:', document.visibilityState);
-  }
-
-  // Send once SW is ready (covers initial page load)
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.ready
-      .then(() => sendVisibility())
-      .catch(() => {});
-  }
-
-  // Re-send on every tab switch, minimize, restore
-  document.addEventListener('visibilitychange', sendVisibility);
-})();
-
-// ─── API Helper ───────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════════════════
+// API Request Helper
+// ════════════════════════════════════════════════════════════════════════════════
 async function apiRequest(endpoint, options = {}) {
-  const token = localStorage.getItem('token');
-  const headers = options.headers || {};
-  if (!headers['Content-Type']) {
-    headers['Content-Type'] = 'application/json';
-  }
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-  try {
-    const response = await fetch(`${API_BASE}/${endpoint}`, { ...options, headers });
-    if (response.status === 401) {
-      localStorage.removeItem('token');
-      window.location.href = './Login.html';
-      return;
-    }
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.detail || `HTTP ${response.status}`);
-    }
-    return await response.json();
-  } catch (error) {
-    if (error.message !== 'Failed to fetch') {
-      console.error(`API request failed for ${endpoint}:`, error);
-    }
-    throw error;
-  }
-}
-
-// ─── FCM Initialization ───────────────────────────────────────────────────────
-async function initializeFCM() {
-  if (fcmInitialized) return true;
-  if (!('Notification' in window)) {
-    console.warn('This browser does not support notifications');
-    return false;
-  }
-  if (!('serviceWorker' in navigator)) {
-    console.warn('This browser does not support service workers');
-    return false;
-  }
-  try {
-    console.log('🔄 Registering service worker...');
-    const existingRegs = await navigator.serviceWorker.getRegistrations();
-    for (const reg of existingRegs) {
-      await reg.update();
-    }
-    await navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: '/' });
-    await navigator.serviceWorker.ready;
-    console.log('✅ Service worker active');
-
-    // Immediately sync visibility after SW becomes ready
-    if (navigator.serviceWorker.controller) {
-      navigator.serviceWorker.controller.postMessage({
-        type: 'PAGE_VISIBILITY',
-        visible: document.visibilityState === 'visible'
-      });
-    }
-
-    const { initializeApp, getApps, getApp } = await
-      import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
-    const { getMessaging } = await
-      import('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js');
-
-    const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
-    messaging = getMessaging(app);
-    fcmInitialized = true;
-    console.log('✅ FCM initialized');
-
-    await setupForegroundMessageHandler();
-    return true;
-  } catch (error) {
-    console.error('❌ FCM initialization failed:', error);
-    return false;
-  }
-}
-
-// ─── Request Permission & Register Token ──────────────────────────────────────
-async function requestNotificationPermission() {
-  if (!('Notification' in window)) {
-    console.warn('Browser does not support notifications');
-    return false;
-  }
-  const permission = await Notification.requestPermission();
-  if (permission !== 'granted') {
-    console.warn('Notification permission denied');
-    return false;
-  }
-  const initialized = await initializeFCM();
-  if (!initialized) return false;
-
-  try {
-    const { getToken } = await
-      import('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js');
-    const registration = await navigator.serviceWorker.ready;
-
-    let deviceId = localStorage.getItem('fcm_device_id');
-    if (!deviceId) {
-      deviceId = 'web_' + Math.random().toString(36).substr(2, 9);
-      localStorage.setItem('fcm_device_id', deviceId);
-      console.log('🆔 New device ID created:', deviceId);
-    }
-
-    console.log('🔄 Requesting FCM token...');
-    const currentToken = await getToken(messaging, {
-      vapidKey: 'BKM4qtaxUhKbxDc2uy1NpAgAeafz10fwKpJn6fdoIr9F1p7NXkGxR7viSyGDmx45mYNFOH3MCxbdvbYWUrIEEy4',
-      serviceWorkerRegistration: registration
-    });
-
-    if (currentToken) {
-      const lastRegisteredToken = localStorage.getItem('fcm_last_token');
-      const needsReregister = localStorage.getItem('fcm_needs_reregister') === 'true';
-
-      if (needsReregister || lastRegisteredToken !== currentToken) {
-        if (lastRegisteredToken && lastRegisteredToken !== currentToken) {
-          try {
-            await apiRequest('fcm/unregister', {
-              method: 'POST',
-              body: JSON.stringify({ token: lastRegisteredToken, device_id: deviceId })
-            });
-          } catch (err) {
-            console.warn('Failed to unregister old token:', err);
-          }
-        }
-        await apiRequest('fcm/register', {
-          method: 'POST',
-          body: JSON.stringify({ token: currentToken, device_id: deviceId })
-        });
-        localStorage.setItem('fcm_last_token', currentToken);
-        localStorage.removeItem('fcm_needs_reregister');
-        console.log('✅ FCM token registered:', currentToken.substring(0, 20) + '...');
-      } else {
-        console.log('✅ FCM token unchanged (already registered)');
-      }
-      return true;
-    } else {
-      console.warn('⚠️ No FCM token obtained');
-      return false;
-    }
-  } catch (error) {
-    console.error('❌ Error getting FCM token:', error);
-    return false;
-  }
-}
-
-// ─── Foreground Message Handler ───────────────────────────────────────────────
-async function setupForegroundMessageHandler() {
-  if (!messaging) return;
-  if (foregroundHandlerSetup) return;
-  foregroundHandlerSetup = true;
-
-  const { onMessage } = await
-    import('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js');
-
-  onMessage(messaging, async (payload) => {
-    console.log('📬 Foreground FCM message received:', payload);
-    const data = payload.data || {};
-
-    // Handle dismiss messages in the foreground
-    if (data.type === 'dismiss_notification') {
-      console.log('🗑️ Foreground dismiss received for request:', data.request_id);
-      dismissNotificationBanner(data.request_id);
-      try {
-        const registration = await navigator.serviceWorker.ready;
-        const sw = navigator.serviceWorker.controller || registration.active;
-        if (sw) {
-          sw.postMessage({ type: 'DISMISS_NOTIFICATION', request_id: data.request_id });
-        }
-      } catch (err) {
-        console.warn('⚠️ Could not forward dismiss to SW:', err);
-      }
-      return;
-    }
-
-    const notificationPayload = {
-      title:      data.title      || '🩸 Blood Request',
-      body:       data.body       || 'Someone needs blood — tap to help!',
-      request_id: data.request_id || '',
-      ...data
+    const token = localStorage.getItem('token');
+    const headers = {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        ...(options.headers || {})
     };
 
-    if (Notification.permission !== 'granted') return;
+    const response = await fetch(`${API_BASE}/${endpoint}`, { ...options, headers });
 
-    // Sync visibility to SW right before forwarding — ensures SW has latest state
-    if (navigator.serviceWorker.controller) {
-      navigator.serviceWorker.controller.postMessage({
-        type: 'PAGE_VISIBILITY',
-        visible: document.visibilityState === 'visible'
-      });
+    if (response.status === 401) {
+        localStorage.removeItem('token');
+        window.location.href = './Login.html';
+        throw new Error('Unauthorized');
     }
 
-    // Forward to SW — SW checks pageIsVisible and shows banner OR OS push, never both
-    try {
-      const registration = await navigator.serviceWorker.ready;
-      const sw = navigator.serviceWorker.controller || registration.active;
-      if (sw) {
-        sw.postMessage({ type: 'SHOW_NOTIFICATION', payload: notificationPayload });
-        console.log('✅ Forwarded foreground message to SW for display');
-      } else {
-        console.warn('⚠️ No active SW controller — showing in-page banner directly');
-        showInPageNotification(notificationPayload.title, notificationPayload.body, notificationPayload);
-      }
-    } catch (err) {
-      console.error('❌ Failed to forward to SW, showing in-page banner:', err);
-      showInPageNotification(notificationPayload.title, notificationPayload.body, notificationPayload);
+    if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.detail || `Request failed: ${response.status}`);
     }
-  });
 
-  console.log('✅ Foreground message handler registered');
+    return response.json();
 }
 
-// ─── Location & Online Status ─────────────────────────────────────────────────
-async function updateLocation(latitude, longitude) {
-  try {
-    await apiRequest('users/location', {
-      method: 'PUT',
-      body: JSON.stringify({ latitude, longitude })
-    });
-  } catch (err) {
-    console.warn('⚠️ Location update failed:', err.message);
-  }
-}
-
+// ════════════════════════════════════════════════════════════════════════════════
+// Online Status
+// ════════════════════════════════════════════════════════════════════════════════
 async function updateOnlineStatus(isOnline) {
-  try {
-    await apiRequest('users/online', {
-      method: 'PUT',
-      body: JSON.stringify({ is_online: isOnline })
-    });
-    isUserOnline = isOnline;
-  } catch (err) {
-    console.warn('⚠️ Online status update failed:', err.message);
-  }
+    try {
+        await apiRequest('users/online', {
+            method: 'PUT',
+            body: JSON.stringify({ is_online: isOnline })
+        });
+        // Persist intent — only cleared on logout
+        localStorage.setItem(ONLINE_KEY, isOnline ? 'true' : 'false');
+    } catch (err) {
+        console.warn('[iDonate] Failed to update online status:', err);
+    }
 }
 
-function getCurrentLocation() {
-  return new Promise((resolve, reject) => {
-    if (!navigator.geolocation) {
-      reject(new Error('Geolocation not supported'));
-      return;
+// ════════════════════════════════════════════════════════════════════════════════
+// Location
+// ════════════════════════════════════════════════════════════════════════════════
+async function updateLocation(latitude, longitude) {
+    try {
+        await apiRequest('users/location', {
+            method: 'PUT',
+            body: JSON.stringify({ latitude, longitude })
+        });
+    } catch (err) {
+        console.warn('[iDonate] Failed to update location:', err);
     }
+}
+
+function startLocationTracking() {
+    if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
-      pos => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
-      err => reject(new Error(`Geolocation error: ${err.message}`)),
-      { timeout: 10000, maximumAge: 60000 }
+        (pos) => updateLocation(pos.coords.latitude, pos.coords.longitude),
+        (err) => console.warn('[iDonate] Geolocation error:', err),
+        { enableHighAccuracy: true, timeout: 10000 }
     );
-  });
 }
 
-// ─── Idle Detection ────────────────────────────────────────────────────────────
-function resetIdleTimer() {
-  clearTimeout(idleTimer);
-  if (!isUserOnline) {
-    updateOnlineStatus(true).catch(() => {});
-  }
-  idleTimer = setTimeout(() => {
-    updateOnlineStatus(false).catch(() => {});
-  }, IDLE_TIMEOUT);
-}
+// ════════════════════════════════════════════════════════════════════════════════
+// FCM Token Registration — dedup guard
+// ════════════════════════════════════════════════════════════════════════════════
+let _fcmRegistrationInProgress = false;
+let _fcmLastRegisteredToken    = null;
 
-// ─── Auto-Online Initialization ───────────────────────────────────────────────
-function initializeAutoOnline() {
-  const activityEvents = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
-  activityEvents.forEach(event => {
-    document.addEventListener(event, resetIdleTimer, { passive: true });
-  });
-
-  if (document.visibilityState === 'visible') {
-    updateOnlineStatus(true)
-      .then(() => {
-        console.log('✅ Auto-online initialized');
-        return getCurrentLocation();
-      })
-      .then(loc => updateLocation(loc.latitude, loc.longitude))
-      .catch(err => {
-        console.warn('⚠️ Location update failed (user still online):', err.message);
-      })
-      .finally(() => {
-        requestNotificationPermission().catch(err =>
-          console.warn('⚠️ Notification setup failed:', err)
-        );
-      });
-    resetIdleTimer();
-  }
-
-  window.addEventListener('beforeunload', () => {
-    if (isUserOnline) {
-      const token = localStorage.getItem('token');
-      fetch(`${API_BASE}/users/online`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ is_online: false }),
-        keepalive: true
-      });
+async function registerFCMToken(token) {
+    if (_fcmRegistrationInProgress) {
+        console.log('[FCM] Registration already in progress, skipping duplicate');
+        return false;
     }
-  });
+    if (_fcmLastRegisteredToken === token) {
+        console.log('[FCM] Token unchanged, skipping re-registration');
+        return true;
+    }
+
+    _fcmRegistrationInProgress = true;
+    try {
+        let deviceId = localStorage.getItem('fcm_device_id');
+        if (!deviceId) {
+            deviceId = 'web_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('fcm_device_id', deviceId);
+        }
+
+        await apiRequest('fcm/register', {
+            method: 'POST',
+            body: JSON.stringify({ token, device_id: deviceId })
+        });
+
+        localStorage.setItem('fcm_last_token', token);
+        _fcmLastRegisteredToken = token;
+        console.log('[FCM] Token registered, device:', deviceId);
+        return true;
+    } catch (err) {
+        console.error('[FCM] Token registration failed:', err);
+        return false;
+    } finally {
+        setTimeout(() => { _fcmRegistrationInProgress = false; }, 5000);
+    }
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initializeAutoOnline);
-} else {
-  initializeAutoOnline();
+// ════════════════════════════════════════════════════════════════════════════════
+// Request Notification Permission + FCM Setup
+// ════════════════════════════════════════════════════════════════════════════════
+async function requestNotificationPermission() {
+    if (!('Notification' in window) || !('serviceWorker' in navigator)) return false;
+
+    if (Notification.permission === 'default') {
+        const result = await Notification.requestPermission();
+        if (result !== 'granted') return false;
+    }
+
+    if (Notification.permission !== 'granted') return false;
+
+    try {
+        const swReg = await navigator.serviceWorker.ready;
+
+        if (typeof firebase === 'undefined') {
+            await _loadScript('https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js');
+            await _loadScript('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js');
+        }
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp({
+                apiKey:            "AIzaSyBsg7HK7O1FCTv9UZRIt1e4Q_56XG9Rkgw",
+                authDomain:        "idonate-9f055.firebaseapp.com",
+                projectId:         "idonate-9f055",
+                storageBucket:     "idonate-9f055.firebasestorage.app",
+                messagingSenderId: "303354735816",
+                appId:             "1:303354735816:web:33c2fc8138cb063e75c9fd",
+                measurementId:     "G-JCBK24BW1E"
+            });
+        }
+
+        const messaging = firebase.messaging();
+
+        const token = await messaging.getToken({ vapidKey: VAPID_KEY, serviceWorkerRegistration: swReg });
+        if (!token) { console.warn('[FCM] No token received'); return false; }
+
+        await registerFCMToken(token);
+
+        // Foreground handler (browser tab mode)
+        messaging.onMessage((payload) => {
+            const data = payload.data || {};
+            if (data.type === 'dismiss_notification') { _dismissBanner(data.request_id); return; }
+            showInAppNotification(data);
+        });
+
+        // Visibility sync to SW
+        function _syncVis() {
+            if (navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage({
+                    type:    'PAGE_VISIBILITY',
+                    visible: document.visibilityState === 'visible'
+                });
+            }
+        }
+        document.addEventListener('visibilitychange', _syncVis);
+        _syncVis();
+
+        // Token refresh
+        if (messaging.onTokenRefresh) {
+            messaging.onTokenRefresh(async () => {
+                try {
+                    const newToken = await messaging.getToken({ vapidKey: VAPID_KEY, serviceWorkerRegistration: swReg });
+                    if (newToken && newToken !== _fcmLastRegisteredToken) {
+                        _fcmLastRegisteredToken = null;
+                        await registerFCMToken(newToken);
+                    }
+                } catch (e) { console.error('[FCM] Token refresh error:', e); }
+            });
+        }
+
+        console.log('[FCM] Setup complete');
+        return true;
+    } catch (err) {
+        console.error('[FCM] Setup error:', err);
+        return false;
+    }
 }
 
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = {
-    apiRequest,
-    initializeFCM,
-    requestNotificationPermission,
-    updateLocation,
-    updateOnlineStatus,
-    getCurrentLocation
-  };
+// ════════════════════════════════════════════════════════════════════════════════
+// In-App Notification Banner
+// ════════════════════════════════════════════════════════════════════════════════
+function showInAppNotification(data) {
+    const title     = data.title      || '🩸 Blood Request';
+    const body      = data.body       || 'Someone needs blood nearby!';
+    const requestId = data.request_id || '';
+
+    if (requestId && document.querySelector(`.notification-banner[data-request-id="${requestId}"]`)) return;
+
+    const banner = document.createElement('div');
+    banner.className = 'notification-banner';
+    if (requestId) banner.dataset.requestId = requestId;
+
+    banner.style.cssText = `
+        position: fixed; top: 16px; right: 16px; z-index: 99999;
+        background: white; border-left: 4px solid #dc2626;
+        border-radius: 10px; box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+        padding: 14px 16px; max-width: 340px; width: calc(100vw - 32px);
+        display: flex; flex-direction: column; gap: 8px;
+        animation: _swipeIn 0.3s ease;
+    `;
+
+    banner.innerHTML = `
+        <style>@keyframes _swipeIn{from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1}}</style>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+            <strong style="color:#dc2626;font-size:0.95rem;line-height:1.3;">${title}</strong>
+            <button onclick="this.closest('.notification-banner').remove()"
+                style="background:none;border:none;cursor:pointer;color:#9ca3af;font-size:1.3rem;line-height:1;padding:0;flex-shrink:0;">✕</button>
+        </div>
+        <p style="margin:0;font-size:0.875rem;color:#374151;line-height:1.4;">${body}</p>
+        ${requestId ? `
+        <div style="display:flex;gap:8px;margin-top:4px;">
+            <a href="./DonorView.html?request=${requestId}"
+               style="flex:1;text-align:center;background:#dc2626;color:white;padding:7px 12px;
+                      border-radius:6px;text-decoration:none;font-size:0.875rem;font-weight:600;">View Request</a>
+            <button onclick="this.closest('.notification-banner').remove()"
+                style="flex:1;background:#f3f4f6;border:none;border-radius:6px;padding:7px 12px;
+                       cursor:pointer;font-size:0.875rem;font-weight:600;color:#374151;">Dismiss</button>
+        </div>` : ''}
+    `;
+
+    document.body.appendChild(banner);
+    setTimeout(() => banner.remove(), 15000);
+}
+
+// ════════════════════════════════════════════════════════════════════════════════
+// Script Loader Helper
+// ════════════════════════════════════════════════════════════════════════════════
+function _loadScript(src) {
+    return new Promise((resolve, reject) => {
+        if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
+        const s = document.createElement('script');
+        s.src = src; s.onload = resolve; s.onerror = reject;
+        document.head.appendChild(s);
+    });
+}
+
+// ════════════════════════════════════════════════════════════════════════════════
+// Hospital Geocoding
+// ════════════════════════════════════════════════════════════════════════════════
+async function locateHospital() {
+    const hospitalName = document.getElementById('hospitalName')?.value.trim();
+    const district     = document.getElementById('district')?.value.trim();
+    const city         = document.getElementById('city')?.value.trim();
+
+    if (!hospitalName) { alert('Please enter a hospital name'); return; }
+
+    const locateBtn = document.querySelector('.locate-btn');
+    const origText  = locateBtn?.innerHTML;
+    if (locateBtn) { locateBtn.innerHTML = '🔍 Locating Hospital...'; locateBtn.disabled = true; }
+
+    try {
+        const response = await fetch(`${API_BASE}/geocode/hospital`, {
+            method:  'POST',
+            headers: {
+                'Content-Type':  'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify({ hospitalName, district: district || null, city: city || null })
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || 'Geocoding failed');
+
+        if (data.success && data.location) {
+            const { latitude, longitude, display_name } = data.location;
+            window.hospitalCoordinates = { latitude, longitude };
+
+            if (window.map) {
+                window.map.setView([latitude, longitude], 15);
+                if (window.hospitalMarker) window.map.removeLayer(window.hospitalMarker);
+                window.hospitalMarker = L.marker([latitude, longitude], {
+                    icon: L.icon({
+                        iconUrl:     'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                        shadowUrl:   'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+                        iconSize:    [25, 41], iconAnchor:   [12, 41],
+                        popupAnchor: [1, -34], shadowSize:   [41, 41]
+                    })
+                }).addTo(window.map);
+                window.hospitalMarker.bindPopup(`<b>${hospitalName}</b><br>${display_name}`).openPopup();
+            }
+            alert(`✅ Hospital located: ${display_name}`);
+        } else {
+            throw new Error('Invalid response from geocoding service');
+        }
+    } catch (error) {
+        console.error('[iDonate] Geocoding error:', error);
+        let msg = 'Unable to locate hospital. ';
+        if (error.message.includes('not found'))    msg += 'Please check the spelling.';
+        else if (error.message.includes('timeout')) msg += 'Service timed out. Please try again.';
+        else                                         msg += error.message || 'Please try again.';
+        alert(msg);
+        if (confirm('Would you like to select the location manually on the map?')) {
+            enableManualLocationSelection();
+        }
+    } finally {
+        if (locateBtn) { locateBtn.innerHTML = origText; locateBtn.disabled = false; }
+    }
+}
+
+function enableManualLocationSelection() {
+    if (!window.map) return;
+    window.map.off('click');
+    window.map.on('click', (e) => {
+        const { lat, lng } = e.latlng;
+        if (window.hospitalMarker) window.map.removeLayer(window.hospitalMarker);
+        window.hospitalMarker = L.marker([lat, lng], {
+            icon: L.icon({
+                iconUrl:     'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                shadowUrl:   'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+                iconSize:    [25, 41], iconAnchor:   [12, 41],
+                popupAnchor: [1, -34], shadowSize:   [41, 41]
+            })
+        }).addTo(window.map);
+        const name = document.getElementById('hospitalName')?.value || 'Selected Location';
+        window.hospitalMarker.bindPopup(`<b>${name}</b><br>Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}`).openPopup();
+        window.hospitalCoordinates = { latitude: lat, longitude: lng };
+        window.map.off('click');
+        alert('✅ Location selected on map');
+    });
 }

@@ -867,6 +867,8 @@ let selectedLocation = null;
 
 async function loadData() {
     try {
+        await restoreOnlineStatus();
+
         user = await apiRequest('auth/me');
         requests = await apiRequest('requests/my-requests');
         await renderRequests();
@@ -880,6 +882,7 @@ function goToDashboard() {
 }
 
 function handleLogout() {
+    localStorage.removeItem('user_is_online');
     localStorage.removeItem('token');
     window.location.href = './Home.html';
 }
@@ -997,16 +1000,16 @@ async function autoLocateHospital() {
 
 document.getElementById('createRequestForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    
+
     if (!selectedLocation) {
         alert('Please locate the hospital first using the "Auto-Locate Hospital" button');
         return;
     }
-    
+
     const submitBtn = document.getElementById('createBtn');
     submitBtn.disabled = true;
     submitBtn.textContent = 'Creating Request...';
-    
+
     try {
         const notesValue = document.getElementById('notes').value.trim();
         const requestData = {
@@ -1018,15 +1021,23 @@ document.getElementById('createRequestForm').addEventListener('submit', async (e
             hospitalLongitude: selectedLocation.lng,
             notes: notesValue || ''
         };
-        
-        await apiRequest('requests/', {
+
+        const result = await apiRequest('requests/', {
             method: 'POST',
             body: JSON.stringify(requestData)
         });
-        
+
+        const requestId = result.id;
+
         closeCreateModal();
         await loadData();
+
         alert('Blood request created successfully!');
+
+        await apiRequest(`requests/${requestId}/start-notifications`, {
+            method: 'POST'
+        });
+
     } catch (err) {
         alert('Failed to create request: ' + err.message);
         submitBtn.disabled = false;
