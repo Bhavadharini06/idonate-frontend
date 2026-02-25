@@ -19,16 +19,15 @@ def main():
 
     for size in ICON_SIZES:
 
-        bg = Image.new("RGBA", (size, size), (255, 255, 255, 255))
+        # 🔥 Transparent background instead of white
+        bg = Image.new("RGBA", (size, size), (0, 0, 0, 0))
 
         padding = int(size * PADDING_PERCENT)
         inner_size = size - padding * 2
 
-        # 🔥 Preserve aspect ratio
         img_copy = img.copy()
         img_copy.thumbnail((inner_size, inner_size), Image.LANCZOS)
 
-        # 🔥 Center properly
         x = (size - img_copy.width) // 2
         y = (size - img_copy.height) // 2
 
