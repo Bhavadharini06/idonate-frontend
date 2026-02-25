@@ -19,7 +19,7 @@ def main():
 
     for size in ICON_SIZES:
 
-        bg = Image.new("RGBA", (size, size), (255, 255, 255, 255))
+        bg = Image.new("RGBA", (size, size), (230, 214, 219, 255)) 
 
         padding = int(size * PADDING_PERCENT)
         inner_size = size - padding * 2

@@ -3,11 +3,11 @@
   "name": "iDonate - Blood Donation App",
   "short_name": "iDonate",
   "description": "Connecting blood donors with patients in need",
-  "start_url": "/Home.html",
+  "start_url": "/Login.html",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#fef2f2",
-  "theme_color": "#dc2626",
+  "background_color":  "#e6d6db",
+  "theme_color": "#e6d6db",
   "icons": [
 
     { "src": "/icons/icon-72x72.png",   "sizes": "72x72",   "type": "image/png" },
