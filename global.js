@@ -180,8 +180,8 @@ async function requestNotificationPermission() {
         console.log('[FCM] Using SW registration:', swReg.active?.scriptURL);
 
         if (typeof firebase === 'undefined') {
-            await _loadScript('https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js');
-            await _loadScript('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js');
+            await _loadScript('https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js');
+            await _loadScript('https://www.gstatic.com/firebasejs/8.10.1/firebase-messaging.js');
         }
 
         if (!firebase.apps.length) {

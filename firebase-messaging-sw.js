@@ -2,9 +2,13 @@
 // ✅ UNIFIED: This is the ONE service worker for both caching (PWA) AND FCM notifications.
 // pwa-register.js must register THIS file as /firebase-messaging-sw.js
 // global.js must use this registration for messaging.getToken()
+//
+// ✅ SDK v8 (NOT v10): v10 uses fcmregistrations.googleapis.com which requires
+// the Firebase apiKey to be unrestricted — causing 401 errors on Vercel deployments.
+// v8 uses iid.googleapis.com which authenticates via VAPID key only — no apiKey needed.
 
-importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js');
+importScripts('https://www.gstatic.com/firebasejs/8.10.1/firebase-messaging.js');
 
 firebase.initializeApp({
   apiKey:            "AIzaSyBsg7HK7O1FCTv9UZRIt1e4Q_56XG9Rkgw",
