@@ -221,11 +221,18 @@
                 render();
 
                 if (Notification.permission === 'default' || Notification.permission === 'granted') {
-                    requestNotificationPermission().catch(err =>
-                        console.error('⚠️ FCM setup failed:', err)
-                    );
+                    requestNotificationPermission()
+                        .then(async (success) => {
+                            if (success) {
+                                try {
+                                    const refreshed = await apiRequest('auth/me');
+                                    user = refreshed;
+                                    render();
+                                } catch (_) {}
+                            }
+                        })
+                        .catch(err => console.error('⚠️ FCM setup failed:', err));
                 }
-
             } catch (err) {
                 console.error(err);
                 window.location.href = './Login.html';
@@ -250,6 +257,10 @@
 
         async function enableNotifications() {
             await requestNotificationPermission();
+            try {
+                const refreshed = await apiRequest('auth/me');
+                user = refreshed;
+            } catch (_) {}
             render();
         }
 
@@ -332,7 +343,7 @@
                     }
                 }).catch(err => console.error('Failed to refresh user:', err));
             }
-        }, 10000);
+        }, 5000);
     </script>
     <script src="/pwa-register.js"></script>
 </body>
