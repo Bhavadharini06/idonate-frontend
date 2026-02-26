@@ -12,214 +12,100 @@
     <meta name="apple-mobile-web-app-title" content="iDonate">
     <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             min-height: 100vh;
             background-color: #f9fafb;
         }
-        .navbar {
-            background: white;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
+        .navbar { background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .navbar-content {
-            max-width: 80rem;
-            margin: auto;
-            padding: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            max-width: 80rem; margin: auto; padding: 1rem;
+            display: flex; justify-content: space-between; align-items: center;
         }
-        .navbar img {
-            height: 40px;
-            cursor: pointer;
-        }
-        .navbar-right {
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-        }
+        .navbar img { height: 40px; cursor: pointer; }
+        .navbar-right { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
         .blood-badge {
-            background: #fee2e2;
-            color: #991b1b;
-            padding: 0.25rem 0.75rem;
-            border-radius: 999px;
-            font-weight: 600;
-            font-size: 0.85rem;
+            background: #fee2e2; color: #dc2626; padding: 0.25rem 0.75rem;
+            border-radius: 9999px; font-weight: 700; font-size: 0.875rem;
         }
         .online-badge {
-            background: #d1fae5;
-            color: #065f46;
-            padding: 0.25rem 0.75rem;
-            border-radius: 999px;
-            font-weight: 600;
-            font-size: 0.85rem;
-            animation: pulse 2s infinite;
+            background: #d1fae5; color: #065f46; padding: 0.25rem 0.75rem;
+            border-radius: 9999px; font-size: 0.875rem; font-weight: 600;
         }
         .offline-badge {
-            background: #e5e7eb;
-            color: #4b5563;
-            padding: 0.25rem 0.75rem;
-            border-radius: 999px;
-            font-weight: 600;
-            font-size: 0.85rem;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
+            background: #e5e7eb; color: #374151; padding: 0.25rem 0.75rem;
+            border-radius: 9999px; font-size: 0.875rem; font-weight: 600;
         }
         .logout-btn {
-            border: none;
-            background: none;
-            cursor: pointer;
-            color: #374151;
-            font-size: 1rem;
+            background: none; border: 1px solid #d1d5db; border-radius: 0.5rem;
+            padding: 0.375rem 0.75rem; cursor: pointer; font-size: 0.875rem; color: #374151;
         }
-        .logout-btn:hover {
-            color: #dc2626;
-        }
-        .container {
-            max-width: 80rem;
-            margin: auto;
-            padding: 2rem 1rem;
-        }
-        .welcome-section {
-            text-align: center;
-            margin-bottom: 3rem;
-        }
-        .welcome-section h2 {
-            font-size: 2rem;
-            color: #1f2937;
-            margin-bottom: 0.5rem;
-        }
-        .welcome-section p {
-            color: #6b7280;
-        }
-        .action-cards {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 1.5rem;
-            max-width: 72rem;
-            margin: 0 auto;
-        }
-        @media (min-width: 768px) {
-            .action-cards {
-                grid-template-columns: 1fr 1fr;
-            }
-        }
-        .action-card {
-            background: white;
-            border-radius: 0.5rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            padding: 2rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-align: center;
-        }
-        .action-card:hover {
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-            transform: translateY(-4px);
-        }
-        .card-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-        }
-        .action-card h3 {
-            font-size: 1.5rem;
-            color: #1f2937;
-            margin-bottom: 0.75rem;
-        }
-        .action-card p {
-            color: #6b7280;
-            margin-bottom: 1.5rem;
-        }
-        .btn {
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-            font-size: 1rem;
-        }
-        .btn-donate {
-            background-color: #dc2626;
-            color: white;
-        }
-        .btn-donate:hover {
-            background-color: #b91c1c;
-        }
-        .btn-request {
-            background-color: #2563eb;
-            color: white;
-        }
-        .btn-request:hover {
-            background-color: #1d4ed8;
-        }
-        .loading {
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 1.5rem;
-            color: #6b7280;
-        }
+        .logout-btn:hover { background: #f3f4f6; }
+        .container { max-width: 48rem; margin: auto; padding: 2rem 1rem; }
+        .welcome-section { text-align: center; margin-bottom: 2rem; }
+        .welcome-section h2 { font-size: 1.875rem; color: #1f2937; margin-bottom: 0.5rem; }
+        .welcome-section p { color: #6b7280; }
         .status-info {
-            background: #f0fdf4;
-            border: 1px solid #86efac;
-            color: #166534;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            margin-bottom: 2rem;
-            text-align: center;
+            background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 0.75rem;
+            padding: 1rem 1.25rem; margin-bottom: 1.5rem; text-align: center;
+            color: #166534; font-size: 0.95rem;
+        }
+        .status-info.offline {
+            background: #f9fafb; border-color: #e5e7eb; color: #6b7280;
         }
         .notif-banner {
-            background: #fffbeb;
-            border: 1px solid #fcd34d;
-            color: #92400e;
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
-            margin-bottom: 1.5rem;
-            text-align: center;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 1rem;
-            flex-wrap: wrap;
+            background: #fef3c7; border: 1px solid #fcd34d; border-radius: 0.75rem;
+            padding: 1rem 1.25rem; margin-bottom: 1.5rem; text-align: center;
+            color: #92400e; font-size: 0.9rem;
         }
         .btn-enable-notif {
-            background-color: #f59e0b;
-            color: white;
-            border: none;
-            padding: 0.4rem 1rem;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            cursor: pointer;
-            font-size: 0.875rem;
+            margin-top: 0.5rem; display: inline-block;
+            background: #dc2626; color: white; border: none; border-radius: 0.5rem;
+            padding: 0.5rem 1rem; cursor: pointer; font-size: 0.875rem;
         }
-        .btn-enable-notif:hover {
-            background-color: #d97706;
+        .action-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+        @media (max-width: 640px) { .action-cards { grid-template-columns: 1fr; } }
+        .action-card {
+            background: white; border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            padding: 2rem 1.5rem; text-align: center; cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
+        .action-card:hover { transform: translateY(-2px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
+        .card-icon { font-size: 3rem; margin-bottom: 1rem; }
+        .action-card h3 { font-size: 1.25rem; color: #1f2937; margin-bottom: 0.5rem; }
+        .action-card p { color: #6b7280; font-size: 0.875rem; margin-bottom: 1.5rem; }
+        .btn { border: none; border-radius: 0.5rem; padding: 0.75rem 1.5rem; cursor: pointer; font-size: 1rem; font-weight: 600; width: 100%; transition: background-color 0.3s ease; }
+        .btn-donate { background-color: #dc2626; color: white; }
+        .btn-donate:hover { background-color: #b91c1c; }
+        .btn-request { background-color: #2563eb; color: white; }
+        .btn-request:hover { background-color: #1d4ed8; }
+        .loading { display: flex; justify-content: center; align-items: center; height: 60vh; font-size: 1.25rem; color: #6b7280; }
     </style>
 </head>
 <body>
     <div id="app"></div>
+
     <script src="./global.js"></script>
     <script>
         let user = null;
 
         async function loadDashboard() {
             try {
+                // FIX: restoreOnlineStatus now uses raw fetch (not apiRequest)
+                // so any error is silently ignored instead of redirecting to Login.
+                // This stops the infinite login loop caused by a failed PUT /users/online.
                 await restoreOnlineStatus();
 
                 const userData = await apiRequest('auth/me');
                 user = userData;
                 render();
 
+                // FIX: Always attempt FCM setup if permission is granted or default.
+                // After FCM token is registered, registerFCMToken() calls _setOnlineRaw(true)
+                // which sets is_online=true in the DB. Then we re-fetch auth/me and
+                // re-render so the Dashboard badge immediately shows "🟢 Online".
                 if (Notification.permission === 'default' || Notification.permission === 'granted') {
                     requestNotificationPermission()
                         .then(async (success) => {
@@ -232,6 +118,7 @@
                         })
                         .catch(err => console.error('⚠️ FCM setup failed:', err));
                 }
+
             } catch (err) {
                 console.error(err);
                 window.location.href = './Login.html';
@@ -239,7 +126,9 @@
         }
 
         function handleLogout() {
-            localStorage.removeItem('user_is_online');
+            localStorage.removeItem(ONLINE_KEY);
+            localStorage.removeItem('fcm_last_token');
+            localStorage.removeItem('fcm_device_id');
             updateOnlineStatus(false).finally(() => {
                 localStorage.removeItem('token');
                 window.location.href = './Login.html';
@@ -265,22 +154,19 @@
                 ? `<span class="online-badge">🟢 Online</span>`
                 : `<span class="offline-badge">⚫ Offline</span>`;
 
+            const statusClass   = user.is_online ? '' : 'offline';
             const statusMessage = user.is_online
                 ? '✅ You are online and will receive blood request notifications nearby'
                 : '⚫ You are offline. Blood requests will still be available in Donate Blood section';
 
             let notifBanner = '';
             if (Notification.permission === 'denied') {
-                notifBanner = `
-                    <div class="notif-banner">
-                        🔕 Notifications are blocked. Please enable them in your browser settings to receive blood request alerts.
-                    </div>`;
+                notifBanner = `<div class="notif-banner">🔕 Notifications are blocked. Please enable them in your browser settings to receive blood request alerts.</div>`;
             } else if (Notification.permission === 'default') {
-                notifBanner = `
-                    <div class="notif-banner">
-                        🔔 Enable notifications to get alerted for nearby blood requests instantly.
-                        <button class="btn-enable-notif" onclick="enableNotifications()">Enable Notifications</button>
-                    </div>`;
+                notifBanner = `<div class="notif-banner">
+                    🔔 Enable notifications to get alerted for nearby blood requests instantly.
+                    <br><button class="btn-enable-notif" onclick="enableNotifications()">Enable Notifications</button>
+                </div>`;
             }
 
             app.innerHTML = `
@@ -301,7 +187,7 @@
                         <p>What would you like to do today?</p>
                     </div>
                     ${notifBanner}
-                    <div class="status-info">${statusMessage}</div>
+                    <div class="status-info ${statusClass}">${statusMessage}</div>
                     <div class="action-cards">
                         <div class="action-card" onclick="navigateToDonor()">
                             <div class="card-icon">💉</div>
@@ -322,6 +208,7 @@
 
         loadDashboard();
 
+        // Poll every 5s — updates badge if online status changes
         setInterval(() => {
             if (user) {
                 apiRequest('auth/me').then(userData => {
@@ -333,6 +220,7 @@
             }
         }, 5000);
     </script>
+
     <script src="/pwa-register.js"></script>
 </body>
 </html>

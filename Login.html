@@ -149,7 +149,8 @@
         function clearPreviousUserSession() {
             localStorage.removeItem('fcm_last_token');
             localStorage.removeItem('fcm_device_id');
-            localStorage.setItem('fcm_needs_reregister', 'true');
+            localStorage.removeItem('fcm_needs_reregister');
+            localStorage.removeItem('user_is_online');
         }
 
         document.getElementById("loginForm").addEventListener("submit", async (e) => {

@@ -1,19 +1,20 @@
-// ⚠️  VAPID KEY: Must exactly match the Web Push certificate in:
-// Firebase Console → Project Settings → Cloud Messaging → Web Push certificates → Key pair
+// Core shared functions for all iDonate pages.
+
+const API_BASE  = 'https://idonate-backend-hy7w.onrender.com';
+
 const VAPID_KEY = 'BKM4qtaxUhKbxDc2uy1NpAgAeafz10fwKpJn6fdoIr9F1p7NXkGxR7viSyGDmx45mYNFOH3MCxbdvbYWUrIEEy4';
 
 const ONLINE_KEY = 'user_is_online';
 
-// ─── Heartbeat handle ─────────────────────────────────────────────────────────
 let _onlineHeartbeatTimer = null;
 
-// ─── Raw fetch for online-status calls (NEVER use apiRequest here) ───────────
-// apiRequest() redirects to Login.html on 401. If called from restoreOnlineStatus()
-// or the heartbeat, any 401/network error creates an infinite login loop:
-//   restoreOnlineStatus fails → loadDashboard catch → Login redirect
+// ─── FIX: Use raw fetch for ALL online-status calls ──────────────────────────
+// NEVER use apiRequest() for online-status. apiRequest() redirects to
+// Login.html on any 401 or error, which causes an infinite login loop:
+//   restoreOnlineStatus() fails → loadDashboard catch → redirect to Login
 //   → login clears FCM tokens → Dashboard loads → repeat forever.
-// This helper fires-and-forgets all errors instead.
-async function _putOnlineStatus(isOnline) {
+// _setOnlineRaw() silently ignores all errors instead.
+async function _setOnlineRaw(isOnline) {
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
@@ -25,44 +26,47 @@ async function _putOnlineStatus(isOnline) {
             },
             body: JSON.stringify({ is_online: isOnline })
         });
-    } catch (_) {
-        // Silently ignore network errors and 401s — never redirect from here
-    }
+    } catch (_) { /* silently ignore — never redirect */ }
 }
 
-// Called once on every page load after confirming the user is logged in.
-async function restoreOnlineStatus() {
-    const stored = localStorage.getItem(ONLINE_KEY);
-
-    // Assert online=true if permission is granted OR was previously online.
-    // Uses _putOnlineStatus so any failure is silent (no Login redirect).
-    if (stored === 'true' || Notification.permission === 'granted') {
-        await _putOnlineStatus(true);
-        localStorage.setItem(ONLINE_KEY, 'true');
-    }
-
-    _startOnlineHeartbeat();
-}
-
-// Re-assert is_online=true every 60s to survive server restarts and network blips.
+// ─── Heartbeat: keep is_online=true in DB while user has the app open ────────
 function _startOnlineHeartbeat() {
     if (_onlineHeartbeatTimer) return;
     _onlineHeartbeatTimer = setInterval(() => {
-        if (localStorage.getItem(ONLINE_KEY) !== 'true') return;
-        _putOnlineStatus(true); // fire-and-forget, never throws, never redirects
-    }, 60_000);
+        if (localStorage.getItem(ONLINE_KEY) === 'true') {
+            _setOnlineRaw(true); // fire-and-forget
+        }
+    }, 60000);
 }
 
 function _stopOnlineHeartbeat() {
-    if (_onlineHeartbeatTimer) {
-        clearInterval(_onlineHeartbeatTimer);
-        _onlineHeartbeatTimer = null;
+    if (_onlineHeartbeatTimer) { clearInterval(_onlineHeartbeatTimer); _onlineHeartbeatTimer = null; }
+}
+
+// ─── Called on every page load ───────────────────────────────────────────────
+// FIX: Was only restoring if ONLINE_KEY==='true', which was never set on first
+// login. Now always sets online if Notification permission is granted OR if
+// was previously online. Uses _setOnlineRaw so errors never cause a redirect.
+async function restoreOnlineStatus() {
+    const stored = localStorage.getItem(ONLINE_KEY);
+    if (stored === 'true' || Notification.permission === 'granted') {
+        await _setOnlineRaw(true);
+        localStorage.setItem(ONLINE_KEY, 'true');
     }
+    _startOnlineHeartbeat();
+}
+
+// ─── Public: called by UI toggles and logout ─────────────────────────────────
+async function updateOnlineStatus(isOnline) {
+    await _setOnlineRaw(isOnline);
+    localStorage.setItem(ONLINE_KEY, isOnline ? 'true' : 'false');
+    if (isOnline) { _startOnlineHeartbeat(); } else { _stopOnlineHeartbeat(); }
 }
 
 // ════════════════════════════════════════════════════════════════════════════
 // SW + BroadcastChannel listeners
 // ════════════════════════════════════════════════════════════════════════════
+
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.addEventListener('message', (event) => {
         if (!event.data) return;
@@ -82,12 +86,11 @@ _notifBC.onmessage = (event) => {
 
 function _dismissBanner(requestId) {
     if (!requestId) return;
-    document.querySelectorAll(`.notification-banner[data-request-id="${requestId}"]`)
-            .forEach(el => el.remove());
+    document.querySelectorAll(`.notification-banner[data-request-id="${requestId}"]`).forEach(el => el.remove());
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// API Request Helper — for normal API calls ONLY (not online status)
+// API Request Helper — for normal API calls ONLY, NOT for online status
 // ════════════════════════════════════════════════════════════════════════════
 async function apiRequest(endpoint, options = {}) {
     const token = localStorage.getItem('token');
@@ -113,19 +116,6 @@ async function apiRequest(endpoint, options = {}) {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// Public Online Status (uses raw fetch — no redirect risk)
-// ════════════════════════════════════════════════════════════════════════════
-async function updateOnlineStatus(isOnline) {
-    await _putOnlineStatus(isOnline);
-    localStorage.setItem(ONLINE_KEY, isOnline ? 'true' : 'false');
-    if (!isOnline) {
-        _stopOnlineHeartbeat();
-    } else {
-        _startOnlineHeartbeat();
-    }
-}
-
-// ════════════════════════════════════════════════════════════════════════════
 // Location
 // ════════════════════════════════════════════════════════════════════════════
 async function updateLocation(latitude, longitude) {
@@ -137,6 +127,15 @@ async function updateLocation(latitude, longitude) {
     } catch (err) {
         console.warn('[iDonate] Failed to update location:', err);
     }
+}
+
+function startLocationTracking() {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+        (pos) => updateLocation(pos.coords.latitude, pos.coords.longitude),
+        (err) => console.warn('[iDonate] Geolocation error:', err),
+        { enableHighAccuracy: true, timeout: 10000 }
+    );
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -172,8 +171,11 @@ async function registerFCMToken(token) {
         _fcmLastRegisteredToken = token;
         console.log('[FCM] Token registered, device:', deviceId);
 
-        // User is now reachable — set online immediately
-        await _putOnlineStatus(true);
+        // ─── FIX: Set user online immediately after FCM token is registered ───
+        // This is the missing link. Without this, is_online stays false even
+        // though the FCM token is now in the DB, so the notification loop finds
+        // "Online donors with FCM tokens: 0" every single cycle.
+        await _setOnlineRaw(true);
         localStorage.setItem(ONLINE_KEY, 'true');
         _startOnlineHeartbeat();
 
@@ -230,7 +232,7 @@ async function requestNotificationPermission() {
             if (msg.includes('401') || msg.includes('authentication') || msg.includes('credential')) {
                 console.error('[FCM] ❌ VAPID key mismatch — check Firebase Console → Project Settings → Cloud Messaging → Web Push certificates');
             } else if (msg.includes('messaging/token-subscribe-failed')) {
-                console.error('[FCM] ❌ Token subscribe failed — check VAPID key and Cloud Messaging API is enabled');
+                console.error('[FCM] ❌ Token subscribe failed — check VAPID key and Cloud Messaging API enabled');
             } else {
                 console.error('[FCM] ❌ getToken failed:', tokenErr);
             }
@@ -240,16 +242,18 @@ async function requestNotificationPermission() {
         if (!token) { console.warn('[FCM] No token received'); return false; }
 
         console.log('[FCM] ✅ Token obtained successfully');
+
+        // registerFCMToken also calls _setOnlineRaw(true) — sets user online
         await registerFCMToken(token);
 
-        // Foreground message handler
+        // Foreground message handler — shows in-app banner when tab is active
         messaging.onMessage((payload) => {
             const data = payload.data || {};
             if (data.type === 'dismiss_notification') { _dismissBanner(data.request_id); return; }
             showInAppNotification(data);
         });
 
-        // Sync visibility to SW for foreground/background decision
+        // Inform SW of page visibility for foreground/background routing
         function _syncVis() {
             if (navigator.serviceWorker.controller) {
                 navigator.serviceWorker.controller.postMessage({
@@ -261,7 +265,6 @@ async function requestNotificationPermission() {
         document.addEventListener('visibilitychange', _syncVis);
         _syncVis();
 
-        // Token refresh
         if (messaging.onTokenRefresh) {
             messaging.onTokenRefresh(async () => {
                 try {
@@ -315,11 +318,11 @@ function showInAppNotification(data) {
         ${requestId ? `
         <div style="display:flex;gap:8px;margin-top:4px;">
             <a href="./DonorView.html?request=${requestId}"
-             style="flex:1;text-align:center;background:#dc2626;color:white;padding:7px 12px;
-                     border-radius:6px;text-decoration:none;font-size:0.875rem;font-weight:600;">View Request</a>
+               style="flex:1;text-align:center;background:#dc2626;color:white;padding:7px 12px;
+                      border-radius:6px;text-decoration:none;font-size:0.875rem;font-weight:600;">View Request</a>
             <button onclick="this.closest('.notification-banner').remove()"
                style="flex:1;background:#f3f4f6;border:none;border-radius:6px;padding:7px 12px;
-                     cursor:pointer;font-size:0.875rem;font-weight:600;color:#374151;">Dismiss</button>
+                      cursor:pointer;font-size:0.875rem;font-weight:600;color:#374151;">Dismiss</button>
         </div>` : ''}
     `;
     document.body.appendChild(banner);
@@ -355,10 +358,7 @@ async function locateHospital() {
     try {
         const response = await fetch(`${API_BASE}/geocode/hospital`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            },
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
             body: JSON.stringify({ hospitalName, district: district || null, city: city || null })
         });
         const data = await response.json();
