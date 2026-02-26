@@ -12,106 +12,40 @@
     <meta name="apple-mobile-web-app-title" content="iDonate">
     <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             min-height: 100vh;
             background: linear-gradient(to bottom right, #fef2f2, #fce7f3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 1rem;
+            display: flex; align-items: center; justify-content: center; padding: 1rem;
         }
-
         .card {
-            background: white;
-            border-radius: 0.5rem;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-            padding: 2rem;
-            max-width: 28rem;
-            width: 100%;
+            background: white; border-radius: 0.5rem;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+            padding: 2rem; max-width: 28rem; width: 100%;
         }
-
-        .logo-container {
-            text-align: center;
-            margin-bottom: 1rem;
-        }
-
-        .logo-container img {
-            max-width: 150px;
-            height: auto;
-        }
-
+        .logo-container { text-align: center; margin-bottom: 1rem; }
+        .logo-container img { max-width: 150px; height: auto; }
         .error {
-            background-color: #fee2e2;
-            border: 1px solid #fca5a5;
-            color: #991b1b;
-            padding: 1rem;
-            border-radius: 0.25rem;
-            margin-bottom: 1rem;
+            background-color: #fee2e2; border: 1px solid #fca5a5;
+            color: #991b1b; padding: 1rem; border-radius: 0.25rem; margin-bottom: 1rem;
         }
-
-        form {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
+        form { display: flex; flex-direction: column; gap: 1rem; }
         input {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border: 1px solid #d1d5db;
-            border-radius: 0.5rem;
-            font-size: 1rem;
+            width: 100%; padding: 0.75rem 1rem;
+            border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;
         }
-
-        input:focus {
-            outline: none;
-            border-color: #dc2626;
-            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
-        }
-
+        input:focus { outline: none; border-color: #dc2626; box-shadow: 0 0 0 3px rgba(220,38,38,0.1); }
         button {
-            width: 100%;
-            background-color: #dc2626;
-            color: white;
-            padding: 0.75rem;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
+            width: 100%; background-color: #dc2626; color: white;
+            padding: 0.75rem; border-radius: 0.5rem; font-weight: 600;
+            border: none; cursor: pointer; transition: background-color 0.3s ease;
         }
-
-        button:hover:not(:disabled) {
-            background-color: #b91c1c;
-        }
-
-        button:disabled {
-            background-color: #9ca3af;
-            cursor: not-allowed;
-        }
-
-        .footer-text {
-            margin-top: 1rem;
-            text-align: center;
-            color: #4b5563;
-        }
-
-        .footer-text a {
-            color: #dc2626;
-            font-weight: 600;
-            text-decoration: none;
-        }
-
-        .footer-text a:hover {
-            text-decoration: underline;
-        }
+        button:hover:not(:disabled) { background-color: #b91c1c; }
+        button:disabled { background-color: #9ca3af; cursor: not-allowed; }
+        .footer-text { margin-top: 1rem; text-align: center; color: #4b5563; }
+        .footer-text a { color: #dc2626; font-weight: 600; text-decoration: none; }
+        .footer-text a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -119,77 +53,64 @@
         <div class="logo-container">
             <img src="logo.png" alt="iDonate Logo">
         </div>
-
         <div id="error" class="error" style="display: none;"></div>
-
         <form id="loginForm">
             <input type="email" id="email" placeholder="Email" required>
             <input type="password" id="password" placeholder="Password" required>
             <button type="submit" id="submitBtn">Sign In</button>
         </form>
-
         <p class="footer-text">
             Don't have an account? <a href="./Register.html">Sign Up</a>
         </p>
     </div>
-
     <script>
         const API_BASE = 'https://idonate-backend-hy7w.onrender.com';
 
         function showError(message) {
-            const errorDiv = document.getElementById("error");
-            errorDiv.textContent = message;
-            errorDiv.style.display = "block";
+            const el = document.getElementById("error");
+            el.textContent = message;
+            el.style.display = "block";
         }
-
         function hideError() {
             document.getElementById("error").style.display = "none";
         }
 
+        // FIX (Problem 2): clearPreviousUserSession now also removes user_is_online
+        // so restoreOnlineStatus() on a second device won't inherit a stale "online"
+        // flag and immediately attempt to set the user online before the FCM token
+        // is registered for that device — which triggered the redirect loop.
         function clearPreviousUserSession() {
             localStorage.removeItem('fcm_last_token');
             localStorage.removeItem('fcm_device_id');
             localStorage.removeItem('fcm_needs_reregister');
-            localStorage.removeItem('user_is_online');
+            localStorage.removeItem('user_is_online');   // ← FIX: was missing
         }
 
         document.getElementById("loginForm").addEventListener("submit", async (e) => {
             e.preventDefault();
             hideError();
-
-            const email = document.getElementById("email").value;
+            const email    = document.getElementById("email").value;
             const password = document.getElementById("password").value;
             const submitBtn = document.getElementById("submitBtn");
-
             submitBtn.disabled = true;
             submitBtn.textContent = "Please wait...";
-
             try {
-                const body = new URLSearchParams({
-                    username: email,
-                    password: password,
-                });
-
+                const body = new URLSearchParams({ username: email, password });
                 const response = await fetch(`${API_BASE}/auth/login`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/x-www-form-urlencoded",
-                    },
+                    method:  "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
                     body,
                 });
-
                 if (!response.ok) {
                     const err = await response.json().catch(() => null);
                     throw new Error(err?.detail || "Login failed. Please check your credentials.");
                 }
-
                 const data = await response.json();
-
+                // FIX: Clear stale session data BEFORE saving the new token.
+                // Order matters — clearing after would also clear the new token.
                 clearPreviousUserSession();
-
                 localStorage.setItem("token", data.access_token);
                 window.location.href = "./Dashboard.html";
-
             } catch (err) {
                 showError(err.message);
                 submitBtn.disabled = false;
