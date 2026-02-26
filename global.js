@@ -1,7 +1,10 @@
 // Core shared functions for all iDonate pages.
 
 const API_BASE  = 'https://idonate-backend-hy7w.onrender.com';
-const VAPID_KEY = 'BLBz4g3zPEzRmBJNOhFnNwjlPPAMBCv8yOEtGCWGWkDivmJnNpGHUvT5xXTHOEqwJQFjIBR4gCcI0-VZ_hRVUyk';
+// ⚠️  VAPID KEY: Must exactly match the Web Push certificate in:
+// Firebase Console → Project Settings → Cloud Messaging → Web Push certificates → Key pair
+// If you see a 401 error from fcmregistrations.googleapis.com, this key is wrong.
+const VAPID_KEY = 'BKM4qtaxUhKbxDc2uy1NpAgAeafz10fwKpJn6fdoIr9F1p7NXkGxR7viSyGDmx45mYNFOH3MCxbdvbYWUrIEEy4';
 
 const ONLINE_KEY = 'user_is_online';
 
@@ -170,15 +173,11 @@ async function requestNotificationPermission() {
     if (Notification.permission !== 'granted') return false;
 
     try {
-        // Get the firebase-messaging-sw.js registration specifically
-        // (pwa-register.js ensures this is the active SW)
-        let swReg;
-        try {
-            swReg = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js');
-            if (!swReg) swReg = await navigator.serviceWorker.ready;
-        } catch(e) {
-            swReg = await navigator.serviceWorker.ready;
-        }
+        // Wait for the active service worker registration (firebase-messaging-sw.js at scope '/')
+        // NOTE: getRegistration() takes a PAGE URL within scope, NOT the SW script filename.
+        // navigator.serviceWorker.ready is the safest way to get the active registration.
+        const swReg = await navigator.serviceWorker.ready;
+        console.log('[FCM] Using SW registration:', swReg.active?.scriptURL);
 
         if (typeof firebase === 'undefined') {
             await _loadScript('https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js');
@@ -199,8 +198,23 @@ async function requestNotificationPermission() {
 
         const messaging = firebase.messaging();
 
-        const token = await messaging.getToken({ vapidKey: VAPID_KEY, serviceWorkerRegistration: swReg });
+        let token;
+        try {
+            token = await messaging.getToken({ vapidKey: VAPID_KEY, serviceWorkerRegistration: swReg });
+        } catch (tokenErr) {
+            const msg = tokenErr?.message || String(tokenErr);
+            if (msg.includes('401') || msg.includes('authentication') || msg.includes('credential')) {
+                console.error('[FCM] ❌ VAPID key error (401): The VAPID key in global.js does NOT match the Web Push certificate in your Firebase Console.\n' +
+                    'Fix: Go to Firebase Console → Project Settings → Cloud Messaging → Web Push certificates → copy the Key pair value into VAPID_KEY in global.js');
+            } else if (msg.includes('messaging/token-subscribe-failed')) {
+                console.error('[FCM] ❌ Token subscribe failed. Check: 1) VAPID key matches Firebase Console, 2) Cloud Messaging API is enabled in Google Cloud Console for project idonate-9f055');
+            } else {
+                console.error('[FCM] ❌ getToken failed:', tokenErr);
+            }
+            throw tokenErr;
+        }
         if (!token) { console.warn('[FCM] No token received'); return false; }
+        console.log('[FCM] ✅ Token obtained successfully');
 
         await registerFCMToken(token);
 
