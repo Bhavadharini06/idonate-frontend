@@ -214,15 +214,17 @@
 
         async function loadDashboard() {
             try {
-                await restoreOnlineStatus();
-
                 const userData = await apiRequest('auth/me');
                 user = userData;
                 render();
 
-                if (Notification.permission === 'default' || Notification.permission === 'granted') {
+                if (Notification.permission === 'default') {
                     requestNotificationPermission().catch(err =>
                         console.error('⚠️ FCM setup failed:', err)
+                    );
+                } else if (Notification.permission === 'granted') {
+                    requestNotificationPermission().catch(err =>
+                        console.error('⚠️ FCM token refresh failed:', err)
                     );
                 }
 
@@ -233,10 +235,9 @@
         }
 
         function handleLogout() {
-            localStorage.removeItem('user_is_online');
             updateOnlineStatus(false).finally(() => {
                 localStorage.removeItem('token');
-                window.location.href = './Login.html';
+                window.location.href = './Home.html';
             });
         }
 
@@ -249,7 +250,7 @@
         }
 
         async function enableNotifications() {
-            await requestNotificationPermission();
+            const success = await requestNotificationPermission();
             render();
         }
 
