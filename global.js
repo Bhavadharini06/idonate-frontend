@@ -1,25 +1,7 @@
-// global.js
 // Core shared functions for all iDonate pages.
 
 const API_BASE  = 'https://idonate-backend-hy7w.onrender.com';
 const VAPID_KEY = 'BLBz4g3zPEzRmBJNOhFnNwjlPPAMBCv8yOEtGCWGWkDivmJnNpGHUvT5xXTHOEqwJQFjIBR4gCcI0-VZ_hRVUyk';
-
-// ════════════════════════════════════════════════════════════════════════════════
-// FIX 1 — ONLINE STATUS PERSISTENCE
-//
-// Problem: Each page calls GET /auth/me on load. If the backend value was False
-// (e.g. right after login), every page showed "Offline" even though the user
-// intended to be online.
-//
-// Solution: We store the user's online intent in localStorage under the key
-// 'user_is_online'. On every page load, global.js reads this value and calls
-// PUT /users/online if needed to sync it to the backend.
-//
-// Rules:
-//  • Set 'true'  → when user explicitly goes online (login success or toggle)
-//  • Set 'false' → ONLY on logout (never on navigation or page reload)
-//  • On every page load → restore the stored intent to the backend
-// ════════════════════════════════════════════════════════════════════════════════
 
 const ONLINE_KEY = 'user_is_online';
 
@@ -188,7 +170,15 @@ async function requestNotificationPermission() {
     if (Notification.permission !== 'granted') return false;
 
     try {
-        const swReg = await navigator.serviceWorker.ready;
+        // Get the firebase-messaging-sw.js registration specifically
+        // (pwa-register.js ensures this is the active SW)
+        let swReg;
+        try {
+            swReg = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js');
+            if (!swReg) swReg = await navigator.serviceWorker.ready;
+        } catch(e) {
+            swReg = await navigator.serviceWorker.ready;
+        }
 
         if (typeof firebase === 'undefined') {
             await _loadScript('https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js');
