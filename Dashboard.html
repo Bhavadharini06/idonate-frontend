@@ -225,8 +225,7 @@
                         .then(async (success) => {
                             if (success) {
                                 try {
-                                    const refreshed = await apiRequest('auth/me');
-                                    user = refreshed;
+                                    user = await apiRequest('auth/me');
                                     render();
                                 } catch (_) {}
                             }
@@ -247,29 +246,20 @@
             });
         }
 
-        function navigateToDonor() {
-            window.location.href = './DonorView.html';
-        }
-
-        function navigateToRequester() {
-            window.location.href = './RequesterView.html';
-        }
+        function navigateToDonor()     { window.location.href = './DonorView.html'; }
+        function navigateToRequester() { window.location.href = './RequesterView.html'; }
 
         async function enableNotifications() {
-            await requestNotificationPermission();
-            try {
-                const refreshed = await apiRequest('auth/me');
-                user = refreshed;
-            } catch (_) {}
+            const success = await requestNotificationPermission();
+            if (success) {
+                try { user = await apiRequest('auth/me'); } catch (_) {}
+            }
             render();
         }
 
         function render() {
             const app = document.getElementById('app');
-            if (!user) {
-                app.innerHTML = '<div class="loading">Loading...</div>';
-                return;
-            }
+            if (!user) { app.innerHTML = '<div class="loading">Loading...</div>'; return; }
 
             const onlineStatusBadge = user.is_online
                 ? `<span class="online-badge">🟢 Online</span>`
@@ -311,9 +301,7 @@
                         <p>What would you like to do today?</p>
                     </div>
                     ${notifBanner}
-                    <div class="status-info">
-                        ${statusMessage}
-                    </div>
+                    <div class="status-info">${statusMessage}</div>
                     <div class="action-cards">
                         <div class="action-card" onclick="navigateToDonor()">
                             <div class="card-icon">💉</div>
@@ -341,7 +329,7 @@
                         user = userData;
                         render();
                     }
-                }).catch(err => console.error('Failed to refresh user:', err));
+                }).catch(() => {});
             }
         }, 5000);
     </script>

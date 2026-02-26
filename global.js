@@ -1,57 +1,56 @@
 // ⚠️  VAPID KEY: Must exactly match the Web Push certificate in:
 // Firebase Console → Project Settings → Cloud Messaging → Web Push certificates → Key pair
-// If you see a 401 error from fcmregistrations.googleapis.com, this key is wrong.
-
 const VAPID_KEY = 'BKM4qtaxUhKbxDc2uy1NpAgAeafz10fwKpJn6fdoIr9F1p7NXkGxR7viSyGDmx45mYNFOH3MCxbdvbYWUrIEEy4';
 
 const ONLINE_KEY = 'user_is_online';
 
-// ────────────────────────────────────────────────────────────────────────────
-// Heartbeat interval handle — kept so we can clear it on logout
-// ────────────────────────────────────────────────────────────────────────────
+// ─── Heartbeat handle ─────────────────────────────────────────────────────────
 let _onlineHeartbeatTimer = null;
 
-// Called once when any page loads (after token check confirms user is logged in)
+// ─── Raw fetch for online-status calls (NEVER use apiRequest here) ───────────
+// apiRequest() redirects to Login.html on 401. If called from restoreOnlineStatus()
+// or the heartbeat, any 401/network error creates an infinite login loop:
+//   restoreOnlineStatus fails → loadDashboard catch → Login redirect
+//   → login clears FCM tokens → Dashboard loads → repeat forever.
+// This helper fires-and-forgets all errors instead.
+async function _putOnlineStatus(isOnline) {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+        await fetch(`${API_BASE}/users/online`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ is_online: isOnline })
+        });
+    } catch (_) {
+        // Silently ignore network errors and 401s — never redirect from here
+    }
+}
+
+// Called once on every page load after confirming the user is logged in.
 async function restoreOnlineStatus() {
     const stored = localStorage.getItem(ONLINE_KEY);
 
-    // FIX: If notification permission is already granted we should always
-    // re-assert online=true so the backend donor pool is populated correctly.
-    // Previously this only ran when stored === 'true', meaning first-time users
-    // (who never explicitly went online) would never appear in the donor query.
+    // Assert online=true if permission is granted OR was previously online.
+    // Uses _putOnlineStatus so any failure is silent (no Login redirect).
     if (stored === 'true' || Notification.permission === 'granted') {
-        try {
-            await apiRequest('users/online', {
-                method: 'PUT',
-                body: JSON.stringify({ is_online: true })
-            });
-            localStorage.setItem(ONLINE_KEY, 'true');
-        } catch (err) {
-            console.warn('[iDonate] Could not restore online status:', err);
-        }
+        await _putOnlineStatus(true);
+        localStorage.setItem(ONLINE_KEY, 'true');
     }
 
-    // FIX: Start a heartbeat so the backend never expires the user as offline
-    // due to a stale is_online flag (e.g. server restart, tab inactive).
     _startOnlineHeartbeat();
 }
 
-// Send a keepalive every 90 seconds while the tab is open and the user is
-// supposed to be online. This handles server restarts and network blips
-// that would otherwise leave is_online stuck as False in the DB.
+// Re-assert is_online=true every 60s to survive server restarts and network blips.
 function _startOnlineHeartbeat() {
-    if (_onlineHeartbeatTimer) return; // already running
-    _onlineHeartbeatTimer = setInterval(async () => {
+    if (_onlineHeartbeatTimer) return;
+    _onlineHeartbeatTimer = setInterval(() => {
         if (localStorage.getItem(ONLINE_KEY) !== 'true') return;
-        try {
-            await apiRequest('users/online', {
-                method: 'PUT',
-                body: JSON.stringify({ is_online: true })
-            });
-        } catch (err) {
-            // Silently ignore — next tick will retry
-        }
-    }, 90_000);
+        _putOnlineStatus(true); // fire-and-forget, never throws, never redirects
+    }, 60_000);
 }
 
 function _stopOnlineHeartbeat() {
@@ -62,10 +61,8 @@ function _stopOnlineHeartbeat() {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// SW + BroadcastChannel listeners --- registered IMMEDIATELY so they are ready
-// before any FCM push arrives (critical for standalone PWA mode).
+// SW + BroadcastChannel listeners
 // ════════════════════════════════════════════════════════════════════════════
-
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.addEventListener('message', (event) => {
         if (!event.data) return;
@@ -90,7 +87,7 @@ function _dismissBanner(requestId) {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// API Request Helper
+// API Request Helper — for normal API calls ONLY (not online status)
 // ════════════════════════════════════════════════════════════════════════════
 async function apiRequest(endpoint, options = {}) {
     const token = localStorage.getItem('token');
@@ -116,26 +113,15 @@ async function apiRequest(endpoint, options = {}) {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// Online Status
+// Public Online Status (uses raw fetch — no redirect risk)
 // ════════════════════════════════════════════════════════════════════════════
 async function updateOnlineStatus(isOnline) {
-    try {
-        await apiRequest('users/online', {
-            method: 'PUT',
-            body: JSON.stringify({ is_online: isOnline })
-        });
-        // Persist intent — only cleared on logout
-        localStorage.setItem(ONLINE_KEY, isOnline ? 'true' : 'false');
-
-        // FIX: Stop heartbeat when user goes offline so we don't accidentally
-        // flip them back to online after they explicitly went offline.
-        if (!isOnline) {
-            _stopOnlineHeartbeat();
-        } else {
-            _startOnlineHeartbeat();
-        }
-    } catch (err) {
-        console.warn('[iDonate] Failed to update online status:', err);
+    await _putOnlineStatus(isOnline);
+    localStorage.setItem(ONLINE_KEY, isOnline ? 'true' : 'false');
+    if (!isOnline) {
+        _stopOnlineHeartbeat();
+    } else {
+        _startOnlineHeartbeat();
     }
 }
 
@@ -154,24 +140,22 @@ async function updateLocation(latitude, longitude) {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// FCM Token Registration --- dedup guard
+// FCM Token Registration
 // ════════════════════════════════════════════════════════════════════════════
 let _fcmRegistrationInProgress = false;
 let _fcmLastRegisteredToken    = null;
 
 async function registerFCMToken(token) {
     if (_fcmRegistrationInProgress) {
-        console.log('[FCM] Registration already in progress, skipping duplicate');
+        console.log('[FCM] Registration already in progress, skipping');
         return false;
     }
-
     if (_fcmLastRegisteredToken === token) {
         console.log('[FCM] Token unchanged, skipping re-registration');
         return true;
     }
 
     _fcmRegistrationInProgress = true;
-
     try {
         let deviceId = localStorage.getItem('fcm_device_id');
         if (!deviceId) {
@@ -188,11 +172,10 @@ async function registerFCMToken(token) {
         _fcmLastRegisteredToken = token;
         console.log('[FCM] Token registered, device:', deviceId);
 
-        // FIX: After successfully registering the FCM token the user is
-        // definitively "online" — set it now so the backend donor pool
-        // includes this user immediately (was missing before; caused
-        // "Online donors with FCM tokens: 0" in the notification loop).
-        await updateOnlineStatus(true);
+        // User is now reachable — set online immediately
+        await _putOnlineStatus(true);
+        localStorage.setItem(ONLINE_KEY, 'true');
+        _startOnlineHeartbeat();
 
         return true;
     } catch (err) {
@@ -217,11 +200,7 @@ async function requestNotificationPermission() {
     if (Notification.permission !== 'granted') return false;
 
     try {
-        // Wait for the active service worker registration (firebase-messaging-sw.js at scope '/')
-        // NOTE: getRegistration() takes a PAGE URL within scope, NOT the SW script filename.
-        // navigator.serviceWorker.ready is the safest way to get the active registration.
         const swReg = await navigator.serviceWorker.ready;
-
         console.log('[FCM] Using SW registration:', swReg.active?.scriptURL);
 
         if (typeof firebase === 'undefined') {
@@ -249,10 +228,9 @@ async function requestNotificationPermission() {
         } catch (tokenErr) {
             const msg = tokenErr?.message || String(tokenErr);
             if (msg.includes('401') || msg.includes('authentication') || msg.includes('credential')) {
-                console.error('[FCM] ❌ VAPID key error (401): The VAPID key in global.js does NOT match the Web Push certificate in your Firebase Console.\n' +
-                    'Fix: Go to Firebase Console → Project Settings → Cloud Messaging → Web Push certificates → copy the Key pair value into VAPID_KEY in global.js');
+                console.error('[FCM] ❌ VAPID key mismatch — check Firebase Console → Project Settings → Cloud Messaging → Web Push certificates');
             } else if (msg.includes('messaging/token-subscribe-failed')) {
-                console.error('[FCM] ❌ Token subscribe failed. Check: 1) VAPID key matches Firebase Console, 2) Cloud Messaging API is enabled in Google Cloud Console for project idonate-9f055');
+                console.error('[FCM] ❌ Token subscribe failed — check VAPID key and Cloud Messaging API is enabled');
             } else {
                 console.error('[FCM] ❌ getToken failed:', tokenErr);
             }
@@ -262,33 +240,26 @@ async function requestNotificationPermission() {
         if (!token) { console.warn('[FCM] No token received'); return false; }
 
         console.log('[FCM] ✅ Token obtained successfully');
-
         await registerFCMToken(token);
 
-        // Foreground handler (browser tab mode)
-        // FIX: Use messaging.onMessage to handle notifications when the app is
-        // in the foreground. The SW will route background messages; this handler
-        // covers the "tab is active" case so we show an in-app banner.
+        // Foreground message handler
         messaging.onMessage((payload) => {
             const data = payload.data || {};
             if (data.type === 'dismiss_notification') { _dismissBanner(data.request_id); return; }
             showInAppNotification(data);
         });
 
-        // FIX: Inform the SW about current visibility state so it can decide
-        // whether to show an OS push or an in-app banner. Send immediately and
-        // re-send on every visibility change.
+        // Sync visibility to SW for foreground/background decision
         function _syncVis() {
             if (navigator.serviceWorker.controller) {
                 navigator.serviceWorker.controller.postMessage({
-                    type:    'PAGE_VISIBILITY',
+                    type: 'PAGE_VISIBILITY',
                     visible: document.visibilityState === 'visible'
                 });
             }
         }
-
         document.addEventListener('visibilitychange', _syncVis);
-        _syncVis(); // send initial state right now
+        _syncVis();
 
         // Token refresh
         if (messaging.onTokenRefresh) {
@@ -383,25 +354,19 @@ async function locateHospital() {
 
     try {
         const response = await fetch(`${API_BASE}/geocode/hospital`, {
-            method:  'POST',
+            method: 'POST',
             headers: {
-                'Content-Type':  'application/json',
+                'Content-Type': 'application/json',
                 'Authorization': `Bearer ${localStorage.getItem('token')}`
             },
-            body: JSON.stringify({
-                hospitalName,
-                district: district || null,
-                city:     city     || null
-            })
+            body: JSON.stringify({ hospitalName, district: district || null, city: city || null })
         });
-
         const data = await response.json();
         if (!response.ok) throw new Error(data.detail || 'Geocoding failed');
 
         if (data.success && data.location) {
             const { latitude, longitude, display_name } = data.location;
             window.hospitalCoordinates = { latitude, longitude };
-
             if (window.map) {
                 window.map.setView([latitude, longitude], 15);
                 if (window.hospitalMarker) window.map.removeLayer(window.hospitalMarker);
@@ -414,15 +379,7 @@ async function locateHospital() {
         }
     } catch (error) {
         console.error('Geocoding error:', error);
-        let errorMessage = 'Unable to locate hospital. ';
-        if (error.message.includes('not found')) {
-            errorMessage += 'Please check the hospital name spelling.';
-        } else if (error.message.includes('unavailable') || error.message.includes('timed out')) {
-            errorMessage += 'Service temporarily unavailable. Please try again in a moment.';
-        } else {
-            errorMessage += error.message;
-        }
-        alert(errorMessage);
+        alert('Unable to locate hospital. ' + error.message);
     } finally {
         if (locateBtn) { locateBtn.innerHTML = origText; locateBtn.disabled = false; }
     }
