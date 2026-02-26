@@ -798,6 +798,16 @@
                 });
                 
                 render();
+
+                // FIX: Initialize FCM on DonorView so the foreground messaging.onMessage()
+                // handler is bound. Without this, notifications sent while the user is
+                // actively using DonorView are silently dropped (no in-app banner shown).
+                if (Notification.permission === 'default' || Notification.permission === 'granted') {
+                    requestNotificationPermission().catch(err =>
+                        console.warn('⚠️ FCM setup failed on DonorView:', err)
+                    );
+                }
+
             } catch (err) {
                 console.error('Load data error:', err);
                 document.getElementById('app').innerHTML = `

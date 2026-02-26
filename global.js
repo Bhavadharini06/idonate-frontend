@@ -1,33 +1,70 @@
-// Core shared functions for all iDonate pages.
-
-const API_BASE  = 'https://idonate-backend-hy7w.onrender.com';
 // ⚠️  VAPID KEY: Must exactly match the Web Push certificate in:
 // Firebase Console → Project Settings → Cloud Messaging → Web Push certificates → Key pair
 // If you see a 401 error from fcmregistrations.googleapis.com, this key is wrong.
+
 const VAPID_KEY = 'BKM4qtaxUhKbxDc2uy1NpAgAeafz10fwKpJn6fdoIr9F1p7NXkGxR7viSyGDmx45mYNFOH3MCxbdvbYWUrIEEy4';
 
 const ONLINE_KEY = 'user_is_online';
 
+// ────────────────────────────────────────────────────────────────────────────
+// Heartbeat interval handle — kept so we can clear it on logout
+// ────────────────────────────────────────────────────────────────────────────
+let _onlineHeartbeatTimer = null;
+
 // Called once when any page loads (after token check confirms user is logged in)
 async function restoreOnlineStatus() {
     const stored = localStorage.getItem(ONLINE_KEY);
-    // If the user was online before navigating, re-assert it to the backend
-    if (stored === 'true') {
+
+    // FIX: If notification permission is already granted we should always
+    // re-assert online=true so the backend donor pool is populated correctly.
+    // Previously this only ran when stored === 'true', meaning first-time users
+    // (who never explicitly went online) would never appear in the donor query.
+    if (stored === 'true' || Notification.permission === 'granted') {
+        try {
+            await apiRequest('users/online', {
+                method: 'PUT',
+                body: JSON.stringify({ is_online: true })
+            });
+            localStorage.setItem(ONLINE_KEY, 'true');
+        } catch (err) {
+            console.warn('[iDonate] Could not restore online status:', err);
+        }
+    }
+
+    // FIX: Start a heartbeat so the backend never expires the user as offline
+    // due to a stale is_online flag (e.g. server restart, tab inactive).
+    _startOnlineHeartbeat();
+}
+
+// Send a keepalive every 90 seconds while the tab is open and the user is
+// supposed to be online. This handles server restarts and network blips
+// that would otherwise leave is_online stuck as False in the DB.
+function _startOnlineHeartbeat() {
+    if (_onlineHeartbeatTimer) return; // already running
+    _onlineHeartbeatTimer = setInterval(async () => {
+        if (localStorage.getItem(ONLINE_KEY) !== 'true') return;
         try {
             await apiRequest('users/online', {
                 method: 'PUT',
                 body: JSON.stringify({ is_online: true })
             });
         } catch (err) {
-            console.warn('[iDonate] Could not restore online status:', err);
+            // Silently ignore — next tick will retry
         }
+    }, 90_000);
+}
+
+function _stopOnlineHeartbeat() {
+    if (_onlineHeartbeatTimer) {
+        clearInterval(_onlineHeartbeatTimer);
+        _onlineHeartbeatTimer = null;
     }
 }
 
-// ════════════════════════════════════════════════════════════════════════════════
-// SW + BroadcastChannel listeners — registered IMMEDIATELY so they are ready
+// ════════════════════════════════════════════════════════════════════════════
+// SW + BroadcastChannel listeners --- registered IMMEDIATELY so they are ready
 // before any FCM push arrives (critical for standalone PWA mode).
-// ════════════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.addEventListener('message', (event) => {
@@ -52,9 +89,9 @@ function _dismissBanner(requestId) {
             .forEach(el => el.remove());
 }
 
-// ════════════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 // API Request Helper
-// ════════════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 async function apiRequest(endpoint, options = {}) {
     const token = localStorage.getItem('token');
     const headers = {
@@ -62,7 +99,6 @@ async function apiRequest(endpoint, options = {}) {
         ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
         ...(options.headers || {})
     };
-
     const response = await fetch(`${API_BASE}/${endpoint}`, { ...options, headers });
 
     if (response.status === 401) {
@@ -79,9 +115,9 @@ async function apiRequest(endpoint, options = {}) {
     return response.json();
 }
 
-// ════════════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 // Online Status
-// ════════════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 async function updateOnlineStatus(isOnline) {
     try {
         await apiRequest('users/online', {
@@ -90,14 +126,22 @@ async function updateOnlineStatus(isOnline) {
         });
         // Persist intent — only cleared on logout
         localStorage.setItem(ONLINE_KEY, isOnline ? 'true' : 'false');
+
+        // FIX: Stop heartbeat when user goes offline so we don't accidentally
+        // flip them back to online after they explicitly went offline.
+        if (!isOnline) {
+            _stopOnlineHeartbeat();
+        } else {
+            _startOnlineHeartbeat();
+        }
     } catch (err) {
         console.warn('[iDonate] Failed to update online status:', err);
     }
 }
 
-// ════════════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 // Location
-// ════════════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 async function updateLocation(latitude, longitude) {
     try {
         await apiRequest('users/location', {
@@ -109,18 +153,9 @@ async function updateLocation(latitude, longitude) {
     }
 }
 
-function startLocationTracking() {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-        (pos) => updateLocation(pos.coords.latitude, pos.coords.longitude),
-        (err) => console.warn('[iDonate] Geolocation error:', err),
-        { enableHighAccuracy: true, timeout: 10000 }
-    );
-}
-
-// ════════════════════════════════════════════════════════════════════════════════
-// FCM Token Registration — dedup guard
-// ════════════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
+// FCM Token Registration --- dedup guard
+// ════════════════════════════════════════════════════════════════════════════
 let _fcmRegistrationInProgress = false;
 let _fcmLastRegisteredToken    = null;
 
@@ -129,12 +164,14 @@ async function registerFCMToken(token) {
         console.log('[FCM] Registration already in progress, skipping duplicate');
         return false;
     }
+
     if (_fcmLastRegisteredToken === token) {
         console.log('[FCM] Token unchanged, skipping re-registration');
         return true;
     }
 
     _fcmRegistrationInProgress = true;
+
     try {
         let deviceId = localStorage.getItem('fcm_device_id');
         if (!deviceId) {
@@ -150,6 +187,13 @@ async function registerFCMToken(token) {
         localStorage.setItem('fcm_last_token', token);
         _fcmLastRegisteredToken = token;
         console.log('[FCM] Token registered, device:', deviceId);
+
+        // FIX: After successfully registering the FCM token the user is
+        // definitively "online" — set it now so the backend donor pool
+        // includes this user immediately (was missing before; caused
+        // "Online donors with FCM tokens: 0" in the notification loop).
+        await updateOnlineStatus(true);
+
         return true;
     } catch (err) {
         console.error('[FCM] Token registration failed:', err);
@@ -159,9 +203,9 @@ async function registerFCMToken(token) {
     }
 }
 
-// ════════════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 // Request Notification Permission + FCM Setup
-// ════════════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 async function requestNotificationPermission() {
     if (!('Notification' in window) || !('serviceWorker' in navigator)) return false;
 
@@ -177,6 +221,7 @@ async function requestNotificationPermission() {
         // NOTE: getRegistration() takes a PAGE URL within scope, NOT the SW script filename.
         // navigator.serviceWorker.ready is the safest way to get the active registration.
         const swReg = await navigator.serviceWorker.ready;
+
         console.log('[FCM] Using SW registration:', swReg.active?.scriptURL);
 
         if (typeof firebase === 'undefined') {
@@ -213,19 +258,26 @@ async function requestNotificationPermission() {
             }
             throw tokenErr;
         }
+
         if (!token) { console.warn('[FCM] No token received'); return false; }
+
         console.log('[FCM] ✅ Token obtained successfully');
 
         await registerFCMToken(token);
 
         // Foreground handler (browser tab mode)
+        // FIX: Use messaging.onMessage to handle notifications when the app is
+        // in the foreground. The SW will route background messages; this handler
+        // covers the "tab is active" case so we show an in-app banner.
         messaging.onMessage((payload) => {
             const data = payload.data || {};
             if (data.type === 'dismiss_notification') { _dismissBanner(data.request_id); return; }
             showInAppNotification(data);
         });
 
-        // Visibility sync to SW
+        // FIX: Inform the SW about current visibility state so it can decide
+        // whether to show an OS push or an in-app banner. Send immediately and
+        // re-send on every visibility change.
         function _syncVis() {
             if (navigator.serviceWorker.controller) {
                 navigator.serviceWorker.controller.postMessage({
@@ -234,8 +286,9 @@ async function requestNotificationPermission() {
                 });
             }
         }
+
         document.addEventListener('visibilitychange', _syncVis);
-        _syncVis();
+        _syncVis(); // send initial state right now
 
         // Token refresh
         if (messaging.onTokenRefresh) {
@@ -252,15 +305,16 @@ async function requestNotificationPermission() {
 
         console.log('[FCM] Setup complete');
         return true;
+
     } catch (err) {
         console.error('[FCM] Setup error:', err);
         return false;
     }
 }
 
-// ════════════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 // In-App Notification Banner
-// ════════════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 function showInAppNotification(data) {
     const title     = data.title      || '🩸 Blood Request';
     const body      = data.body       || 'Someone needs blood nearby!';
@@ -271,7 +325,6 @@ function showInAppNotification(data) {
     const banner = document.createElement('div');
     banner.className = 'notification-banner';
     if (requestId) banner.dataset.requestId = requestId;
-
     banner.style.cssText = `
         position: fixed; top: 16px; right: 16px; z-index: 99999;
         background: white; border-left: 4px solid #dc2626;
@@ -280,33 +333,31 @@ function showInAppNotification(data) {
         display: flex; flex-direction: column; gap: 8px;
         animation: _swipeIn 0.3s ease;
     `;
-
     banner.innerHTML = `
         <style>@keyframes _swipeIn{from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1}}</style>
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
             <strong style="color:#dc2626;font-size:0.95rem;line-height:1.3;">${title}</strong>
             <button onclick="this.closest('.notification-banner').remove()"
-                style="background:none;border:none;cursor:pointer;color:#9ca3af;font-size:1.3rem;line-height:1;padding:0;flex-shrink:0;">✕</button>
+               style="background:none;border:none;cursor:pointer;color:#9ca3af;font-size:1.3rem;line-height:1;padding:0;flex-shrink:0;">✕</button>
         </div>
         <p style="margin:0;font-size:0.875rem;color:#374151;line-height:1.4;">${body}</p>
         ${requestId ? `
         <div style="display:flex;gap:8px;margin-top:4px;">
             <a href="./DonorView.html?request=${requestId}"
-               style="flex:1;text-align:center;background:#dc2626;color:white;padding:7px 12px;
-                      border-radius:6px;text-decoration:none;font-size:0.875rem;font-weight:600;">View Request</a>
+             style="flex:1;text-align:center;background:#dc2626;color:white;padding:7px 12px;
+                     border-radius:6px;text-decoration:none;font-size:0.875rem;font-weight:600;">View Request</a>
             <button onclick="this.closest('.notification-banner').remove()"
-                style="flex:1;background:#f3f4f6;border:none;border-radius:6px;padding:7px 12px;
-                       cursor:pointer;font-size:0.875rem;font-weight:600;color:#374151;">Dismiss</button>
+               style="flex:1;background:#f3f4f6;border:none;border-radius:6px;padding:7px 12px;
+                     cursor:pointer;font-size:0.875rem;font-weight:600;color:#374151;">Dismiss</button>
         </div>` : ''}
     `;
-
     document.body.appendChild(banner);
     setTimeout(() => banner.remove(), 15000);
 }
 
-// ════════════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 // Script Loader Helper
-// ════════════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 function _loadScript(src) {
     return new Promise((resolve, reject) => {
         if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
@@ -316,9 +367,9 @@ function _loadScript(src) {
     });
 }
 
-// ════════════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 // Hospital Geocoding
-// ════════════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 async function locateHospital() {
     const hospitalName = document.getElementById('hospitalName')?.value.trim();
     const district     = document.getElementById('district')?.value.trim();
@@ -337,7 +388,11 @@ async function locateHospital() {
                 'Content-Type':  'application/json',
                 'Authorization': `Bearer ${localStorage.getItem('token')}`
             },
-            body: JSON.stringify({ hospitalName, district: district || null, city: city || null })
+            body: JSON.stringify({
+                hospitalName,
+                district: district || null,
+                city:     city     || null
+            })
         });
 
         const data = await response.json();
@@ -350,14 +405,7 @@ async function locateHospital() {
             if (window.map) {
                 window.map.setView([latitude, longitude], 15);
                 if (window.hospitalMarker) window.map.removeLayer(window.hospitalMarker);
-                window.hospitalMarker = L.marker([latitude, longitude], {
-                    icon: L.icon({
-                        iconUrl:     'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-                        shadowUrl:   'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-                        iconSize:    [25, 41], iconAnchor:   [12, 41],
-                        popupAnchor: [1, -34], shadowSize:   [41, 41]
-                    })
-                }).addTo(window.map);
+                window.hospitalMarker = L.marker([latitude, longitude]).addTo(window.map);
                 window.hospitalMarker.bindPopup(`<b>${hospitalName}</b><br>${display_name}`).openPopup();
             }
             alert(`✅ Hospital located: ${display_name}`);
@@ -365,36 +413,29 @@ async function locateHospital() {
             throw new Error('Invalid response from geocoding service');
         }
     } catch (error) {
-        console.error('[iDonate] Geocoding error:', error);
-        let msg = 'Unable to locate hospital. ';
-        if (error.message.includes('not found'))    msg += 'Please check the spelling.';
-        else if (error.message.includes('timeout')) msg += 'Service timed out. Please try again.';
-        else                                         msg += error.message || 'Please try again.';
-        alert(msg);
-        if (confirm('Would you like to select the location manually on the map?')) {
-            enableManualLocationSelection();
+        console.error('Geocoding error:', error);
+        let errorMessage = 'Unable to locate hospital. ';
+        if (error.message.includes('not found')) {
+            errorMessage += 'Please check the hospital name spelling.';
+        } else if (error.message.includes('unavailable') || error.message.includes('timed out')) {
+            errorMessage += 'Service temporarily unavailable. Please try again in a moment.';
+        } else {
+            errorMessage += error.message;
         }
+        alert(errorMessage);
     } finally {
         if (locateBtn) { locateBtn.innerHTML = origText; locateBtn.disabled = false; }
     }
 }
 
-function enableManualLocationSelection() {
-    if (!window.map) return;
-    window.map.off('click');
-    window.map.on('click', (e) => {
+function selectOnMap() {
+    if (!window.map) { alert('Please open the request form first.'); return; }
+    alert('Click anywhere on the map to select the hospital location.');
+    window.map.once('click', (e) => {
         const { lat, lng } = e.latlng;
         if (window.hospitalMarker) window.map.removeLayer(window.hospitalMarker);
-        window.hospitalMarker = L.marker([lat, lng], {
-            icon: L.icon({
-                iconUrl:     'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-                shadowUrl:   'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-                iconSize:    [25, 41], iconAnchor:   [12, 41],
-                popupAnchor: [1, -34], shadowSize:   [41, 41]
-            })
-        }).addTo(window.map);
-        const name = document.getElementById('hospitalName')?.value || 'Selected Location';
-        window.hospitalMarker.bindPopup(`<b>${name}</b><br>Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}`).openPopup();
+        window.hospitalMarker = L.marker([lat, lng]).addTo(window.map);
+        window.hospitalMarker.bindPopup(`<b>Selected Location</b><br>Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}`).openPopup();
         window.hospitalCoordinates = { latitude: lat, longitude: lng };
         window.map.off('click');
         alert('✅ Location selected on map');

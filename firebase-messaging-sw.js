@@ -4,8 +4,8 @@
 // global.js must use this registration for messaging.getToken()
 //
 // ✅ SDK v8 (NOT v10): v10 uses fcmregistrations.googleapis.com which requires
-// the Firebase apiKey to be unrestricted — causing 401 errors on Vercel deployments.
-// v8 uses iid.googleapis.com which authenticates via VAPID key only — no apiKey needed.
+// the Firebase apiKey to be unrestricted --- causing 401 errors on Vercel deployments.
+// v8 uses iid.googleapis.com which authenticates via VAPID key only --- no apiKey needed.
 
 importScripts('https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js');
 importScripts('https://www.gstatic.com/firebasejs/8.10.1/firebase-messaging.js');
@@ -58,6 +58,7 @@ self.addEventListener('activate', (event) => {
 // ─── Fetch (Cache Strategy) ───────────────────────────────────────────────────
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
+
   if (event.request.method !== 'GET') return;
   if (url.origin !== self.location.origin && !url.hostname.includes('firebase')) return;
 
@@ -116,8 +117,22 @@ function _getDedupeKey(data) {
   return `${data.request_id || data.type || 'unknown'}_${bucket}`;
 }
 
+// ─── FIX: Track page visibility via postMessage from main page ───────────────
+// Previously the SW received PAGE_VISIBILITY messages but discarded them,
+// then tried to use client.visibilityState which is unreliable across browsers.
+// Now we maintain a Set of client IDs that are currently visible, updated via
+// postMessage. This is the only reliable cross-browser approach in a SW.
+const _visibleClients = new Set();
+
 // ─── Check if any app window is currently visible ────────────────────────────
+// FIX: Prefer the _visibleClients set (kept in sync via postMessage) over
+// reading client.visibilityState directly, which is unreliable in Safari and
+// some Android browsers. Fall back to client.visibilityState if the set is
+// empty (e.g. before the first PAGE_VISIBILITY message arrives).
 async function _hasVisibleClient() {
+  if (_visibleClients.size > 0) return true;
+
+  // Fallback: iterate clients and check visibilityState directly
   const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
   return clients.some((c) => c.visibilityState === 'visible');
 }
@@ -132,6 +147,7 @@ async function deliverNotification(data) {
     console.log('[SW] Duplicate push suppressed:', dedupKey);
     return;
   }
+
   _handledPushIds.add(dedupKey);
   setTimeout(() => _handledPushIds.delete(dedupKey), 10000);
 
@@ -141,20 +157,25 @@ async function deliverNotification(data) {
     // App is open and visible → send in-app banner only, suppress OS push
     const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
     let sent = false;
+
     for (const client of clients) {
-      if (client.visibilityState === 'visible') {
+      // FIX: Check both the _visibleClients set and the native visibilityState
+      if (_visibleClients.has(client.id) || client.visibilityState === 'visible') {
         client.postMessage({ type: 'BLOOD_REQUEST_NOTIFICATION', title, body, data });
         sent = true;
         break;
       }
     }
+
     if (!sent) bc.postMessage({ type: 'BLOOD_REQUEST_NOTIFICATION', title, body, data });
+
     console.log('[SW] Page VISIBLE → in-app banner only');
     return; // Do NOT call showNotification
   }
 
   // App is backgrounded or closed → OS push notification
   console.log('[SW] Page HIDDEN → OS push notification');
+
   return self.registration.showNotification(title, {
     body,
     icon:               '/logo.png',
@@ -211,9 +232,36 @@ messaging.onBackgroundMessage((payload) => {
 // ─── Message handler (postMessage from main page) ─────────────────────────────
 self.addEventListener('message', (event) => {
   if (!event.data) return;
-  if (event.data.type === 'PAGE_VISIBILITY') return; // informational only
+
+  // FIX: Actually track page visibility state here so deliverNotification()
+  // can reliably know whether a foreground tab is open. Previously this
+  // message was received but completely ignored (just a comment said
+  // "informational only"), which meant _hasVisibleClient() always fell back
+  // to the unreliable client.visibilityState property.
+  if (event.data.type === 'PAGE_VISIBILITY') {
+    const clientId = event.source?.id;
+    if (clientId) {
+      if (event.data.visible) {
+        _visibleClients.add(clientId);
+      } else {
+        _visibleClients.delete(clientId);
+      }
+    }
+    return;
+  }
+
   if (event.data.type === 'DISMISS_NOTIFICATION') {
     event.waitUntil(handleDismiss(event.data.request_id));
+  }
+});
+
+// ─── Clean up _visibleClients when a window closes ───────────────────────────
+// FIX: Without this, a closed tab's clientId lingers in _visibleClients
+// forever, causing the SW to think the app is visible when it's not.
+self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+  const liveIds = new Set(clients.map((c) => c.id));
+  for (const id of _visibleClients) {
+    if (!liveIds.has(id)) _visibleClients.delete(id);
   }
 });
 
