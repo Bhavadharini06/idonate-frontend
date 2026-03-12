@@ -63,37 +63,60 @@
             Don't have an account? <a href="./Register.html">Sign Up</a>
         </p>
     </div>
+
     <script>
         const API_BASE = 'https://idonate-backend-hy7w.onrender.com';
+
+        // ── FIX 1 & 2: If user is already logged in, redirect to Dashboard immediately
+        // and replace Login in history so back button won't return here.
+        (function checkAlreadyLoggedIn() {
+            const token = localStorage.getItem('token');
+            if (token) {
+                // Replace current history entry so back button from Dashboard
+                // does not come back to Login.
+                history.replaceState(null, '', './Login.html');
+                window.location.replace('./Dashboard.html');
+            }
+        })();
+
+        // ── FIX 2: Push a sentinel state so that if someone navigates here
+        // manually while logged in, the popstate handler can catch it.
+        history.replaceState({ page: 'login' }, '', './Login.html');
+
+        window.addEventListener('popstate', function () {
+            if (localStorage.getItem('token')) {
+                window.location.replace('./Dashboard.html');
+            }
+        });
 
         function showError(message) {
             const el = document.getElementById("error");
             el.textContent = message;
             el.style.display = "block";
         }
+
         function hideError() {
             document.getElementById("error").style.display = "none";
         }
 
         // FIX (Problem 2): clearPreviousUserSession now also removes user_is_online
-        // so restoreOnlineStatus() on a second device won't inherit a stale "online"
-        // flag and immediately attempt to set the user online before the FCM token
-        // is registered for that device — which triggered the redirect loop.
         function clearPreviousUserSession() {
             localStorage.removeItem('fcm_last_token');
             localStorage.removeItem('fcm_device_id');
             localStorage.removeItem('fcm_needs_reregister');
-            localStorage.removeItem('user_is_online');   // ← FIX: was missing
+            localStorage.removeItem('user_is_online');
         }
 
         document.getElementById("loginForm").addEventListener("submit", async (e) => {
             e.preventDefault();
             hideError();
+
             const email    = document.getElementById("email").value;
             const password = document.getElementById("password").value;
             const submitBtn = document.getElementById("submitBtn");
             submitBtn.disabled = true;
             submitBtn.textContent = "Please wait...";
+
             try {
                 const body = new URLSearchParams({ username: email, password });
                 const response = await fetch(`${API_BASE}/auth/login`, {
@@ -101,16 +124,23 @@
                     headers: { "Content-Type": "application/x-www-form-urlencoded" },
                     body,
                 });
+
                 if (!response.ok) {
                     const err = await response.json().catch(() => null);
                     throw new Error(err?.detail || "Login failed. Please check your credentials.");
                 }
+
                 const data = await response.json();
+
                 // FIX: Clear stale session data BEFORE saving the new token.
-                // Order matters — clearing after would also clear the new token.
                 clearPreviousUserSession();
                 localStorage.setItem("token", data.access_token);
-                window.location.href = "./Dashboard.html";
+
+                // ── FIX 1 & 2: Replace current history state so the login page
+                // is removed from the browser history stack before navigating.
+                history.replaceState(null, '', './Dashboard.html');
+                window.location.replace('./Dashboard.html');
+
             } catch (err) {
                 showError(err.message);
                 submitBtn.disabled = false;
@@ -118,6 +148,7 @@
             }
         });
     </script>
+
     <script src="/pwa-register.js"></script>
 </body>
 </html>

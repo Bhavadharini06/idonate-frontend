@@ -142,6 +142,26 @@
     <script>
         const API_BASE = 'https://idonate-backend-hy7w.onrender.com';
 
+        // ── FIX 1 & 2: If user is already logged in, redirect to Dashboard.
+        // Logged-in users should never be able to access Register page.
+        (function checkAlreadyLoggedIn() {
+            const token = localStorage.getItem('token');
+            if (token) {
+                history.replaceState(null, '', './Dashboard.html');
+                window.location.replace('./Dashboard.html');
+            }
+        })();
+
+        // ── FIX 2: Set page state; if a logged-in user somehow ends up here
+        // via back button, redirect them away.
+        history.replaceState({ page: 'register' }, '', './Register.html');
+
+        window.addEventListener('popstate', function () {
+            if (localStorage.getItem('token')) {
+                window.location.replace('./Dashboard.html');
+            }
+        });
+
         function showError(message) {
             const errorDiv = document.getElementById("error");
             errorDiv.textContent = message;
@@ -165,13 +185,13 @@
             e.preventDefault();
             hideMessages();
 
-            const name = document.getElementById("name").value.trim();
-            const email = document.getElementById("email").value.trim();
-            const phone = document.getElementById("phone").value.trim();
-            const bloodgroup = document.getElementById("bloodgroup").value;
-            const password = document.getElementById("password").value;
+            const name        = document.getElementById("name").value.trim();
+            const email       = document.getElementById("email").value.trim();
+            const phone       = document.getElementById("phone").value.trim();
+            const bloodgroup  = document.getElementById("bloodgroup").value;
+            const password    = document.getElementById("password").value;
             const confirmPassword = document.getElementById("confirmPassword").value;
-            const submitBtn = document.getElementById("submitBtn");
+            const submitBtn   = document.getElementById("submitBtn");
 
             if (!name || !email || !phone || !bloodgroup || !password) {
                 showError("Please fill in all fields");
@@ -194,16 +214,8 @@
             try {
                 const response = await fetch(`${API_BASE}/auth/request-otp`, {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        email,
-                        name,
-                        phone,
-                        bloodgroup,
-                        password
-                    }),
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, name, phone, bloodgroup, password }),
                 });
 
                 if (!response.ok) {
@@ -212,13 +224,15 @@
                 }
 
                 const data = await response.json();
-
                 localStorage.setItem("pending_email", email);
 
                 showSuccess("OTP sent to your email! Check your inbox.");
 
                 setTimeout(() => {
-                    window.location.href = "./OTPverify.html";
+                    // ── FIX 4: Replace Register in history so back button
+                    // from OTP page does not return here.
+                    history.replaceState(null, '', './OTPverify.html');
+                    window.location.replace('./OTPverify.html');
                 }, 1500);
 
             } catch (err) {
@@ -228,6 +242,7 @@
             }
         });
     </script>
+
     <script src="/pwa-register.js"></script>
 </body>
 </html>

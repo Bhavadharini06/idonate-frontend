@@ -48,14 +48,40 @@
 </head>
 <body>
     <div id="app"></div>
+
     <script src="./global.js"></script>
     <script>
+        // ── FIX 1 & 5: Route protection — redirect to Login if no token
+        (function guardRoute() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                history.replaceState(null, '', './Login.html');
+                window.location.replace('./Login.html');
+            }
+        })();
+
+        // ── FIX 2: Push Dashboard state into history so the back button
+        // stays inside the app and never goes to auth pages.
+        history.replaceState({ page: 'dashboard' }, '', './Dashboard.html');
+
+        // If back button is pressed on Dashboard, keep the user here
+        // (they are at the root of the app session).
+        window.addEventListener('popstate', function (e) {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.replace('./Login.html');
+            } else {
+                // Re-push Dashboard so back doesn't escape
+                history.pushState({ page: 'dashboard' }, '', './Dashboard.html');
+            }
+        });
+
         let user = null;
 
         async function loadDashboard() {
             try {
                 // FIX (Problem 1 & 2): restoreOnlineStatus uses _setOnlineRaw internally,
-                // so ANY failure is silently ignored — it will NEVER throw or cause the
+                // so ANY failure is silently ignored --- it will NEVER throw or cause the
                 // catch block below to redirect to Login. Only apiRequest() can throw here.
                 await restoreOnlineStatus();
 
@@ -87,7 +113,8 @@
                 // Only reaches here on 401 (token expired) from apiRequest('auth/me').
                 // restoreOnlineStatus failures are silent and never land here.
                 console.error(err);
-                window.location.href = './Login.html';
+                history.replaceState(null, '', './Login.html');
+                window.location.replace('./Login.html');
             }
         }
 
@@ -98,7 +125,10 @@
             localStorage.removeItem('fcm_device_id');
             updateOnlineStatus(false).finally(() => {
                 localStorage.removeItem('token');
-                window.location.href = './Login.html';
+                // ── FIX 2: Replace Dashboard in history with Login on logout
+                // so forward/back history is clean.
+                history.replaceState(null, '', './Login.html');
+                window.location.replace('./Login.html');
             });
         }
 
@@ -175,7 +205,7 @@
 
         loadDashboard();
 
-        // Poll every 5s — refreshes badge if DB online status changes externally
+        // Poll every 5s --- refreshes badge if DB online status changes externally
         setInterval(() => {
             if (user) {
                 apiRequest('auth/me').then(userData => {
@@ -187,6 +217,7 @@
             }
         }, 5000);
     </script>
+
     <script src="/pwa-register.js"></script>
 </body>
 </html>

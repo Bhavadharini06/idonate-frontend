@@ -1,12 +1,16 @@
-// global.js — Core shared functions for all iDonate pages.
+// global.js --- Core shared functions for all iDonate pages.
+// IMPORTANT: On protected pages (Dashboard, DonorView, RequesterView),
+// load auth-guard.js BEFORE this file to ensure route protection runs first.
+
 const API_BASE  = 'https://idonate-backend-hy7w.onrender.com';
 const VAPID_KEY = 'BKM4qtaxUhKbxDc2uy1NpAgAeafz10fwKpJn6fdoIr9F1p7NXkGxR7viSyGDmx45mYNFOH3MCxbdvbYWUrIEEy4';
 const ONLINE_KEY = 'user_is_online';
 
-// ── Raw fetch for online status ───────────────────────────────────────────────
+// ── Raw fetch for online status ────────────────────────────────────────────────
 // NEVER use apiRequest() for online-status calls — apiRequest() redirects to
 // Login.html on ANY non-OK response, which creates an infinite redirect loop
 // when the token is momentarily invalid (e.g. second device, cold start).
+
 async function _setOnlineRaw(isOnline) {
     const token = localStorage.getItem('token');
     if (!token) return;
@@ -16,28 +20,32 @@ async function _setOnlineRaw(isOnline) {
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
             body:    JSON.stringify({ is_online: isOnline })
         });
-    } catch (_) { /* silently ignore — never redirect */ }
+    } catch (_) { /* silently ignore --- never redirect */ }
 }
 
-// ── Heartbeat ─────────────────────────────────────────────────────────────────
+// ── Heartbeat ──────────────────────────────────────────────────────────────────
+
 let _heartbeatTimer = null;
+
 function _startHeartbeat() {
     if (_heartbeatTimer) return;
     _heartbeatTimer = setInterval(() => {
         if (localStorage.getItem(ONLINE_KEY) === 'true') _setOnlineRaw(true);
     }, 60_000);
 }
+
 function _stopHeartbeat() {
     if (_heartbeatTimer) { clearInterval(_heartbeatTimer); _heartbeatTimer = null; }
 }
 
-// ── restoreOnlineStatus ───────────────────────────────────────────────────────
+// ── restoreOnlineStatus ────────────────────────────────────────────────────────
 // FIX (Problem 1 & 2):
 //   • Always go online if Notification.permission === 'granted' (FCM token
 //     exists) — covers the case where ONLINE_KEY was never written (first load).
 //   • Uses _setOnlineRaw so failures are silent, never causing a Login redirect.
 //   • Does NOT throw — loadDashboard()'s catch block can ONLY fire on apiRequest
 //     failures (token expired), not on an online-status update failure.
+
 async function restoreOnlineStatus() {
     const stored = localStorage.getItem(ONLINE_KEY);
     if (stored === 'true' || Notification.permission === 'granted') {
@@ -47,7 +55,8 @@ async function restoreOnlineStatus() {
     _startHeartbeat();
 }
 
-// ── SW + BroadcastChannel listeners ──────────────────────────────────────────
+// ── SW + BroadcastChannel listeners ───────────────────────────────────────────
+
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.addEventListener('message', (event) => {
         if (!event.data) return;
@@ -56,6 +65,7 @@ if ('serviceWorker' in navigator) {
         if (type === 'DISMISS_NOTIFICATION')       _dismissBanner(event.data.request_id);
     });
 }
+
 const _notifBC = new BroadcastChannel('idonate_notifications');
 _notifBC.onmessage = (event) => {
     if (!event.data) return;
@@ -63,13 +73,15 @@ _notifBC.onmessage = (event) => {
     if (type === 'BLOOD_REQUEST_NOTIFICATION') showInAppNotification({ title, body, ...(data || {}) });
     if (type === 'DISMISS_NOTIFICATION')       _dismissBanner(event.data.request_id);
 };
+
 function _dismissBanner(requestId) {
     if (!requestId) return;
     document.querySelectorAll(`.notification-banner[data-request-id="${requestId}"]`)
             .forEach(el => el.remove());
 }
 
-// ── API Request Helper ────────────────────────────────────────────────────────
+// ── API Request Helper ─────────────────────────────────────────────────────────
+
 async function apiRequest(endpoint, options = {}) {
     const token = localStorage.getItem('token');
     const headers = {
@@ -78,26 +90,35 @@ async function apiRequest(endpoint, options = {}) {
         ...(options.headers || {})
     };
     const response = await fetch(`${API_BASE}/${endpoint}`, { ...options, headers });
+
     if (response.status === 401) {
         localStorage.removeItem('token');
-        window.location.href = './Login.html';
+        // FIX 1 & 2: Use replaceState + replace() so Login is not stacked
+        // on top of the protected page in history. The back button will not
+        // return to an auth-required page after token expiry.
+        history.replaceState(null, '', './Login.html');
+        window.location.replace('./Login.html');
         throw new Error('Unauthorized');
     }
+
     if (!response.ok) {
         const err = await response.json().catch(() => ({}));
         throw new Error(err.detail || `Request failed: ${response.status}`);
     }
+
     return response.json();
 }
 
-// ── Online Status (public) ────────────────────────────────────────────────────
+// ── Online Status (public) ─────────────────────────────────────────────────────
+
 async function updateOnlineStatus(isOnline) {
     await _setOnlineRaw(isOnline);
     localStorage.setItem(ONLINE_KEY, isOnline ? 'true' : 'false');
     if (isOnline) { _startHeartbeat(); } else { _stopHeartbeat(); }
 }
 
-// ── Location ──────────────────────────────────────────────────────────────────
+// ── Location ───────────────────────────────────────────────────────────────────
+
 async function updateLocation(latitude, longitude) {
     try {
         await apiRequest('users/location', {
@@ -108,6 +129,7 @@ async function updateLocation(latitude, longitude) {
         console.warn('[iDonate] Failed to update location:', err);
     }
 }
+
 function startLocationTracking() {
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
@@ -117,10 +139,11 @@ function startLocationTracking() {
     );
 }
 
-// ── FCM Token Registration ────────────────────────────────────────────────────
+// ── FCM Token Registration ─────────────────────────────────────────────────────
 // FIX (Problem 3): After registering the token, immediately set is_online=true
 // in the DB. The notification loop queries is_online=true AND fcm_tokens≠empty.
 // Without this call, is_online stays false → zero donors found → no notifications.
+
 let _fcmRegistrationInProgress = false;
 let _fcmLastRegisteredToken    = null;
 
@@ -129,6 +152,7 @@ async function registerFCMToken(token) {
         console.log('[FCM] Registration already in progress, skipping duplicate');
         return false;
     }
+
     if (_fcmLastRegisteredToken === token) {
         console.log('[FCM] Token unchanged, skipping re-registration');
         // Still ensure online status is set (idempotent)
@@ -137,131 +161,112 @@ async function registerFCMToken(token) {
         _startHeartbeat();
         return true;
     }
+
     _fcmRegistrationInProgress = true;
+
     try {
         let deviceId = localStorage.getItem('fcm_device_id');
         if (!deviceId) {
             deviceId = 'web_' + Math.random().toString(36).substr(2, 9);
             localStorage.setItem('fcm_device_id', deviceId);
         }
+
         await apiRequest('fcm/register', {
             method: 'POST',
             body:   JSON.stringify({ token, device_id: deviceId })
         });
+
         localStorage.setItem('fcm_last_token', token);
         _fcmLastRegisteredToken = token;
         console.log('[FCM] Token registered, device:', deviceId);
 
         // KEY FIX: set is_online=true right after FCM token is saved.
-        // The notification loop finds 0 donors when is_online is false.
         await _setOnlineRaw(true);
         localStorage.setItem(ONLINE_KEY, 'true');
         _startHeartbeat();
+
         return true;
+
     } catch (err) {
-        console.error('[FCM] Token registration failed:', err);
+        console.error('[FCM] Registration failed:', err);
         return false;
     } finally {
-        setTimeout(() => { _fcmRegistrationInProgress = false; }, 5000);
+        _fcmRegistrationInProgress = false;
     }
 }
 
-// ── Request Notification Permission + FCM Setup ───────────────────────────────
+// ── Notification Permission ────────────────────────────────────────────────────
+
 async function requestNotificationPermission() {
-    if (!('Notification' in window) || !('serviceWorker' in navigator)) return false;
-    if (Notification.permission === 'default') {
-        const result = await Notification.requestPermission();
-        if (result !== 'granted') return false;
-    }
-    if (Notification.permission !== 'granted') return false;
-
     try {
+        if (!('Notification' in window) || !('serviceWorker' in navigator)) return false;
+
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') return false;
+
         const swReg = await navigator.serviceWorker.ready;
-        console.log('[FCM] Using SW registration:', swReg.active?.scriptURL);
 
-        if (typeof firebase === 'undefined') {
-            await _loadScript('https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js');
-            await _loadScript('https://www.gstatic.com/firebasejs/8.10.1/firebase-messaging.js');
-        }
-        if (!firebase.apps.length) {
-            firebase.initializeApp({
-                apiKey:            "AIzaSyBsg7HK7O1FCTv9UZRIt1e4Q_56XG9Rkgw",
-                authDomain:        "idonate-9f055.firebaseapp.com",
-                projectId:         "idonate-9f055",
-                storageBucket:     "idonate-9f055.firebasestorage.app",
-                messagingSenderId: "303354735816",
-                appId:             "1:303354735816:web:33c2fc8138cb063e75c9fd",
-                measurementId:     "G-JCBK24BW1E"
-            });
-        }
-        const messaging = firebase.messaging();
-        let token;
-        try {
-            token = await messaging.getToken({ vapidKey: VAPID_KEY, serviceWorkerRegistration: swReg });
-        } catch (tokenErr) {
-            const msg = tokenErr?.message || String(tokenErr);
-            if (msg.includes('401') || msg.includes('authentication') || msg.includes('credential')) {
-                console.error('[FCM] ❌ VAPID key mismatch (401). Fix: Firebase Console → Project Settings → Cloud Messaging → Web Push certificates → copy Key pair into VAPID_KEY in global.js');
-            } else if (msg.includes('messaging/token-subscribe-failed')) {
-                console.error('[FCM] ❌ Token subscribe failed. Check VAPID key and that Cloud Messaging API is enabled in Google Cloud Console.');
-            } else {
-                console.error('[FCM] ❌ getToken failed:', tokenErr);
-            }
-            throw tokenErr;
-        }
-        if (!token) { console.warn('[FCM] No token received'); return false; }
-        console.log('[FCM] ✅ Token obtained successfully');
+        const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+        const { getMessaging, getToken, onMessage } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js');
 
-        const registered = await registerFCMToken(token);
+        const firebaseConfig = {
+            apiKey:            "AIzaSyBsg7HK7O1FCTv9UZRIt1e4Q_56XG9Rkgw",
+            authDomain:        "idonate-9f055.firebaseapp.com",
+            projectId:         "idonate-9f055",
+            storageBucket:     "idonate-9f055.firebasestorage.app",
+            messagingSenderId: "303354735816",
+            appId:             "1:303354735816:web:33c2fc8138cb063e75c9fd",
+        };
 
-        // Foreground handler
-        messaging.onMessage((payload) => {
-            const data = payload.data || {};
-            if (data.type === 'dismiss_notification') { _dismissBanner(data.request_id); return; }
-            showInAppNotification(data);
+        const app      = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+        const messaging = getMessaging(app);
+
+        const fcmToken = await getToken(messaging, {
+            vapidKey:           VAPID_KEY,
+            serviceWorkerRegistration: swReg,
         });
 
-        // Visibility sync to SW
-        function _syncVis() {
-            if (navigator.serviceWorker.controller) {
-                navigator.serviceWorker.controller.postMessage({
-                    type:    'PAGE_VISIBILITY',
-                    visible: document.visibilityState === 'visible'
+        if (!fcmToken) return false;
+
+        // Report visibility state to SW so it can decide foreground vs background push
+        swReg.active?.postMessage({ type: 'PAGE_VISIBILITY', visible: !document.hidden });
+        document.addEventListener('visibilitychange', () => {
+            swReg.active?.postMessage({ type: 'PAGE_VISIBILITY', visible: !document.hidden });
+        });
+
+        onMessage(messaging, (payload) => {
+            const data = payload.data || {};
+            if (data.type !== 'dismiss_notification') {
+                showInAppNotification({
+                    title:      data.title || '🩸 Blood Request',
+                    body:       data.body  || 'Someone needs blood nearby!',
+                    request_id: data.request_id || '',
+                    ...data,
                 });
             }
-        }
-        document.addEventListener('visibilitychange', _syncVis);
-        _syncVis();
+        });
 
-        // Token refresh
-        if (messaging.onTokenRefresh) {
-            messaging.onTokenRefresh(async () => {
-                try {
-                    const newToken = await messaging.getToken({ vapidKey: VAPID_KEY, serviceWorkerRegistration: swReg });
-                    if (newToken && newToken !== _fcmLastRegisteredToken) {
-                        _fcmLastRegisteredToken = null;
-                        await registerFCMToken(newToken);
-                    }
-                } catch (e) { console.error('[FCM] Token refresh error:', e); }
-            });
-        }
-        console.log('[FCM] Setup complete');
-        return registered;
+        return await registerFCMToken(fcmToken);
+
     } catch (err) {
-        console.error('[FCM] Setup error:', err);
+        console.error('[FCM] Permission/token error:', err);
         return false;
     }
 }
 
-// ── In-App Notification Banner ────────────────────────────────────────────────
+// ── In-app Notification Banner ─────────────────────────────────────────────────
+
 function showInAppNotification(data) {
     const title     = data.title      || '🩸 Blood Request';
     const body      = data.body       || 'Someone needs blood nearby!';
     const requestId = data.request_id || '';
+
     if (requestId && document.querySelector(`.notification-banner[data-request-id="${requestId}"]`)) return;
+
     const banner = document.createElement('div');
     banner.className = 'notification-banner';
     if (requestId) banner.dataset.requestId = requestId;
+
     banner.style.cssText = `
         position:fixed;top:16px;right:16px;z-index:99999;
         background:white;border-left:4px solid #dc2626;
@@ -270,12 +275,13 @@ function showInAppNotification(data) {
         display:flex;flex-direction:column;gap:8px;
         animation:_swipeIn 0.3s ease;
     `;
+
     banner.innerHTML = `
         <style>@keyframes _swipeIn{from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1}}</style>
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
             <strong style="color:#dc2626;font-size:0.95rem;line-height:1.3;">${title}</strong>
             <button onclick="this.closest('.notification-banner').remove()"
-                style="background:none;border:none;cursor:pointer;color:#9ca3af;font-size:1.3rem;line-height:1;padding:0;flex-shrink:0;">✕</button>
+               style="background:none;border:none;cursor:pointer;color:#9ca3af;font-size:1.3rem;line-height:1;padding:0;flex-shrink:0;">✕</button>
         </div>
         <p style="margin:0;font-size:0.875rem;color:#374151;line-height:1.4;">${body}</p>
         ${requestId ? `
@@ -284,15 +290,17 @@ function showInAppNotification(data) {
                style="flex:1;text-align:center;background:#dc2626;color:white;padding:7px 12px;
                       border-radius:6px;text-decoration:none;font-size:0.875rem;font-weight:600;">View Request</a>
             <button onclick="this.closest('.notification-banner').remove()"
-                style="flex:1;background:#f3f4f6;border:none;border-radius:6px;padding:7px 12px;
-                       cursor:pointer;font-size:0.875rem;font-weight:600;color:#374151;">Dismiss</button>
+               style="flex:1;background:#f3f4f6;border:none;border-radius:6px;padding:7px 12px;
+                      cursor:pointer;font-size:0.875rem;font-weight:600;color:#374151;">Dismiss</button>
         </div>` : ''}
     `;
+
     document.body.appendChild(banner);
     setTimeout(() => banner.remove(), 15000);
 }
 
-// ── Script Loader ─────────────────────────────────────────────────────────────
+// ── Script Loader ──────────────────────────────────────────────────────────────
+
 function _loadScript(src) {
     return new Promise((resolve, reject) => {
         if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
@@ -302,15 +310,19 @@ function _loadScript(src) {
     });
 }
 
-// ── Hospital Geocoding ────────────────────────────────────────────────────────
+// ── Hospital Geocoding ─────────────────────────────────────────────────────────
+
 async function locateHospital() {
     const hospitalName = document.getElementById('hospitalName')?.value.trim();
     const district     = document.getElementById('district')?.value.trim();
     const city         = document.getElementById('city')?.value.trim();
+
     if (!hospitalName) { alert('Please enter a hospital name'); return; }
+
     const locateBtn = document.querySelector('.locate-btn');
     const origText  = locateBtn?.innerHTML;
     if (locateBtn) { locateBtn.innerHTML = '🔍 Locating Hospital...'; locateBtn.disabled = true; }
+
     try {
         const response = await fetch(`${API_BASE}/geocode/hospital`, {
             method:  'POST',
@@ -320,34 +332,39 @@ async function locateHospital() {
             },
             body: JSON.stringify({ hospitalName, district: district || null, city: city || null })
         });
+
         const data = await response.json();
         if (!response.ok) throw new Error(data.detail || 'Geocoding failed');
+
         if (data.success && data.location) {
             const { latitude, longitude, display_name } = data.location;
             window.hospitalCoordinates = { latitude, longitude };
+
             if (window.map) {
                 window.map.setView([latitude, longitude], 15);
                 if (window.hospitalMarker) window.map.removeLayer(window.hospitalMarker);
                 window.hospitalMarker = L.marker([latitude, longitude], {
                     icon: L.icon({
-                        iconUrl:     'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-                        shadowUrl:   'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+                        iconUrl:    'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                        shadowUrl:  'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
                         iconSize:    [25, 41], iconAnchor:   [12, 41],
                         popupAnchor: [1, -34], shadowSize:   [41, 41]
                     })
                 }).addTo(window.map);
                 window.hospitalMarker.bindPopup(`<b>${hospitalName}</b><br>${display_name}`).openPopup();
             }
+
             alert(`✅ Hospital located: ${display_name}`);
         } else {
             throw new Error('Invalid response from geocoding service');
         }
+
     } catch (error) {
         console.error('[iDonate] Geocoding error:', error);
         let msg = 'Unable to locate hospital. ';
         if (error.message.includes('not found'))    msg += 'Please check the spelling.';
         else if (error.message.includes('timeout')) msg += 'Service timed out. Please try again.';
-        else                                         msg += error.message || 'Please try again.';
+        else                                        msg += error.message || 'Please try again.';
         alert(msg);
         if (confirm('Would you like to select the location manually on the map?')) {
             enableManualLocationSelection();
@@ -365,8 +382,8 @@ function enableManualLocationSelection() {
         if (window.hospitalMarker) window.map.removeLayer(window.hospitalMarker);
         window.hospitalMarker = L.marker([lat, lng], {
             icon: L.icon({
-                iconUrl:     'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-                shadowUrl:   'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+                iconUrl:    'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                shadowUrl:  'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
                 iconSize:    [25, 41], iconAnchor:   [12, 41],
                 popupAnchor: [1, -34], shadowSize:   [41, 41]
             })
