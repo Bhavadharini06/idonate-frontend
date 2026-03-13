@@ -5,70 +5,117 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>iDonate - Login</title>
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#dc2626">
+    <meta name="theme-color" content="#ffffff">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="iDonate">
     <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+
+    <!-- Instant redirect — runs in <head> before ANY paint. Zero login-page flash. -->
+    <script>
+        if (localStorage.getItem('token')) {
+            window.location.replace('./Dashboard.html');
+        }
+    </script>
+
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             min-height: 100vh;
             background: linear-gradient(to bottom right, #fef2f2, #fce7f3);
-            display: flex; align-items: center; justify-content: center; padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.25rem;
         }
         .card {
-            background: white; border-radius: 0.5rem;
-            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
-            padding: 2rem; max-width: 28rem; width: 100%;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+            padding: 2.5rem 2rem;
+            max-width: 25rem;
+            width: 100%;
         }
-        .logo-container { text-align: center; margin-bottom: 1rem; }
-        .logo-container img { max-width: 150px; height: auto; }
-        .error {
-            background-color: #fee2e2; border: 1px solid #fca5a5;
-            color: #991b1b; padding: 1rem; border-radius: 0.25rem; margin-bottom: 1rem;
+        .logo-wrap {
+            text-align: center;
+            margin-bottom: 2rem;
         }
-        .info {
-            background-color: #eff6ff; border: 1px solid #93c5fd;
-            color: #1e40af; padding: 1rem; border-radius: 0.25rem; margin-bottom: 1rem;
-            font-size: 0.9rem;
+        .logo-wrap img { max-width: 130px; height: auto; }
+        .alert {
+            border-radius: 8px;
+            padding: 0.8rem 1rem;
+            font-size: 0.875rem;
+            line-height: 1.55;
+            margin-bottom: 1.25rem;
         }
-        form { display: flex; flex-direction: column; gap: 1rem; }
+        .alert-error { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; }
+        .alert-info  { background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; }
+        form { display: flex; flex-direction: column; gap: 0.875rem; }
         input {
-            width: 100%; padding: 0.75rem 1rem;
-            border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 0.9375rem;
+            color: #111827;
+            background: #f9fafb;
+            transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
         }
-        input:focus { outline: none; border-color: #dc2626; box-shadow: 0 0 0 3px rgba(220,38,38,0.1); }
-        button {
-            width: 100%; background-color: #dc2626; color: white;
-            padding: 0.75rem; border-radius: 0.5rem; font-weight: 600;
-            border: none; cursor: pointer; transition: background-color 0.3s ease;
+        input:focus {
+            outline: none;
+            background: #fff;
+            border-color: #dc2626;
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.08);
         }
-        button:hover:not(:disabled) { background-color: #b91c1c; }
-        button:disabled { background-color: #9ca3af; cursor: not-allowed; }
-        .footer-text { margin-top: 1rem; text-align: center; color: #4b5563; }
-        .footer-text a { color: #dc2626; font-weight: 600; text-decoration: none; }
-        .footer-text a:hover { text-decoration: underline; }
+        .btn-submit {
+            width: 100%;
+            background: #dc2626;
+            color: #fff;
+            padding: 0.8125rem;
+            border-radius: 10px;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            margin-top: 0.25rem;
+            transition: background 0.18s, transform 0.12s, box-shadow 0.18s;
+            box-shadow: 0 1px 4px rgba(220, 38, 38, 0.2);
+        }
+        .btn-submit:hover:not(:disabled) {
+            background: #b91c1c;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
+        }
+        .btn-submit:active:not(:disabled) { transform: translateY(0); }
+        .btn-submit:disabled { background: #d1d5db; cursor: not-allowed; box-shadow: none; }
+        .footer-link {
+            margin-top: 1.5rem;
+            text-align: center;
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        .footer-link a { color: #dc2626; font-weight: 600; text-decoration: none; }
+        .footer-link a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
     <div class="card">
-        <div class="logo-container">
-            <img src="logo.png" alt="iDonate Logo">
+        <div class="logo-wrap">
+            <img src="logo.png" alt="iDonate">
         </div>
 
-        <div id="error" class="error" style="display: none;"></div>
-        <div id="info" class="info" style="display: none;"></div>
+        <div id="alertError" class="alert alert-error" style="display:none;"></div>
+        <div id="alertInfo"  class="alert alert-info"  style="display:none;"></div>
 
         <form id="loginForm">
-            <input type="email" id="email" placeholder="Email" required>
-            <input type="password" id="password" placeholder="Password" required>
-            <button type="submit" id="submitBtn">Sign In</button>
+            <input type="email"    id="email"    placeholder="Email address" required autocomplete="email">
+            <input type="password" id="password" placeholder="Password"      required autocomplete="current-password">
+            <button type="submit" id="submitBtn" class="btn-submit">Sign In</button>
         </form>
 
-        <p class="footer-text">
+        <p class="footer-link">
             Don't have an account? <a href="./Register.html">Sign Up</a>
         </p>
     </div>
@@ -76,104 +123,71 @@
     <script>
         const API_BASE = 'https://idonate-backend-hy7w.onrender.com';
 
-        // ── FIX: Redirect immediately if already logged in — no flash of login page
-        (function checkAlreadyLoggedIn() {
-            const token = localStorage.getItem('token');
-            if (token) {
-                // Replace current history entry so back button from Dashboard
-                // does not return to Login.
-                history.replaceState(null, '', './Dashboard.html');
-                window.location.replace('./Dashboard.html');
-            }
-        })();
-
-        // Push a sentinel state; if a logged-in user navigates back here, redirect them away.
-        history.replaceState({ page: 'login' }, '', './Login.html');
-        window.addEventListener('popstate', function () {
-            if (localStorage.getItem('token')) {
-                window.location.replace('./Dashboard.html');
-            }
-        });
-
-        function showError(message) {
-            const el = document.getElementById("error");
-            el.textContent = message;
-            el.style.display = "block";
-            document.getElementById("info").style.display = "none";
+        function showError(msg) {
+            const el = document.getElementById('alertError');
+            el.textContent = msg;
+            el.style.display = 'block';
+            document.getElementById('alertInfo').style.display = 'none';
+        }
+        function showInfo(msg) {
+            const el = document.getElementById('alertInfo');
+            el.textContent = msg;
+            el.style.display = 'block';
+            document.getElementById('alertError').style.display = 'none';
+        }
+        function hideAlerts() {
+            document.getElementById('alertError').style.display = 'none';
+            document.getElementById('alertInfo').style.display  = 'none';
+        }
+        function clearPreviousSession() {
+            ['fcm_last_token', 'fcm_device_id', 'fcm_needs_reregister', 'user_is_online']
+                .forEach(k => localStorage.removeItem(k));
         }
 
-        function showInfo(message) {
-            const el = document.getElementById("info");
-            el.textContent = message;
-            el.style.display = "block";
-            document.getElementById("error").style.display = "none";
-        }
-
-        function hideMessages() {
-            document.getElementById("error").style.display = "none";
-            document.getElementById("info").style.display = "none";
-        }
-
-        // Clear stale session data from previous user
-        function clearPreviousUserSession() {
-            localStorage.removeItem('fcm_last_token');
-            localStorage.removeItem('fcm_device_id');
-            localStorage.removeItem('fcm_needs_reregister');
-            localStorage.removeItem('user_is_online');
-        }
-
-        document.getElementById("loginForm").addEventListener("submit", async (e) => {
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            hideMessages();
+            hideAlerts();
 
-            const email     = document.getElementById("email").value;
-            const password  = document.getElementById("password").value;
-            const submitBtn = document.getElementById("submitBtn");
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const btn = document.getElementById('submitBtn');
 
-            submitBtn.disabled = true;
-            submitBtn.textContent = "Please wait...";
+            btn.disabled    = true;
+            btn.textContent = 'Signing in…';
 
             try {
-                const body = new URLSearchParams({ username: email, password });
-                const response = await fetch(`${API_BASE}/auth/login`, {
-                    method:  "POST",
-                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                    body,
+                const res = await fetch(`${API_BASE}/auth/login`, {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body:    new URLSearchParams({ username: email, password }),
                 });
 
-                if (response.status === 403) {
-                    // Email not verified
-                    const err = await response.json().catch(() => null);
-                    showInfo(err?.detail || "Your email is not verified. Please check your inbox and click the verification link.");
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = "Sign In";
+                if (res.status === 403) {
+                    const err = await res.json().catch(() => null);
+                    showInfo(err?.detail || 'Please verify your email before signing in. Check your inbox for the verification link.');
+                    btn.disabled    = false;
+                    btn.textContent = 'Sign In';
                     return;
                 }
 
-                if (!response.ok) {
-                    const err = await response.json().catch(() => null);
-                    throw new Error(err?.detail || "Login failed. Please check your credentials.");
+                if (!res.ok) {
+                    const err = await res.json().catch(() => null);
+                    throw new Error(err?.detail || 'Incorrect email or password.');
                 }
 
-                const data = await response.json();
-
-                // Clear stale session data BEFORE saving the new token.
-                clearPreviousUserSession();
-                localStorage.setItem("token", data.access_token);
-
-                // Replace current history state so the login page
-                // is removed from the browser history stack before navigating.
+                const data = await res.json();
+                clearPreviousSession();
+                localStorage.setItem('token', data.access_token);
                 history.replaceState(null, '', './Dashboard.html');
                 window.location.replace('./Dashboard.html');
 
             } catch (err) {
                 showError(err.message);
-                submitBtn.disabled = false;
-                submitBtn.textContent = "Sign In";
+                btn.disabled    = false;
+                btn.textContent = 'Sign In';
             }
         });
     </script>
-
     <script src="/pwa-register.js"></script>
 </body>
 </html>
