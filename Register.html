@@ -12,100 +12,62 @@
     <meta name="apple-mobile-web-app-title" content="iDonate">
     <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             min-height: 100vh;
             background: linear-gradient(to bottom right, #fef2f2, #fce7f3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 1rem;
+            display: flex; align-items: center; justify-content: center; padding: 1rem;
         }
         .card {
-            background: white;
-            border-radius: 0.5rem;
+            background: white; border-radius: 0.5rem;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-            padding: 2rem;
-            max-width: 28rem;
-            width: 100%;
+            padding: 2rem; max-width: 28rem; width: 100%;
         }
-        .logo-container {
-            text-align: center;
-            margin-bottom: 1rem;
-        }
-        .logo-container img {
-            max-width: 150px;
-            height: auto;
-        }
+        .logo-container { text-align: center; margin-bottom: 1rem; }
+        .logo-container img { max-width: 150px; height: auto; }
         .error {
-            background-color: #fee2e2;
-            border: 1px solid #fca5a5;
-            color: #991b1b;
-            padding: 1rem;
-            border-radius: 0.25rem;
-            margin-bottom: 1rem;
+            background-color: #fee2e2; border: 1px solid #fca5a5;
+            color: #991b1b; padding: 1rem; border-radius: 0.25rem; margin-bottom: 1rem;
         }
         .success {
-            background-color: #d1fae5;
-            border: 1px solid #6ee7b7;
-            color: #065f46;
-            padding: 1rem;
-            border-radius: 0.25rem;
-            margin-bottom: 1rem;
+            background-color: #d1fae5; border: 1px solid #6ee7b7;
+            color: #065f46; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;
         }
-        form {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
+        /* Email sent confirmation panel */
+        .email-sent-panel {
+            display: none;
+            text-align: center;
+            padding: 1rem 0;
         }
+        .email-sent-panel .icon { font-size: 3rem; margin-bottom: 1rem; }
+        .email-sent-panel h3 { color: #1f2937; font-size: 1.25rem; margin-bottom: 0.75rem; }
+        .email-sent-panel p { color: #6b7280; font-size: 0.9rem; line-height: 1.6; margin-bottom: 1rem; }
+        .email-sent-panel .email-highlight { color: #dc2626; font-weight: 600; }
+        .email-sent-panel .login-link {
+            display: inline-block; margin-top: 0.5rem;
+            color: #dc2626; font-weight: 600; text-decoration: none;
+        }
+        .email-sent-panel .login-link:hover { text-decoration: underline; }
+        form { display: flex; flex-direction: column; gap: 1rem; }
         input, select {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border: 1px solid #d1d5db;
-            border-radius: 0.5rem;
-            font-size: 1rem;
+            width: 100%; padding: 0.75rem 1rem;
+            border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;
         }
         input:focus, select:focus {
-            outline: none;
-            border-color: #dc2626;
+            outline: none; border-color: #dc2626;
             box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
         }
         button {
-            width: 100%;
-            background-color: #dc2626;
-            color: white;
-            padding: 0.75rem;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
+            width: 100%; background-color: #dc2626; color: white;
+            padding: 0.75rem; border-radius: 0.5rem; font-weight: 600;
+            border: none; cursor: pointer; transition: background-color 0.3s ease;
         }
-        button:hover:not(:disabled) {
-            background-color: #b91c1c;
-        }
-        button:disabled {
-            background-color: #9ca3af;
-            cursor: not-allowed;
-        }
-        .footer-text {
-            margin-top: 1rem;
-            text-align: center;
-            color: #4b5563;
-        }
-        .footer-text a {
-            color: #dc2626;
-            font-weight: 600;
-            text-decoration: none;
-        }
-        .footer-text a:hover {
-            text-decoration: underline;
-        }
+        button:hover:not(:disabled) { background-color: #b91c1c; }
+        button:disabled { background-color: #9ca3af; cursor: not-allowed; }
+        .footer-text { margin-top: 1rem; text-align: center; color: #4b5563; }
+        .footer-text a { color: #dc2626; font-weight: 600; text-decoration: none; }
+        .footer-text a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -113,37 +75,59 @@
         <div class="logo-container">
             <img src="logo.png" alt="iDonate Logo">
         </div>
+
         <div id="error" class="error" style="display: none;"></div>
-        <div id="success" class="success" style="display: none;"></div>
-        <form id="registerForm">
-            <input type="text" id="name" placeholder="Full Name" required>
-            <input type="email" id="email" placeholder="Email" required>
-            <input type="tel" id="phone" placeholder="Phone Number" required>
-            <select id="bloodgroup" required>
-                <option value="">Select Blood Group</option>
-                <option value="A+">A+</option>
-                <option value="A-">A-</option>
-                <option value="B+">B+</option>
-                <option value="B-">B-</option>
-                <option value="AB+">AB+</option>
-                <option value="AB-">AB-</option>
-                <option value="O+">O+</option>
-                <option value="O-">O-</option>
-            </select>
-            <input type="password" id="password" placeholder="Password" required>
-            <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
-            <button type="submit" id="submitBtn">Create Account</button>
-        </form>
-        <p class="footer-text">
-            Already have an account? <a href="./Login.html">Sign In</a>
-        </p>
+
+        <!-- Registration Form -->
+        <div id="formSection">
+            <form id="registerForm">
+                <input type="text"  id="name"           placeholder="Full Name"      required>
+                <input type="email" id="email"          placeholder="Email"          required>
+                <input type="tel"   id="phone"          placeholder="Phone Number"   required>
+                <select id="bloodgroup" required>
+                    <option value="">Select Blood Group</option>
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                    <option value="O+">O+</option>
+                    <option value="O-">O-</option>
+                </select>
+                <input type="password" id="password"        placeholder="Password"         required>
+                <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
+                <button type="submit" id="submitBtn">Create Account</button>
+            </form>
+
+            <p class="footer-text">
+                Already have an account? <a href="./Login.html">Sign In</a>
+            </p>
+        </div>
+
+        <!-- Email Sent Confirmation Panel (shown after successful registration) -->
+        <div id="emailSentPanel" class="email-sent-panel">
+            <div class="icon">📧</div>
+            <h3>Check Your Email</h3>
+            <p>
+                We've sent a verification link to<br>
+                <span class="email-highlight" id="confirmedEmail"></span>
+            </p>
+            <p>
+                Click the link in the email to activate your account.
+                The link expires in <strong>24 hours</strong>.
+            </p>
+            <p style="font-size:0.8rem; color:#9ca3af;">
+                Don't see it? Check your spam folder.
+            </p>
+            <a class="login-link" href="./Login.html">← Back to Login</a>
+        </div>
     </div>
 
     <script>
         const API_BASE = 'https://idonate-backend-hy7w.onrender.com';
 
-        // ── FIX 1 & 2: If user is already logged in, redirect to Dashboard.
-        // Logged-in users should never be able to access Register page.
+        // If user is already logged in, redirect to Dashboard.
         (function checkAlreadyLoggedIn() {
             const token = localStorage.getItem('token');
             if (token) {
@@ -152,10 +136,7 @@
             }
         })();
 
-        // ── FIX 2: Set page state; if a logged-in user somehow ends up here
-        // via back button, redirect them away.
         history.replaceState({ page: 'register' }, '', './Register.html');
-
         window.addEventListener('popstate', function () {
             if (localStorage.getItem('token')) {
                 window.location.replace('./Dashboard.html');
@@ -166,54 +147,43 @@
             const errorDiv = document.getElementById("error");
             errorDiv.textContent = message;
             errorDiv.style.display = "block";
-            document.getElementById("success").style.display = "none";
         }
 
-        function showSuccess(message) {
-            const successDiv = document.getElementById("success");
-            successDiv.textContent = message;
-            successDiv.style.display = "block";
+        function hideError() {
             document.getElementById("error").style.display = "none";
-        }
-
-        function hideMessages() {
-            document.getElementById("error").style.display = "none";
-            document.getElementById("success").style.display = "none";
         }
 
         document.getElementById("registerForm").addEventListener("submit", async (e) => {
             e.preventDefault();
-            hideMessages();
+            hideError();
 
-            const name        = document.getElementById("name").value.trim();
-            const email       = document.getElementById("email").value.trim();
-            const phone       = document.getElementById("phone").value.trim();
-            const bloodgroup  = document.getElementById("bloodgroup").value;
-            const password    = document.getElementById("password").value;
+            const name            = document.getElementById("name").value.trim();
+            const email           = document.getElementById("email").value.trim();
+            const phone           = document.getElementById("phone").value.trim();
+            const bloodgroup      = document.getElementById("bloodgroup").value;
+            const password        = document.getElementById("password").value;
             const confirmPassword = document.getElementById("confirmPassword").value;
-            const submitBtn   = document.getElementById("submitBtn");
+            const submitBtn       = document.getElementById("submitBtn");
 
             if (!name || !email || !phone || !bloodgroup || !password) {
                 showError("Please fill in all fields");
                 return;
             }
-
             if (password !== confirmPassword) {
                 showError("Passwords do not match");
                 return;
             }
-
             if (password.length < 6) {
                 showError("Password must be at least 6 characters long");
                 return;
             }
 
             submitBtn.disabled = true;
-            submitBtn.textContent = "Sending OTP...";
+            submitBtn.textContent = "Creating Account...";
 
             try {
-                const response = await fetch(`${API_BASE}/auth/request-otp`, {
-                    method: "POST",
+                const response = await fetch(`${API_BASE}/auth/register`, {
+                    method:  "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ email, name, phone, bloodgroup, password }),
                 });
@@ -223,17 +193,11 @@
                     throw new Error(err?.detail || "Registration failed. Please try again.");
                 }
 
-                const data = await response.json();
-                localStorage.setItem("pending_email", email);
-
-                showSuccess("OTP sent to your email! Check your inbox.");
-
-                setTimeout(() => {
-                    // ── FIX 4: Replace Register in history so back button
-                    // from OTP page does not return here.
-                    history.replaceState(null, '', './OTPverify.html');
-                    window.location.replace('./OTPverify.html');
-                }, 1500);
+                // Registration successful — show email confirmation panel
+                document.getElementById("confirmedEmail").textContent = email;
+                document.getElementById("formSection").style.display = "none";
+                document.getElementById("emailSentPanel").style.display = "block";
+                hideError();
 
             } catch (err) {
                 showError(err.message);
