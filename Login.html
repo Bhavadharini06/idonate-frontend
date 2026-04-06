@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>iDonate - Login</title>
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#dc2626">
+    <meta name="theme-color" content="#ffffff">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-status-bar-style" content="white">
     <meta name="apple-mobile-web-app-title" content="iDonate">
     <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
 
@@ -21,6 +21,29 @@
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        /* ── Splash Screen ─────────────────────────────────────── */
+        #splash {
+            position: fixed;
+            inset: 0;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.35s ease;
+        }
+        #splash.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        #splash img {
+            width: 140px;
+            height: auto;
+        }
+
+        /* ── Login page ────────────────────────────────────────── */
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             min-height: 100vh;
@@ -101,26 +124,39 @@
     </style>
 </head>
 <body>
+
+    <!-- Splash Screen: shown on launch, fades out before login UI appears -->
+    <div id="splash">
+        <img src="logo.png" alt="iDonate">
+    </div>
+
     <div class="card">
         <div class="logo-wrap">
             <img src="logo.png" alt="iDonate">
         </div>
-
         <div id="alertError" class="alert alert-error" style="display:none;"></div>
         <div id="alertInfo"  class="alert alert-info"  style="display:none;"></div>
-
         <form id="loginForm">
             <input type="email"    id="email"    placeholder="Email address" required autocomplete="email">
             <input type="password" id="password" placeholder="Password"      required autocomplete="current-password">
             <button type="submit" id="submitBtn" class="btn-submit">Sign In</button>
         </form>
-
         <p class="footer-link">
             Don't have an account? <a href="./Register.html">Sign Up</a>
         </p>
     </div>
 
     <script>
+        // ── Splash: fade out after 1.2 s ──────────────────────────
+        window.addEventListener('load', function () {
+            setTimeout(function () {
+                var splash = document.getElementById('splash');
+                splash.classList.add('hidden');
+                setTimeout(function () { splash.remove(); }, 380);
+            }, 1200);
+        });
+
+        // ── Login logic (unchanged) ───────────────────────────────
         const API_BASE = 'https://idonate-backend-hy7w.onrender.com';
 
         function showError(msg) {
@@ -147,21 +183,17 @@
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             hideAlerts();
-
-            const email = document.getElementById('email').value;
+            const email    = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            const btn = document.getElementById('submitBtn');
-
+            const btn      = document.getElementById('submitBtn');
             btn.disabled    = true;
             btn.textContent = 'Signing in…';
-
             try {
                 const res = await fetch(`${API_BASE}/auth/login`, {
                     method:  'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body:    new URLSearchParams({ username: email, password }),
                 });
-
                 if (res.status === 403) {
                     const err = await res.json().catch(() => null);
                     showInfo(err?.detail || 'Please verify your email before signing in. Check your inbox for the verification link.');
@@ -169,18 +201,15 @@
                     btn.textContent = 'Sign In';
                     return;
                 }
-
                 if (!res.ok) {
                     const err = await res.json().catch(() => null);
                     throw new Error(err?.detail || 'Incorrect email or password.');
                 }
-
                 const data = await res.json();
                 clearPreviousSession();
                 localStorage.setItem('token', data.access_token);
                 history.replaceState(null, '', './Dashboard.html');
                 window.location.replace('./Dashboard.html');
-
             } catch (err) {
                 showError(err.message);
                 btn.disabled    = false;
@@ -188,6 +217,7 @@
             }
         });
     </script>
+
     <script src="/pwa-register.js"></script>
 </body>
 </html>
