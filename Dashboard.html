@@ -49,29 +49,23 @@
 <body>
     <div id="app"></div>
 
+    <script src="/nav.js"></script>
     <script src="./global.js"></script>
     <script>
-        // ── FIX 1 & 5: Route protection — redirect to Login if no token
         (function guardRoute() {
             const token = localStorage.getItem('token');
             if (!token) {
-                history.replaceState(null, '', './Login.html');
-                window.location.replace('./Login.html');
+                navTo('./Login.html');
             }
         })();
 
-        // ── FIX 2: Push Dashboard state into history so the back button
-        // stays inside the app and never goes to auth pages.
         history.replaceState({ page: 'dashboard' }, '', './Dashboard.html');
 
-        // If back button is pressed on Dashboard, keep the user here
-        // (they are at the root of the app session).
         window.addEventListener('popstate', function (e) {
             const token = localStorage.getItem('token');
             if (!token) {
-                window.location.replace('./Login.html');
+                navTo('./Login.html');
             } else {
-                // Re-push Dashboard so back doesn't escape
                 history.pushState({ page: 'dashboard' }, '', './Dashboard.html');
             }
         });
@@ -80,41 +74,23 @@
 
         async function loadDashboard() {
             try {
-                // FIX (Problem 1 & 2): restoreOnlineStatus uses _setOnlineRaw internally,
-                // so ANY failure is silently ignored --- it will NEVER throw or cause the
-                // catch block below to redirect to Login. Only apiRequest() can throw here.
                 await restoreOnlineStatus();
-
                 const userData = await apiRequest('auth/me');
                 user = userData;
                 render();
-
-                // FIX (Problem 1): Attempt FCM setup whenever permission is granted or
-                // still pending. After FCM token registration, registerFCMToken() calls
-                // _setOnlineRaw(true) which sets is_online=true in the DB. We then
-                // re-fetch auth/me and re-render so the badge immediately shows 🟢 Online.
                 if (Notification.permission === 'default' || Notification.permission === 'granted') {
                     requestNotificationPermission()
                         .then(async (success) => {
                             if (success) {
-                                try {
-                                    user = await apiRequest('auth/me');
-                                    render();
-                                } catch (_) {}
+                                try { user = await apiRequest('auth/me'); render(); } catch (_) {}
                             }
                         })
                         .catch(err => console.error('⚠️ FCM setup failed:', err));
                 }
-
-                // Start tracking location so donors are locatable for the notification loop
                 startLocationTracking();
-
             } catch (err) {
-                // Only reaches here on 401 (token expired) from apiRequest('auth/me').
-                // restoreOnlineStatus failures are silent and never land here.
                 console.error(err);
-                history.replaceState(null, '', './Login.html');
-                window.location.replace('./Login.html');
+                navTo('./Login.html');
             }
         }
 
@@ -125,15 +101,12 @@
             localStorage.removeItem('fcm_device_id');
             updateOnlineStatus(false).finally(() => {
                 localStorage.removeItem('token');
-                // ── FIX 2: Replace Dashboard in history with Login on logout
-                // so forward/back history is clean.
-                history.replaceState(null, '', './Login.html');
-                window.location.replace('./Login.html');
+                navTo('./Login.html');
             });
         }
 
-        function navigateToDonor()     { window.location.href = './DonorView.html'; }
-        function navigateToRequester() { window.location.href = './RequesterView.html'; }
+        function navigateToDonor()     { navTo('./DonorView.html'); }
+        function navigateToRequester() { navTo('./RequesterView.html'); }
 
         async function enableNotifications() {
             const success = await requestNotificationPermission();
@@ -205,7 +178,6 @@
 
         loadDashboard();
 
-        // Poll every 5s --- refreshes badge if DB online status changes externally
         setInterval(() => {
             if (user) {
                 apiRequest('auth/me').then(userData => {
@@ -217,7 +189,6 @@
             }
         }, 5000);
     </script>
-
     <script src="/pwa-register.js"></script>
 </body>
 </html>

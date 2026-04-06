@@ -11,719 +11,151 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="iDonate">
     <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
-    
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            min-height: 100vh;
-            background-color: #f9fafb;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; min-height: 100vh; background-color: #f9fafb; }
         .navbar { background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .navbar-content {
-            max-width: 80rem;
-            margin: auto;
-            padding: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+        .navbar-content { max-width: 80rem; margin: auto; padding: 1rem; display: flex; justify-content: space-between; align-items: center; }
         .navbar img { height: 40px; cursor: pointer; }
-        .container {
-            max-width: 80rem;
-            margin: auto;
-            padding: 2rem 1rem;
-        }
+        .container { max-width: 80rem; margin: auto; padding: 2rem 1rem; }
         .header { margin-bottom: 2rem; }
-        .header h2 {
-            font-size: 1.875rem;
-            color: #1f2937;
-            margin-bottom: 0.5rem;
-        }
+        .header h2 { font-size: 1.875rem; color: #1f2937; margin-bottom: 0.5rem; }
         .header p { color: #6b7280; }
-        
-        /* ============================================
-           COMMITMENT SECTION (unchanged)
-        ============================================ */
-        .my-commitments {
-            margin-bottom: 3rem;
-        }
-        .commitments-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-            margin-top: 1rem;
-        }
-        .commitments-grid.single-column {
-            grid-template-columns: 1fr;
-            max-width: 500px;
-            margin: 0 auto;
-        }
+        .my-commitments { margin-bottom: 3rem; }
+        .commitments-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1rem; }
+        .commitments-grid.single-column { grid-template-columns: 1fr; max-width: 500px; margin: 0 auto; }
         @media (max-width: 768px) {
-            .commitments-grid {
-                grid-template-columns: 1fr;
-            }
-            .commitments-grid.single-column {
-                max-width: 100%;
-                margin: 0 auto;
-            }
+            .commitments-grid { grid-template-columns: 1fr; }
+            .commitments-grid.single-column { max-width: 100%; margin: 0 auto; }
         }
-        .commitment-column {
-            background: white;
-            border-radius: 0.75rem;
-            overflow: hidden;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            height: 280px;
-        }
-        .commitment-header {
-            padding: 1.25rem 1.5rem;
-            font-size: 1.1rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-        .donating-header {
-            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
-            color: white;
-        }
-        .helping-header {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            color: white;
-        }
-        .commitment-count {
-            background: rgba(255, 255, 255, 0.25);
-            padding: 0.25rem 0.75rem;
-            border-radius: 999px;
-            font-size: 0.9rem;
-            font-weight: 600;
-        }
-        .commitment-body {
-            padding: 1rem;
-            height: 200px !important;
-        }
-        .commitment-body.single-card {
-            overflow-y: hidden !important;
-        }
-        .commitment-body.multiple-cards {
-            overflow-y: auto;
-        }
-        .compact-request-card {
-            background: #f9fafb;
-            border-radius: 0.5rem;
-            padding: 1rem;
-            margin-bottom: 0.75rem;
-            border-left: 4px solid;
-            transition: all 0.2s;
-        }
-        .compact-request-card:hover {
-            background: #f3f4f6;
-            transform: translateX(2px);
-        }
-        .compact-request-card.donating {
-            border-left-color: #16a34a;
-        }
-        .compact-request-card.helping {
-            border-left-color: #f59e0b;
-        }
-        .compact-title {
-            font-size: 1rem;
-            font-weight: 600;
-            color: #1f2937;
-            margin-bottom: 0.5rem;
-        }
-        .compact-details {
-            font-size: 0.875rem;
-            color: #6b7280;
-            margin-bottom: 0.5rem;
-            line-height: 1.4;
-        }
-        .compact-hospital {
-            color: #2563eb;
-            font-weight: 500;
-        }
-        .compact-actions {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 0.75rem;
-        }
-        .btn-compact {
-            flex: 1;
-            padding: 0.5rem;
-            border-radius: 0.375rem;
-            font-weight: 600;
-            font-size: 0.8rem;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .btn-compact-undo {
-            background-color: #f3f4f6;
-            color: #374151;
-        }
-        .btn-compact-undo:hover {
-            background-color: #e5e7eb;
-        }
-        .btn-compact-map {
-            background-color: #dbeafe;
-            color: #1d4ed8;
-        }
-        .btn-compact-map:hover {
-            background-color: #bfdbfe;
-        }
-        .compact-urgency {
-            display: inline-block;
-            padding: 0.125rem 0.5rem;
-            border-radius: 999px;
-            font-size: 0.7rem;
-            font-weight: 600;
-            margin-top: 0.25rem;
-        }
-        
-        .tabs {
-            display: flex;
-            gap: 1rem;
-            border-bottom: 2px solid #e5e7eb;
-            margin-bottom: 2rem;
-        }
-        .tab {
-            padding: 1rem 1.5rem;
-            cursor: pointer;
-            font-weight: 600;
-            color: #6b7280;
-            border-bottom: 3px solid transparent;
-            margin-bottom: -2px;
-            transition: all 0.2s;
-        }
-        .tab.active {
-            color: #dc2626;
-            border-bottom-color: #dc2626;
-        }
-        .tab:hover:not(.active) {
-            color: #374151;
-        }
-        
-        /* ============================================
-           REFINED REQUEST CARD - HOSPITAL-GRADE UI
-        ============================================ */
-        .request-card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-            padding: 0;
-            margin-bottom: 1.25rem;
-            transition: all 0.3s ease;
-            position: relative;
-            border: 1px solid #e5e7eb;
-            overflow: hidden;
-        }
-        .request-card:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-            transform: translateY(-2px);
-            border-color: #d1d5db;
-        }
-        
-        /* CARD HEADER - Contains blood badge, urgency, and share */
-        .card-header {
-            background: linear-gradient(to bottom, #ffffff, #f9fafb);
-            border-bottom: 1px solid #e5e7eb;
-            padding: 1rem 1.25rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 1rem;
-        }
-        
-        /* Left side - Circular blood badge */
-        .blood-badge-circle {
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
-            flex-shrink: 0;
-        }
-        .blood-badge-circle .blood-icon {
-            font-size: 1.5rem;
-            line-height: 1;
-            margin-bottom: 2px;
-        }
-        .blood-badge-circle .blood-type {
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: white;
-            letter-spacing: 0.5px;
-        }
-        
-        /* Center - Title */
-        .card-title-section {
-            flex: 1;
-            min-width: 0;
-        }
-        .card-title {
-            font-size: 1.125rem;
-            font-weight: 700;
-            color: #1f2937;
-            margin-bottom: 0.25rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .card-subtitle {
-            font-size: 0.875rem;
-            color: #6b7280;
-            font-weight: 500;
-        }
-        
-        /* Right side - Urgency + Share */
-        .card-actions-header {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            flex-shrink: 0;
-        }
-        
-        /* Urgency badge */
-        .badge {
-            padding: 0.35rem 0.875rem;
-            border-radius: 20px;
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            white-space: nowrap;
-        }
+        .commitment-column { background: white; border-radius: 0.75rem; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); height: 280px; }
+        .commitment-header { padding: 1.25rem 1.5rem; font-size: 1.1rem; font-weight: 700; display: flex; align-items: center; gap: 0.75rem; }
+        .donating-header { background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: white; }
+        .helping-header { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; }
+        .commitment-count { background: rgba(255, 255, 255, 0.25); padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.9rem; font-weight: 600; }
+        .commitment-body { padding: 1rem; height: 200px !important; }
+        .commitment-body.single-card { overflow-y: hidden !important; }
+        .commitment-body.multiple-cards { overflow-y: auto; }
+        .compact-request-card { background: #f9fafb; border-radius: 0.5rem; padding: 1rem; margin-bottom: 0.75rem; border-left: 4px solid; transition: all 0.2s; }
+        .compact-request-card:hover { background: #f3f4f6; transform: translateX(2px); }
+        .compact-request-card.donating { border-left-color: #16a34a; }
+        .compact-request-card.helping { border-left-color: #f59e0b; }
+        .compact-title { font-size: 1rem; font-weight: 600; color: #1f2937; margin-bottom: 0.5rem; }
+        .compact-details { font-size: 0.875rem; color: #6b7280; margin-bottom: 0.5rem; line-height: 1.4; }
+        .compact-hospital { color: #2563eb; font-weight: 500; }
+        .compact-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
+        .btn-compact { flex: 1; padding: 0.5rem; border-radius: 0.375rem; font-weight: 600; font-size: 0.8rem; border: none; cursor: pointer; transition: all 0.2s; }
+        .btn-compact-undo { background-color: #f3f4f6; color: #374151; }
+        .btn-compact-undo:hover { background-color: #e5e7eb; }
+        .btn-compact-map { background-color: #dbeafe; color: #1d4ed8; }
+        .btn-compact-map:hover { background-color: #bfdbfe; }
+        .compact-urgency { display: inline-block; padding: 0.125rem 0.5rem; border-radius: 999px; font-size: 0.7rem; font-weight: 600; margin-top: 0.25rem; }
+        .tabs { display: flex; gap: 1rem; border-bottom: 2px solid #e5e7eb; margin-bottom: 2rem; }
+        .tab { padding: 1rem 1.5rem; cursor: pointer; font-weight: 600; color: #6b7280; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.2s; }
+        .tab.active { color: #dc2626; border-bottom-color: #dc2626; }
+        .tab:hover:not(.active) { color: #374151; }
+        .request-card { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); padding: 0; margin-bottom: 1.25rem; transition: all 0.3s ease; position: relative; border: 1px solid #e5e7eb; overflow: hidden; }
+        .request-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.12); transform: translateY(-2px); border-color: #d1d5db; }
+        .card-header { background: linear-gradient(to bottom, #ffffff, #f9fafb); border-bottom: 1px solid #e5e7eb; padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+        .blood-badge-circle { width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); display: flex; align-items: center; justify-content: center; flex-direction: column; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25); flex-shrink: 0; }
+        .blood-badge-circle .blood-icon { font-size: 1.5rem; line-height: 1; margin-bottom: 2px; }
+        .blood-badge-circle .blood-type { font-size: 0.75rem; font-weight: 700; color: white; letter-spacing: 0.5px; }
+        .card-title-section { flex: 1; min-width: 0; }
+        .card-title { font-size: 1.125rem; font-weight: 700; color: #1f2937; margin-bottom: 0.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .card-subtitle { font-size: 0.875rem; color: #6b7280; font-weight: 500; }
+        .card-actions-header { display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; }
+        .badge { padding: 0.35rem 0.875rem; border-radius: 20px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
         .urgency-low { background: #d1fae5; color: #065f46; }
         .urgency-medium { background: #fef3c7; color: #92400e; }
         .urgency-high { background: #fed7aa; color: #9a3412; }
         .urgency-critical { background: #fee2e2; color: #991b1b; }
-        
-        /* Share button in header */
-        .share-btn {
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
-            background: #f0f9ff;
-            border: 1px solid #bae6fd;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.25s;
-            text-decoration: none;
-            flex-shrink: 0;
-        }
-        .share-btn:hover {
-            background: #25D366;
-            border-color: #25D366;
-            transform: scale(1.1);
-            box-shadow: 0 4px 8px rgba(37, 211, 102, 0.3);
-        }
-        .share-icon {
-            font-size: 1.1rem;
-        }
-        
-        /* CARD BODY - Patient and hospital info */
-        .card-body {
-            padding: 1.25rem;
-        }
-        
-        .info-row {
-            display: flex;
-            align-items: baseline;
-            margin-bottom: 0.4rem;
-            font-size: 1rem;
-            line-height: 1.5;
-        }
-        
-        .info-label {
-            font-weight: 700;
-            color: #4b5563;
-            min-width: 70px;
-            margin-right: 0.5rem;
-            font-size: 0.95rem;
-        }
-        
-        .info-value {
-            font-weight: 600;
-            color: #1f2937;
-            flex: 1;
-            font-size: 1.05rem;
-        }
-        
-        /* Notes section */
-        .request-notes-section {
-            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-            border-left: 4px solid #2563eb;
-            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
-            padding: 0.5rem 1rem 0.75rem 1rem;
-            margin: 0.5rem 0 0.25rem 0;
-            border-radius: 8px;
-            display: flex;
-            align-items: flex-start;
-        }
-
-        .request-notes-section p {
-            color: #e00e0e;
-            font-size: 1rem !important;
-            font-weight: 650 !important;
-            line-height: 1.4 !important;
-            margin: 0 !important;
-            padding-top: 0.25rem !important;
-        }
-
-        .request-notes-section strong {
-            color: #1d4ed8;
-            font-weight: 700 !important;
-            font-size: 1.1rem !important;
-            display: block;
-            margin-bottom: 0.125rem !important;
-        }
-        
-        /* CARD FOOTER - Action buttons */
-        .card-footer {
-            padding: 1rem 1.25rem;
-            background: #fafafa;
-            border-top: 1px solid #e5e7eb;
-        }
-        
-        .request-actions {
-            display: flex;
-            gap: 0.75rem;
-        }
-        
-        .btn {
-            flex: 1;
-            padding: 0.875rem 1rem;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.95rem;
-            border: none;
-            cursor: pointer;
-            transition: all 0.25s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-        }
-        
-        .btn-accept {
-            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
-            color: white;
-            box-shadow: 0 2px 4px rgba(22, 163, 74, 0.2);
-        }
-        .btn-accept:hover { 
-            background: linear-gradient(135deg, #15803d 0%, #166534 100%);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(22, 163, 74, 0.35);
-        }
-        
-        .btn-help {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            color: white;
-            box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2);
-        }
-        .btn-help:hover {
-            background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35);
-        }
-        
-        .btn-map {
-            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-            color: white;
-            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
-        }
-        .btn-map:hover {
-            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
-        }
-        
-        /* Mobile responsiveness */
+        .share-btn { width: 38px; height: 38px; border-radius: 50%; background: #f0f9ff; border: 1px solid #bae6fd; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.25s; text-decoration: none; flex-shrink: 0; }
+        .share-btn:hover { background: #25D366; border-color: #25D366; transform: scale(1.1); box-shadow: 0 4px 8px rgba(37, 211, 102, 0.3); }
+        .share-icon { font-size: 1.1rem; }
+        .card-body { padding: 1.25rem; }
+        .info-row { display: flex; align-items: baseline; margin-bottom: 0.4rem; font-size: 1rem; line-height: 1.5; }
+        .info-label { font-weight: 700; color: #4b5563; min-width: 70px; margin-right: 0.5rem; font-size: 0.95rem; }
+        .info-value { font-weight: 600; color: #1f2937; flex: 1; font-size: 1.05rem; }
+        .request-notes-section { background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border-left: 4px solid #2563eb; box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1); padding: 0.5rem 1rem 0.75rem 1rem; margin: 0.5rem 0 0.25rem 0; border-radius: 8px; display: flex; align-items: flex-start; }
+        .request-notes-section p { color: #e00e0e; font-size: 1rem !important; font-weight: 650 !important; line-height: 1.4 !important; margin: 0 !important; padding-top: 0.25rem !important; }
+        .request-notes-section strong { color: #1d4ed8; font-weight: 700 !important; font-size: 1.1rem !important; display: block; margin-bottom: 0.125rem !important; }
+        .card-footer { padding: 1rem 1.25rem; background: #fafafa; border-top: 1px solid #e5e7eb; }
+        .request-actions { display: flex; gap: 0.75rem; }
+        .btn { flex: 1; padding: 0.875rem 1rem; border-radius: 8px; font-weight: 600; font-size: 0.95rem; border: none; cursor: pointer; transition: all 0.25s; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+        .btn-accept { background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: white; box-shadow: 0 2px 4px rgba(22, 163, 74, 0.2); }
+        .btn-accept:hover { background: linear-gradient(135deg, #15803d 0%, #166534 100%); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(22, 163, 74, 0.35); }
+        .btn-help { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2); }
+        .btn-help:hover { background: linear-gradient(135deg, #d97706 0%, #b45309 100%); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35); }
+        .btn-map { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2); }
+        .btn-map:hover { background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35); }
         @media (max-width: 640px) {
-            .card-header {
-                flex-wrap: wrap;
-                padding: 1rem;
-            }
-            .blood-badge-circle {
-                width: 48px;
-                height: 48px;
-            }
-            .blood-badge-circle .blood-icon {
-                font-size: 1.25rem;
-            }
-            .card-title {
-                font-size: 1rem;
-            }
-            .card-actions-header {
-                order: 3;
-                width: 100%;
-                justify-content: flex-end;
-                margin-top: 0.75rem;
-            }
-            .request-actions {
-                flex-direction: column;
-            }
+            .card-header { flex-wrap: wrap; padding: 1rem; }
+            .blood-badge-circle { width: 48px; height: 48px; }
+            .blood-badge-circle .blood-icon { font-size: 1.25rem; }
+            .card-title { font-size: 1rem; }
+            .card-actions-header { order: 3; width: 100%; justify-content: flex-end; margin-top: 0.75rem; }
+            .request-actions { flex-direction: column; }
         }
-        
-        .empty-state {
-            text-align: center;
-            padding: 3rem;
-            color: #6b7280;
-        }
-        .loading {
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 1.5rem;
-            color: #6b7280;
-        }
-        
-        /* Map Modal - Navigation Mode */
-        .map-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-            padding: 0;
-        }
-        .map-modal.active {
-            display: flex;
-        }
-        .map-container {
-            background: white;
-            width: 100%;
-            height: 100%;
-            position: relative;
-            overflow: hidden;
-        }
-        .map-header {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            padding: 1rem;
-            background: linear-gradient(to bottom, rgba(255,255,255,0.98), rgba(255,255,255,0.95));
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(0,0,0,0.1);
-            z-index: 1001;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        .map-header h3 {
-            font-size: 1.25rem;
-            color: #1f2937;
-            font-weight: 600;
-        }
-        .close-map {
-            background: rgba(0,0,0,0.05);
-            border: none;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            cursor: pointer;
-            color: #374151;
-            font-size: 1.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-        }
-        .close-map:hover {
-            background: #fee2e2;
-            color: #dc2626;
-            transform: scale(1.05);
-        }
-        
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-        @keyframes pulse-ring {
-            0% {
-                transform: translate(-50%, -50%) scale(0.8);
-                opacity: 1;
-            }
-            100% {
-                transform: translate(-50%, -50%) scale(2);
-                opacity: 0;
-            }
-        }
-        
-        /* Turn-by-turn instruction panel */
-        .nav-instruction-panel {
-            position: absolute;
-            top: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: white;
-            padding: 1.25rem 1.75rem;
-            border-radius: 16px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-            z-index: 1001;
-            min-width: 320px;
-            max-width: 90%;
-        }
-        .nav-instruction {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        .nav-icon {
-            font-size: 2.5rem;
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-        .nav-text-container {
-            flex: 1;
-        }
-        .nav-distance {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #1f2937;
-            margin-bottom: 0.25rem;
-        }
-        .nav-instruction-text {
-            font-size: 1rem;
-            color: #4b5563;
-            font-weight: 500;
-        }
-        
-        /* Navigation stats bar */
-        .nav-stats-bar {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: white;
-            padding: 1rem 1.5rem;
-            border-top: 1px solid #e5e7eb;
-            z-index: 1001;
-            display: flex;
-            justify-content: space-around;
-            box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
-        }
-        .nav-stat {
-            text-align: center;
-        }
-        .nav-stat-value {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: #1f2937;
-        }
-        .nav-stat-label {
-            font-size: 0.75rem;
-            color: #6b7280;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-top: 0.25rem;
-        }
-        
-        /* Recenter button */
-        .recenter-btn {
-            position: absolute;
-            bottom: 120px;
-            right: 20px;
-            width: 50px;
-            height: 50px;
-            background: white;
-            border: none;
-            border-radius: 50%;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            cursor: pointer;
-            z-index: 1001;
-            font-size: 1.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-        }
-        .recenter-btn:hover {
-            background: #f3f4f6;
-            transform: scale(1.05);
-        }
-        .recenter-btn:active {
-            transform: scale(0.95);
-        }
-        .recenter-btn.active {
-            background: #3b82f6;
-            color: white;
-        }
-        
-        #mapView {
-            width: 100%;
-            height: 100%;
-        }
+        .empty-state { text-align: center; padding: 3rem; color: #6b7280; }
+        .loading { min-height: 100vh; display: flex; justify-content: center; align-items: center; font-size: 1.5rem; color: #6b7280; }
+        .map-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); z-index: 1000; justify-content: center; align-items: center; padding: 0; }
+        .map-modal.active { display: flex; }
+        .map-container { background: white; width: 100%; height: 100%; position: relative; overflow: hidden; }
+        .map-header { position: absolute; top: 0; left: 0; right: 0; padding: 1rem; background: linear-gradient(to bottom, rgba(255,255,255,0.98), rgba(255,255,255,0.95)); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(0,0,0,0.1); z-index: 1001; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .map-header h3 { font-size: 1.25rem; color: #1f2937; font-weight: 600; }
+        .close-map { background: rgba(0,0,0,0.05); border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; color: #374151; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .close-map:hover { background: #fee2e2; color: #dc2626; transform: scale(1.05); }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        @keyframes pulse-ring { 0% { transform: translate(-50%, -50%) scale(0.8); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(2); opacity: 0; } }
+        .nav-instruction-panel { position: absolute; top: 80px; left: 50%; transform: translateX(-50%); background: white; padding: 1.25rem 1.75rem; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); z-index: 1001; min-width: 320px; max-width: 90%; }
+        .nav-instruction { display: flex; align-items: center; gap: 1rem; }
+        .nav-icon { font-size: 2.5rem; animation: pulse 2s infinite; }
+        .nav-text-container { flex: 1; }
+        .nav-distance { font-size: 1.5rem; font-weight: 700; color: #1f2937; margin-bottom: 0.25rem; }
+        .nav-instruction-text { font-size: 1rem; color: #4b5563; font-weight: 500; }
+        .nav-stats-bar { position: absolute; bottom: 0; left: 0; right: 0; background: white; padding: 1rem 1.5rem; border-top: 1px solid #e5e7eb; z-index: 1001; display: flex; justify-content: space-around; box-shadow: 0 -2px 8px rgba(0,0,0,0.1); }
+        .nav-stat { text-align: center; }
+        .nav-stat-value { font-size: 1.25rem; font-weight: 700; color: #1f2937; }
+        .nav-stat-label { font-size: 0.75rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 0.25rem; }
+        .recenter-btn { position: absolute; bottom: 120px; right: 20px; width: 50px; height: 50px; background: white; border: none; border-radius: 50%; box-shadow: 0 4px 12px rgba(0,0,0,0.15); cursor: pointer; z-index: 1001; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .recenter-btn:hover { background: #f3f4f6; transform: scale(1.05); }
+        .recenter-btn:active { transform: scale(0.95); }
+        .recenter-btn.active { background: #3b82f6; color: white; }
+        #mapView { width: 100%; height: 100%; }
     </style>
 </head>
 <body>
     <div id="app"></div>
-    
+
     <div id="mapModal" class="map-modal">
         <div class="map-container">
             <div class="map-header">
-                <h3>&#128506;&#65039; Navigate to Hospital</h3>
+                <h3>🗺️ Navigate to Hospital</h3>
                 <button class="close-map" onclick="closeMapModal()">&#x2715;</button>
             </div>
-            
-            <!-- Turn-by-turn instruction panel -->
             <div class="nav-instruction-panel" id="navInstructionPanel" style="display: none;">
                 <div class="nav-instruction">
-                    <div class="nav-icon" id="navIcon">&#x2B06;&#xFE0F;</div>
+                    <div class="nav-icon" id="navIcon">⬆️</div>
                     <div class="nav-text-container">
                         <div class="nav-distance" id="navDistance">--</div>
                         <div class="nav-instruction-text" id="navInstructionText">Calculating route...</div>
                     </div>
                 </div>
             </div>
-            
-            <!-- Map view -->
             <div id="mapView"></div>
-            
-            <!-- Recenter button -->
-            <button class="recenter-btn active" id="recenterBtn" onclick="toggleAutoCenter()" title="Auto-center">
-                &#127919;
-            </button>
-            
-            <!-- Navigation stats bar -->
+            <button class="recenter-btn active" id="recenterBtn" onclick="toggleAutoCenter()" title="Auto-center">🎯</button>
             <div class="nav-stats-bar">
-                <div class="nav-stat">
-                    <div class="nav-stat-value" id="statDistance">--</div>
-                    <div class="nav-stat-label">Distance</div>
-                </div>
-                <div class="nav-stat">
-                    <div class="nav-stat-value" id="statTime">--</div>
-                    <div class="nav-stat-label">ETA</div>
-                </div>
-                <div class="nav-stat">
-                    <div class="nav-stat-value" id="statSpeed">--</div>
-                    <div class="nav-stat-label">Speed</div>
-                </div>
+                <div class="nav-stat"><div class="nav-stat-value" id="statDistance">--</div><div class="nav-stat-label">Distance</div></div>
+                <div class="nav-stat"><div class="nav-stat-value" id="statTime">--</div><div class="nav-stat-label">ETA</div></div>
+                <div class="nav-stat"><div class="nav-stat-value" id="statSpeed">--</div><div class="nav-stat-label">Speed</div></div>
             </div>
         </div>
     </div>
-    
+
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+    <script src="/nav.js"></script>
     <script src="./global.js"></script>
     <script>
         let user = null;
@@ -732,7 +164,7 @@
         let activeTab = 'my';
         let currentMap = null;
         let currentRoute = null;
-        
+
         const BLOOD_COMPATIBILITY = {
             'A+': ['A+', 'AB+'],
             'A-': ['A+', 'A-', 'AB+', 'AB-'],
@@ -743,12 +175,12 @@
             'O+': ['A+', 'B+', 'AB+', 'O+'],
             'O-': ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
         };
-        
+
         function canDonateBlood(donorBlood, requestBlood) {
             const compatibleRecipients = BLOOD_COMPATIBILITY[donorBlood] || [];
             return compatibleRecipients.includes(requestBlood);
         }
-        
+
         async function reverseGeocode(lat, lng) {
             try {
                 const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
@@ -758,56 +190,33 @@
                 return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
             }
         }
-        
+
         async function loadData() {
             try {
                 const app = document.getElementById('app');
                 app.innerHTML = '<div class="loading">Loading...</div>';
-
                 await restoreOnlineStatus();
-
-                console.log('Loading user data...');
                 const userData = await apiRequest('auth/me');
                 user = userData;
-                console.log('User loaded:', user);
-                
-                console.log('Loading blood requests...');
                 try {
-                    const myBlood = await apiRequest('requests/my-blood-requests');
+                    const myBlood    = await apiRequest('requests/my-blood-requests');
                     const otherBlood = await apiRequest('requests/other-blood-requests');
                     allRequests = [...(myBlood || []), ...(otherBlood || [])];
-                    console.log('Loaded from my-blood-requests + other-blood-requests:', allRequests.length);
                 } catch (e) {
                     console.warn('Trying fallback endpoint /requests/');
                     const allReqs = await apiRequest('requests/');
                     allRequests = (allReqs || []).filter(r => r.requester_id !== userData.id);
-                    console.log('Loaded from /requests/ (filtered):', allRequests.length);
                 }
-                
                 acceptedRequestsMap.clear();
                 allRequests.forEach(req => {
                     if (req.acceptors && req.acceptors.some(d => d.donor_id === userData.id || d.user_id === userData.id)) {
                         acceptedRequestsMap.set(req.id, req);
                     }
                 });
-                
-                console.log('Stats:', {
-                    total: allRequests.length,
-                    accepted: acceptedRequestsMap.size,
-                    userBlood: user.bloodgroup
-                });
-                
                 render();
-
-                // FIX: Initialize FCM on DonorView so the foreground messaging.onMessage()
-                // handler is bound. Without this, notifications sent while the user is
-                // actively using DonorView are silently dropped (no in-app banner shown).
                 if (Notification.permission === 'default' || Notification.permission === 'granted') {
-                    requestNotificationPermission().catch(err =>
-                        console.warn('⚠️ FCM setup failed on DonorView:', err)
-                    );
+                    requestNotificationPermission().catch(err => console.warn('⚠️ FCM setup failed on DonorView:', err));
                 }
-
             } catch (err) {
                 console.error('Load data error:', err);
                 document.getElementById('app').innerHTML = `
@@ -821,208 +230,93 @@
                 `;
             }
         }
-        
+
         function handleLogout() {
             localStorage.removeItem('user_is_online');
             localStorage.removeItem('token');
-            window.location.href = './Login.html';
+            navTo('./Login.html');
         }
-        
-        function goToDashboard() {
-            window.location.href = './Dashboard.html';
-        }
-        
-        function setActiveTab(tab) {
-            activeTab = tab;
-            render();
-        }
-        
-        function urgencyClass(u) {
-            return `urgency-${u || 'low'}`;
-        }
-        
-        // Navigation state
+
+        function goToDashboard() { navTo('./Dashboard.html'); }
+
+        function setActiveTab(tab) { activeTab = tab; render(); }
+
+        function urgencyClass(u) { return `urgency-${u || 'low'}`; }
+
         let navigationState = {
-            isNavigating: false,
-            autoCenter: true,
-            currentPosition: null,
-            destinationPosition: null,
-            route: null,
-            routeCoordinates: [],
-            currentStepIndex: 0,
-            watchId: null,
-            userMarker: null,
-            destinationMarker: null,
-            routeLine: null,
-            lastBearing: 0,
-            lastSpeed: 0,
-            deviationThreshold: 50 // meters
+            isNavigating: false, autoCenter: true, currentPosition: null,
+            destinationPosition: null, route: null, routeCoordinates: [],
+            currentStepIndex: 0, watchId: null, userMarker: null,
+            destinationMarker: null, routeLine: null, lastBearing: 0,
+            lastSpeed: 0, deviationThreshold: 50
         };
-        
+
         function showMapModal(request) {
-            if (!navigator.geolocation) {
-                alert('Geolocation is not supported by your browser');
-                return;
-            }
-            
+            if (!navigator.geolocation) { alert('Geolocation is not supported by your browser'); return; }
             const modal = document.getElementById('mapModal');
             modal.classList.add('active');
-            
             navigationState.destinationPosition = {
                 lat: request.hospitalLatitude,
                 lng: request.hospitalLongitude,
                 name: request.hospital_name || 'Hospital'
             };
-            
-            // Initialize map
-            if (currentMap) {
-                currentMap.remove();
-            }
-            
-            currentMap = L.map('mapView', {
-                zoomControl: false,
-                attributionControl: false,
-                rotateControl: false
-            }).setView([13.0827, 80.2707], 15);
-            
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19
-            }).addTo(currentMap);
-            
-            // Start navigation
+            if (currentMap) { currentMap.remove(); }
+            currentMap = L.map('mapView', { zoomControl: false, attributionControl: false, rotateControl: false }).setView([13.0827, 80.2707], 15);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(currentMap);
             startNavigation();
         }
-        
+
         function startNavigation() {
             navigationState.isNavigating = true;
             document.getElementById('navInstructionPanel').style.display = 'block';
-            
-            // Get initial position and start watching
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     updateUserPosition(position);
-                    
-                    // Start continuous tracking
-                    navigationState.watchId = navigator.geolocation.watchPosition(
-                        updateUserPosition,
-                        handleGeolocationError,
-                        {
-                            enableHighAccuracy: true,
-                            timeout: 5000,
-                            maximumAge: 0
-                        }
-                    );
+                    navigationState.watchId = navigator.geolocation.watchPosition(updateUserPosition, handleGeolocationError, { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 });
                 },
                 handleGeolocationError
             );
         }
-        
+
         function updateUserPosition(position) {
             const lat = position.coords.latitude;
             const lng = position.coords.longitude;
-            const accuracy = position.coords.accuracy;
             const heading = position.coords.heading;
             const speed = position.coords.speed || 0;
-            
             navigationState.currentPosition = { lat, lng };
             navigationState.lastSpeed = speed;
-            
-            // Update or create user marker
             if (!navigationState.userMarker) {
-                // Create animated user marker
                 const userIcon = L.divIcon({
                     className: 'user-location-marker',
-                    html: `
-                        <div style="position: relative;">
-                            <div style="
-                                width: 20px;
-                                height: 20px;
-                                background: #3b82f6;
-                                border: 4px solid white;
-                                border-radius: 50%;
-                                box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
-                                position: relative;
-                                z-index: 1000;
-                            "></div>
-                            <div style="
-                                position: absolute;
-                                top: 50%;
-                                left: 50%;
-                                transform: translate(-50%, -50%);
-                                width: 40px;
-                                height: 40px;
-                                background: rgba(59, 130, 246, 0.2);
-                                border-radius: 50%;
-                                animation: pulse-ring 2s infinite;
-                            "></div>
-                        </div>
-                    `,
-                    iconSize: [40, 40],
-                    iconAnchor: [20, 20]
+                    html: `<div style="position: relative;"><div style="width:20px;height:20px;background:#3b82f6;border:4px solid white;border-radius:50%;box-shadow:0 0 20px rgba(59,130,246,0.5);position:relative;z-index:1000;"></div><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:40px;height:40px;background:rgba(59,130,246,0.2);border-radius:50%;animation:pulse-ring 2s infinite;"></div></div>`,
+                    iconSize: [40, 40], iconAnchor: [20, 20]
                 });
-                
-                navigationState.userMarker = L.marker([lat, lng], { 
-                    icon: userIcon,
-                    zIndexOffset: 1000
-                }).addTo(currentMap);
+                navigationState.userMarker = L.marker([lat, lng], { icon: userIcon, zIndexOffset: 1000 }).addTo(currentMap);
             } else {
                 navigationState.userMarker.setLatLng([lat, lng]);
             }
-            
-            // Create or update destination marker
             if (!navigationState.destinationMarker) {
                 const destIcon = L.divIcon({
                     className: 'destination-marker',
-                    html: `
-                        <div style="
-                            width: 40px;
-                            height: 40px;
-                            background: #dc2626;
-                            border: 4px solid white;
-                            border-radius: 50%;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            font-size: 24px;
-                            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
-                        ">&#127973;</div>
-                    `,
-                    iconSize: [40, 40],
-                    iconAnchor: [20, 40]
+                    html: `<div style="width:40px;height:40px;background:#dc2626;border:4px solid white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 4px 12px rgba(220,38,38,0.4);">🏥</div>`,
+                    iconSize: [40, 40], iconAnchor: [20, 40]
                 });
-                
                 navigationState.destinationMarker = L.marker(
                     [navigationState.destinationPosition.lat, navigationState.destinationPosition.lng],
                     { icon: destIcon }
                 ).addTo(currentMap);
             }
-            
-            // Calculate and draw route if not exists or user deviated
-            if (!navigationState.route || hasUserDeviated()) {
-                calculateRoute();
-            }
-            
-            // Update map view with navigation mode
-            if (navigationState.autoCenter) {
-                updateNavigationView(heading);
-            }
-            
-            // Update navigation instructions
+            if (!navigationState.route || hasUserDeviated()) { calculateRoute(); }
+            if (navigationState.autoCenter) { updateNavigationView(heading); }
             updateNavigationInstructions();
-            
-            // Update stats
             updateNavigationStats(speed);
         }
-        
+
         function calculateRoute() {
             if (!navigationState.currentPosition || !navigationState.destinationPosition) return;
-            
             const start = navigationState.currentPosition;
-            const end = navigationState.destinationPosition;
-            
-            // Use OSRM for routing (free OpenStreetMap routing service)
+            const end   = navigationState.destinationPosition;
             const routingUrl = `https://router.project-osrm.org/route/v1/driving/${start.lng},${start.lat};${end.lng},${end.lat}?overview=full&geometries=geojson&steps=true`;
-            
             fetch(routingUrl)
                 .then(response => response.json())
                 .then(data => {
@@ -1031,309 +325,172 @@
                         navigationState.route = route;
                         navigationState.routeCoordinates = route.geometry.coordinates.map(coord => [coord[1], coord[0]]);
                         navigationState.currentStepIndex = 0;
-                        
-                        // Draw route on map
-                        if (navigationState.routeLine) {
-                            currentMap.removeLayer(navigationState.routeLine);
-                        }
-                        
-                        navigationState.routeLine = L.polyline(navigationState.routeCoordinates, {
-                            color: '#3b82f6',
-                            weight: 6,
-                            opacity: 0.8,
-                            lineJoin: 'round',
-                            lineCap: 'round'
-                        }).addTo(currentMap);
-                        
+                        if (navigationState.routeLine) { currentMap.removeLayer(navigationState.routeLine); }
+                        navigationState.routeLine = L.polyline(navigationState.routeCoordinates, { color: '#3b82f6', weight: 6, opacity: 0.8, lineJoin: 'round', lineCap: 'round' }).addTo(currentMap);
                         updateNavigationInstructions();
                     }
                 })
-                .catch(error => {
-                    console.error('Routing error:', error);
-                    // Fallback: draw straight line
-                    drawStraightLineRoute();
-                });
+                .catch(() => { drawStraightLineRoute(); });
         }
-        
+
         function drawStraightLineRoute() {
             const start = navigationState.currentPosition;
-            const end = navigationState.destinationPosition;
-            
+            const end   = navigationState.destinationPosition;
             navigationState.routeCoordinates = [[start.lat, start.lng], [end.lat, end.lng]];
-            
-            if (navigationState.routeLine) {
-                currentMap.removeLayer(navigationState.routeLine);
-            }
-            
-            navigationState.routeLine = L.polyline(navigationState.routeCoordinates, {
-                color: '#3b82f6',
-                weight: 6,
-                opacity: 0.7,
-                dashArray: '10, 10'
-            }).addTo(currentMap);
+            if (navigationState.routeLine) { currentMap.removeLayer(navigationState.routeLine); }
+            navigationState.routeLine = L.polyline(navigationState.routeCoordinates, { color: '#3b82f6', weight: 6, opacity: 0.7, dashArray: '10, 10' }).addTo(currentMap);
         }
-        
+
         function hasUserDeviated() {
-            if (!navigationState.routeCoordinates || navigationState.routeCoordinates.length === 0) {
-                return true;
-            }
-            
+            if (!navigationState.routeCoordinates || navigationState.routeCoordinates.length === 0) return true;
             const userPos = navigationState.currentPosition;
             if (!userPos) return false;
-            
-            // Find closest point on route
             let minDistance = Infinity;
             for (const coord of navigationState.routeCoordinates) {
-                const distance = calculateDistance(userPos.lat, userPos.lng, coord[0], coord[1]) * 1000; // Convert to meters
-                if (distance < minDistance) {
-                    minDistance = distance;
-                }
+                const distance = calculateDistance(userPos.lat, userPos.lng, coord[0], coord[1]) * 1000;
+                if (distance < minDistance) { minDistance = distance; }
             }
-            
             return minDistance > navigationState.deviationThreshold;
         }
-        
+
         function updateNavigationView(heading) {
             if (!navigationState.currentPosition) return;
-            
             const userLat = navigationState.currentPosition.lat;
             const userLng = navigationState.currentPosition.lng;
-            
-            // Calculate bearing to destination
-            const bearing = heading !== null && heading !== undefined ? heading : 
-                           calculateBearing(
-                               userLat, 
-                               userLng, 
-                               navigationState.destinationPosition.lat, 
-                               navigationState.destinationPosition.lng
-                           );
-            
+            const bearing = heading !== null && heading !== undefined ? heading :
+                calculateBearing(userLat, userLng, navigationState.destinationPosition.lat, navigationState.destinationPosition.lng);
             navigationState.lastBearing = bearing;
-            
-            // Adaptive zoom based on speed
             let zoomLevel = 17;
-            if (navigationState.lastSpeed > 20) zoomLevel = 15; // Fast moving
-            else if (navigationState.lastSpeed > 10) zoomLevel = 16; // Medium speed
-            
-            // Offset user position to bottom of screen for better forward view
+            if (navigationState.lastSpeed > 20) zoomLevel = 15;
+            else if (navigationState.lastSpeed > 10) zoomLevel = 16;
             const offsetLat = calculateOffsetLatitude(userLat, zoomLevel);
-            
-            // Smooth pan and rotate
-            currentMap.flyTo([userLat - offsetLat, userLng], zoomLevel, {
-                duration: 0.5,
-                easeLinearity: 0.25
-            });
-            
-            // Rotate map based on bearing (if supported)
-            if (currentMap.setBearing) {
-                currentMap.setBearing(bearing);
-            }
+            currentMap.flyTo([userLat - offsetLat, userLng], zoomLevel, { duration: 0.5, easeLinearity: 0.25 });
+            if (currentMap.setBearing) { currentMap.setBearing(bearing); }
         }
-        
+
         function calculateOffsetLatitude(lat, zoom) {
-            // Offset to position user at bottom 1/3 of screen
             const metersPerPixel = 156543.03392 * Math.cos(lat * Math.PI / 180) / Math.pow(2, zoom);
             const screenHeight = window.innerHeight;
             const offsetPixels = screenHeight / 3;
             const offsetMeters = offsetPixels * metersPerPixel;
-            const offsetDegrees = offsetMeters / 111320; // meters to degrees
-            return offsetDegrees;
+            return offsetMeters / 111320;
         }
-        
+
         function calculateBearing(lat1, lon1, lat2, lon2) {
             const dLon = (lon2 - lon1) * Math.PI / 180;
             const lat1Rad = lat1 * Math.PI / 180;
             const lat2Rad = lat2 * Math.PI / 180;
-            
             const y = Math.sin(dLon) * Math.cos(lat2Rad);
-            const x = Math.cos(lat1Rad) * Math.sin(lat2Rad) -
-                     Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(dLon);
-            
+            const x = Math.cos(lat1Rad) * Math.sin(lat2Rad) - Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(dLon);
             let bearing = Math.atan2(y, x) * 180 / Math.PI;
-            bearing = (bearing + 360) % 360;
-            
-            return bearing;
+            return (bearing + 360) % 360;
         }
-        
+
         function updateNavigationInstructions() {
             if (!navigationState.route || !navigationState.currentPosition) {
                 document.getElementById('navInstructionText').textContent = 'Calculating route...';
                 return;
             }
-            
             const distanceToDestination = calculateDistance(
-                navigationState.currentPosition.lat,
-                navigationState.currentPosition.lng,
-                navigationState.destinationPosition.lat,
-                navigationState.destinationPosition.lng
+                navigationState.currentPosition.lat, navigationState.currentPosition.lng,
+                navigationState.destinationPosition.lat, navigationState.destinationPosition.lng
             );
-            
-            // Check if arrived
-            if (distanceToDestination < 0.05) { // Less than 50 meters
-                document.getElementById('navIcon').textContent = '&#127919;';
+            if (distanceToDestination < 0.05) {
+                document.getElementById('navIcon').textContent = '🎯';
                 document.getElementById('navDistance').textContent = 'Arrived!';
                 document.getElementById('navInstructionText').textContent = 'You have reached your destination';
                 return;
             }
-            
-            // Get current step
             const steps = navigationState.route.legs[0].steps;
             let currentStep = steps[navigationState.currentStepIndex];
-            
-            // Update to next step if close to current step end
             if (navigationState.currentStepIndex < steps.length - 1) {
                 const stepEndCoord = steps[navigationState.currentStepIndex].maneuver.location;
                 const distToStepEnd = calculateDistance(
-                    navigationState.currentPosition.lat,
-                    navigationState.currentPosition.lng,
-                    stepEndCoord[1],
-                    stepEndCoord[0]
+                    navigationState.currentPosition.lat, navigationState.currentPosition.lng,
+                    stepEndCoord[1], stepEndCoord[0]
                 );
-                
-                if (distToStepEnd < 0.02) { // Less than 20 meters
+                if (distToStepEnd < 0.02) {
                     navigationState.currentStepIndex++;
                     currentStep = steps[navigationState.currentStepIndex];
                 }
             }
-            
-            // Get maneuver icon and text
             const maneuver = currentStep.maneuver;
             const icon = getManeuverIcon(maneuver.type, maneuver.modifier);
             const instruction = currentStep.maneuver.instruction || 'Continue straight';
             const distance = currentStep.distance;
-            
             document.getElementById('navIcon').textContent = icon;
             document.getElementById('navDistance').textContent = formatDistance(distance);
             document.getElementById('navInstructionText').textContent = instruction;
         }
-        
+
         function getManeuverIcon(type, modifier) {
             const icons = {
-                'turn': {
-                    'left': '\u21B0',
-                    'slight left': '\u2196\uFE0F',
-                    'sharp left': '\u21B0',
-                    'right': '\u21B1',
-                    'slight right': '\u2197\uFE0F',
-                    'sharp right': '\u21B1',
-                    'straight': '\u2B06\uFE0F'
-                },
-                'new name': '\u2B06\uFE0F',
-                'depart': '\uD83D\uDE97',
-                'arrive': '\uD83C\uDFAF',
-                'merge': '\u2197\uFE0F',
-                'on ramp': '\u2197\uFE0F',
-                'off ramp': '\u2198\uFE0F',
-                'fork': '\uD83D\uDD00',
-                'end of road': '\u2B06\uFE0F',
-                'continue': '\u2B06\uFE0F',
-                'roundabout': '\uD83D\uDD04',
-                'rotary': '\uD83D\uDD04',
-                'exit roundabout': '\u27A1\uFE0F'
+                'turn': { 'left': '\u21B0', 'slight left': '\u2196\uFE0F', 'sharp left': '\u21B0', 'right': '\u21B1', 'slight right': '\u2197\uFE0F', 'sharp right': '\u21B1', 'straight': '\u2B06\uFE0F' },
+                'new name': '\u2B06\uFE0F', 'depart': '\uD83D\uDE97', 'arrive': '\uD83C\uDFAF',
+                'merge': '\u2197\uFE0F', 'on ramp': '\u2197\uFE0F', 'off ramp': '\u2198\uFE0F',
+                'fork': '\uD83D\uDD00', 'end of road': '\u2B06\uFE0F', 'continue': '\u2B06\uFE0F',
+                'roundabout': '\uD83D\uDD04', 'rotary': '\uD83D\uDD04', 'exit roundabout': '\u27A1\uFE0F'
             };
-            
-            if (icons[type] && icons[type][modifier]) {
-                return icons[type][modifier];
-            } else if (icons[type]) {
-                return typeof icons[type] === 'string' ? icons[type] : '\u2B06\uFE0F';
-            }
-            
+            if (icons[type] && icons[type][modifier]) return icons[type][modifier];
+            if (icons[type]) return typeof icons[type] === 'string' ? icons[type] : '\u2B06\uFE0F';
             return '\u2B06\uFE0F';
         }
-        
+
         function formatDistance(meters) {
-            if (meters < 1000) {
-                return Math.round(meters) + ' m';
-            } else {
-                return (meters / 1000).toFixed(1) + ' km';
-            }
+            return meters < 1000 ? Math.round(meters) + ' m' : (meters / 1000).toFixed(1) + ' km';
         }
-        
+
         function updateNavigationStats(speed) {
-            // Update total distance
             const totalDistance = calculateDistance(
-                navigationState.currentPosition.lat,
-                navigationState.currentPosition.lng,
-                navigationState.destinationPosition.lat,
-                navigationState.destinationPosition.lng
+                navigationState.currentPosition.lat, navigationState.currentPosition.lng,
+                navigationState.destinationPosition.lat, navigationState.destinationPosition.lng
             );
-            
             document.getElementById('statDistance').textContent = totalDistance.toFixed(1) + ' km';
-            
-            // Update speed
             const speedKmh = speed ? (speed * 3.6).toFixed(0) : 0;
             document.getElementById('statSpeed').textContent = speedKmh + ' km/h';
-            
-            // Calculate ETA
             if (speed && speed > 0) {
                 const timeHours = totalDistance / (speed * 3.6);
-                const timeMinutes = Math.round(timeHours * 60);
-                document.getElementById('statTime').textContent = timeMinutes + ' min';
+                document.getElementById('statTime').textContent = Math.round(timeHours * 60) + ' min';
             } else {
                 document.getElementById('statTime').textContent = '--';
             }
         }
-        
+
         function toggleAutoCenter() {
             navigationState.autoCenter = !navigationState.autoCenter;
             const btn = document.getElementById('recenterBtn');
-            
             if (navigationState.autoCenter) {
                 btn.classList.add('active');
                 btn.style.background = '#3b82f6';
                 btn.style.color = 'white';
-                if (navigationState.currentPosition) {
-                    updateNavigationView(navigationState.lastBearing);
-                }
+                if (navigationState.currentPosition) { updateNavigationView(navigationState.lastBearing); }
             } else {
                 btn.classList.remove('active');
                 btn.style.background = 'white';
                 btn.style.color = '#374151';
             }
         }
-        
+
         function handleGeolocationError(error) {
             console.error('Geolocation error:', error);
             alert('Unable to get your location. Please enable location services.');
         }
-        
+
         function closeMapModal() {
             const modal = document.getElementById('mapModal');
             modal.classList.remove('active');
-            
-            // Stop navigation
-            if (navigationState.watchId) {
-                navigator.geolocation.clearWatch(navigationState.watchId);
-                navigationState.watchId = null;
-            }
-            
-            // Clean up map
-            if (currentMap) {
-                currentMap.remove();
-                currentMap = null;
-            }
-            
-            // Reset navigation state
+            if (navigationState.watchId) { navigator.geolocation.clearWatch(navigationState.watchId); navigationState.watchId = null; }
+            if (currentMap) { currentMap.remove(); currentMap = null; }
             navigationState = {
-                isNavigating: false,
-                autoCenter: true,
-                currentPosition: null,
-                destinationPosition: null,
-                route: null,
-                routeCoordinates: [],
-                currentStepIndex: 0,
-                watchId: null,
-                userMarker: null,
-                destinationMarker: null,
-                routeLine: null,
-                lastBearing: 0,
-                lastSpeed: 0,
-                deviationThreshold: 50
+                isNavigating: false, autoCenter: true, currentPosition: null,
+                destinationPosition: null, route: null, routeCoordinates: [],
+                currentStepIndex: 0, watchId: null, userMarker: null,
+                destinationMarker: null, routeLine: null, lastBearing: 0,
+                lastSpeed: 0, deviationThreshold: 50
             };
-            
             document.getElementById('navInstructionPanel').style.display = 'none';
         }
-        
+
         function calculateDistance(lat1, lon1, lat2, lon2) {
             const R = 6371;
             const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -1341,205 +498,149 @@
             const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
                 Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
                 Math.sin(dLon / 2) * Math.sin(dLon / 2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            return R * c;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         }
-        
+
         function renderCompactCard(r) {
             const canDonate = canDonateBlood(user.bloodgroup, r.bloodgroup);
             const typeClass = canDonate ? 'donating' : 'helping';
             const showNotes = r.notes && r.notes.trim() !== '' && r.notes !== 'No notes provided';
-            
             return `
                 <div class="compact-request-card ${typeClass}">
                     <div class="compact-title">${r.bloodgroup} Blood Needed</div>
                     <div class="compact-details">
-                        ${r.patient_name ? `&#128100; ${r.patient_name}<br>` : ''}
-                        ${r.hospital_name ? `&#127973; <span class="compact-hospital">${r.hospital_name}</span><br>` : ''}
-                        ${showNotes ? `&#128221; ${r.notes}<br>` : ''}
+                        ${r.patient_name  ? `👤 ${r.patient_name}<br>` : ''}
+                        ${r.hospital_name ? `🏥 <span class="compact-hospital">${r.hospital_name}</span><br>` : ''}
+                        ${showNotes       ? `📝 ${r.notes}<br>` : ''}
                     </div>
-                    <span class="compact-urgency ${urgencyClass(r.urgency)}">
-                        ${(r.urgency || 'LOW').toUpperCase()}
-                    </span>
+                    <span class="compact-urgency ${urgencyClass(r.urgency)}">${(r.urgency || 'LOW').toUpperCase()}</span>
                     <div class="compact-actions">
-                        <button class="btn-compact btn-compact-undo" onclick="handleAccept('${r.id}')">
-                            &#x2715; Undo Accept
-                        </button>
-                        <button class="btn-compact btn-compact-map" onclick='showMapModal(${JSON.stringify(r).replace(/'/g, "&#39;")})'>
-                            View Map
-                        </button>
+                        <button class="btn-compact btn-compact-undo" onclick="handleAccept('${r.id}')">&#x2715; Undo Accept</button>
+                        <button class="btn-compact btn-compact-map" onclick='showMapModal(${JSON.stringify(r).replace(/'/g, "&#39;")})'>View Map</button>
                     </div>
                 </div>
             `;
         }
-        
+
         async function renderRequestCard(r) {
-            const canDonate = canDonateBlood(user.bloodgroup, r.bloodgroup);
-            const showNotes = r.notes && r.notes.trim() !== '' && r.notes !== 'No notes provided';
-            const urgencyText = (r.urgency || 'LOW').toUpperCase();
-            
-            // Fetch location text for sharing
+            const canDonate    = canDonateBlood(user.bloodgroup, r.bloodgroup);
+            const showNotes    = r.notes && r.notes.trim() !== '' && r.notes !== 'No notes provided';
+            const urgencyText  = (r.urgency || 'LOW').toUpperCase();
             const locationText = await reverseGeocode(r.hospitalLatitude, r.hospitalLongitude);
-            
-            // Build share message with location
-            let shareMessage = `\uD83E\uDE78 BLOOD REQUEST\n\nBlood Group: ${r.bloodgroup}\nPatient: ${r.patient_name || 'N/A'}\nHospital: ${r.hospital_name || 'N/A'}\nLocation: ${locationText}`;
-            if (showNotes) {
-                shareMessage += `\n\nNotes: ${r.notes}`;
-            }
+            let shareMessage = `🩸 BLOOD REQUEST\n\nBlood Group: ${r.bloodgroup}\nPatient: ${r.patient_name || 'N/A'}\nHospital: ${r.hospital_name || 'N/A'}\nLocation: ${locationText}`;
+            if (showNotes) { shareMessage += `\n\nNotes: ${r.notes}`; }
             shareMessage += `\n\nIf you are eligible, please consider donating.\nKindly share this message.`;
             const shareText = encodeURIComponent(shareMessage);
-            
             return `
                 <div class="request-card" data-request-id="${r.id}">
-                    <!-- CARD HEADER with blood badge, title, urgency, and share -->
                     <div class="card-header">
-                        <!-- Circular blood badge -->
                         <div class="blood-badge-circle">
-                            <div class="blood-icon">&#129656;</div>
+                            <div class="blood-icon">🩸</div>
                             <div class="blood-type">${r.bloodgroup}</div>
                         </div>
-                        
-                        <!-- Title section -->
                         <div class="card-title-section">
                             <div class="card-title">Blood Needed</div>
                             <div class="card-subtitle">Urgent medical requirement</div>
                         </div>
-                        
-                        <!-- Actions: Urgency + Share -->
                         <div class="card-actions-header">
-                            <span class="badge ${urgencyClass(r.urgency)}">
-                                ${urgencyText}
-                            </span>
+                            <span class="badge ${urgencyClass(r.urgency)}">${urgencyText}</span>
                             <a href="whatsapp://send?text=${shareText}" class="share-btn" title="Share on WhatsApp" onclick="event.stopPropagation();">
-                                <span class="share-icon">&#128228;</span>
+                                <span class="share-icon">📤</span>
                             </a>
                         </div>
                     </div>
-                    
-                    <!-- CARD BODY with patient and hospital info -->
                     <div class="card-body">
-                        ${r.patient_name ? `<div class="info-row"><span class="info-label">Patient:</span><span class="info-value">${r.patient_name}</span></div>` : ''}
+                        ${r.patient_name  ? `<div class="info-row"><span class="info-label">Patient:</span><span class="info-value">${r.patient_name}</span></div>` : ''}
                         ${r.hospital_name ? `<div class="info-row"><span class="info-label">Hospital:</span><span class="info-value">${r.hospital_name}</span></div>` : ''}
-                        
-                        ${showNotes ? `
-                            <div class="request-notes-section">
-                                <p><strong>NOTES:</strong> ${r.notes}</p>
-                            </div>
-                        ` : ''}
+                        ${showNotes ? `<div class="request-notes-section"><p><strong>NOTES:</strong> ${r.notes}</p></div>` : ''}
                     </div>
-                    
-                    <!-- CARD FOOTER with action buttons -->
                     <div class="card-footer">
                         <div class="request-actions">
                             <button class="btn ${canDonate ? 'btn-accept' : 'btn-help'}" onclick="handleAccept('${r.id}')">
                                 ${canDonate ? 'Ready to Donate' : 'Ready to Help'}
                             </button>
-                            <button class="btn btn-map" onclick='showMapModal(${JSON.stringify(r).replace(/'/g, "&#39;")})'>
-                                View Map
-                            </button>
+                            <button class="btn btn-map" onclick='showMapModal(${JSON.stringify(r).replace(/'/g, "&#39;")})'>View Map</button>
                         </div>
                     </div>
                 </div>
             `;
         }
-        
+
         async function handleAccept(id) {
             const isAlreadyAccepted = acceptedRequestsMap.has(id);
-            const confirmMessage = isAlreadyAccepted
-                ? 'Remove your acceptance of this blood donation request?'
-                : 'Accept this blood donation request?';
-            
+            const confirmMessage = isAlreadyAccepted ? 'Remove your acceptance of this blood donation request?' : 'Accept this blood donation request?';
             if (!confirm(confirmMessage)) return;
-            
             try {
-                console.log(`${isAlreadyAccepted ? 'Removing' : 'Accepting'} request:`, id);
                 const response = await apiRequest(`requests/${id}/accept`, { method: 'POST' });
-                console.log('Response:', response);
-                
                 if (response.action === 'accepted') {
                     alert('Request accepted successfully!');
                     const request = allRequests.find(r => r.id === id);
-                    if (request) {
-                        acceptedRequestsMap.set(id, request);
-                    }
+                    if (request) { acceptedRequestsMap.set(id, request); }
                 } else if (response.action === 'removed') {
                     alert('Acceptance removed successfully');
                     acceptedRequestsMap.delete(id);
                 }
-                
                 render();
             } catch (err) {
                 console.error('Accept error:', err);
                 alert(`Failed to process request: ${err.message}`);
             }
         }
-        
+
         async function render() {
             const app = document.getElementById('app');
-            
-            if (!user) {
-                app.innerHTML = '<div class="loading">Loading...</div>';
-                return;
-            }
-            
-            const acceptedRequests = Array.from(acceptedRequestsMap.values());
-            const acceptedDonating = acceptedRequests.filter(r => canDonateBlood(user.bloodgroup, r.bloodgroup));
-            const acceptedHelping = acceptedRequests.filter(r => !canDonateBlood(user.bloodgroup, r.bloodgroup));
-            
-            const pendingRequests = allRequests.filter(r => !acceptedRequestsMap.has(r.id));
-            const pendingMyBlood = pendingRequests.filter(r => canDonateBlood(user.bloodgroup, r.bloodgroup));
+            if (!user) { app.innerHTML = '<div class="loading">Loading...</div>'; return; }
+
+            const acceptedRequests  = Array.from(acceptedRequestsMap.values());
+            const acceptedDonating  = acceptedRequests.filter(r =>  canDonateBlood(user.bloodgroup, r.bloodgroup));
+            const acceptedHelping   = acceptedRequests.filter(r => !canDonateBlood(user.bloodgroup, r.bloodgroup));
+            const pendingRequests   = allRequests.filter(r => !acceptedRequestsMap.has(r.id));
+            const pendingMyBlood    = pendingRequests.filter(r =>  canDonateBlood(user.bloodgroup, r.bloodgroup));
             const pendingOtherBlood = pendingRequests.filter(r => !canDonateBlood(user.bloodgroup, r.bloodgroup));
-            
             const list = activeTab === 'my' ? pendingMyBlood : pendingOtherBlood;
-            
+
             const hasAcceptedDonating = acceptedDonating.length > 0;
-            const hasAcceptedHelping = acceptedHelping.length > 0;
-            const showBothColumns = hasAcceptedDonating && hasAcceptedHelping;
-            
+            const hasAcceptedHelping  = acceptedHelping.length > 0;
+            const showBothColumns     = hasAcceptedDonating && hasAcceptedHelping;
+
             let myCommitmentsSection = '';
-            
             if (hasAcceptedDonating || hasAcceptedHelping) {
                 const donatingScrollClass = acceptedDonating.length === 1 ? 'single-card' : 'multiple-cards';
-                const helpingScrollClass = acceptedHelping.length === 1 ? 'single-card' : 'multiple-cards';
-                
+                const helpingScrollClass  = acceptedHelping.length  === 1 ? 'single-card' : 'multiple-cards';
                 myCommitmentsSection = `
                     <div class="my-commitments">
                         <div class="header">
                             <h2>My Commitments</h2>
-                            <p>Your small actions can make a big impact &#128519;</p>
+                            <p>Your small actions can make a big impact 🥹</p>
                         </div>
                         <div class="commitments-grid${showBothColumns ? '' : ' single-column'}">
                             ${hasAcceptedDonating ? `
                                 <div class="commitment-column">
                                     <div class="commitment-header donating-header">
-                                        <span>&#129293; Ready to Donate</span>
+                                        <span>🤝 Ready to Donate</span>
                                         <span class="commitment-count">${acceptedDonating.length}</span>
                                     </div>
                                     <div class="commitment-body ${donatingScrollClass}">
                                         ${acceptedDonating.map(r => renderCompactCard(r)).join('')}
                                     </div>
-                                </div>
-                            ` : ''}
-                            
+                                </div>` : ''}
                             ${hasAcceptedHelping ? `
                                 <div class="commitment-column">
                                     <div class="commitment-header helping-header">
-                                        <span>&#129293; Ready to Help</span>
+                                        <span>🤝 Ready to Help</span>
                                         <span class="commitment-count">${acceptedHelping.length}</span>
                                     </div>
                                     <div class="commitment-body ${helpingScrollClass}">
                                         ${acceptedHelping.map(r => renderCompactCard(r)).join('')}
                                     </div>
-                                </div>
-                            ` : ''}
+                                </div>` : ''}
                         </div>
                     </div>
                 `;
             }
-            
-            // Render request cards asynchronously
+
             const requestCardsHTML = await Promise.all(list.map(r => renderRequestCard(r)));
-            
+
             app.innerHTML = `
                 <nav class="navbar">
                     <div class="navbar-content">
@@ -1548,31 +649,21 @@
                 </nav>
                 <div class="container">
                     ${myCommitmentsSection}
-                    
                     <div class="header">
                         <h2>Available Requests</h2>
-                        <p>Requests waiting for someone like you to step in &#10084;&#65039;&#8205;&#129657;</p>
+                        <p>Requests waiting for someone like you to step in ❤️‍🩹</p>
                     </div>
-                    
                     <div class="tabs">
-                        <div class="tab ${activeTab === 'my' ? 'active' : ''}" onclick="setActiveTab('my')">
-                            Can Donate (${pendingMyBlood.length})
-                        </div>
-                        <div class="tab ${activeTab === 'other' ? 'active' : ''}" onclick="setActiveTab('other')">
-                            Can Help (${pendingOtherBlood.length})
-                        </div>
+                        <div class="tab ${activeTab === 'my'    ? 'active' : ''}" onclick="setActiveTab('my')">Can Donate (${pendingMyBlood.length})</div>
+                        <div class="tab ${activeTab === 'other' ? 'active' : ''}" onclick="setActiveTab('other')">Can Help (${pendingOtherBlood.length})</div>
                     </div>
-                    
                     <div>
-                        ${requestCardsHTML.length > 0
-                            ? requestCardsHTML.join('')
-                            : '<div class="empty-state">No requests available</div>'
-                        }
+                        ${requestCardsHTML.length > 0 ? requestCardsHTML.join('') : '<div class="empty-state">No requests available</div>'}
                     </div>
                 </div>
             `;
         }
-        
+
         loadData();
     </script>
     <script src="/pwa-register.js"></script>

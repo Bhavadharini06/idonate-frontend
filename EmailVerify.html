@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>iDonate - Verify Email</title>
 <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#ffffff">
+<meta name="theme-color" content="#dc2626">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -28,74 +28,86 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;m
 .countdown-wrap{margin-top:0.875rem;font-size:0.8125rem;color:#9ca3af;}
 .countdown-wrap strong{color:#6b7280;}
 .error-box{background:#fef2f2;border:1px solid #fecaca;color:#dc2626;border-radius:8px;padding:0.8rem 1rem;font-size:0.875rem;line-height:1.5;margin:1rem 0 0;}
-.btn-primary{display:inline-block;margin-top:1.25rem;background:#dc2626;color:#fff;padding:0.75rem 2rem;border-radius:10px;text-decoration:none;font-size:0.9375rem;font-weight:600;transition:background 0.18s,transform 0.12s;box-shadow:0 1px 4px rgba(220,38,38,0.2);}
+.btn-primary{display:inline-block;margin-top:1.25rem;background:#dc2626;color:#fff;padding:0.75rem 2rem;border-radius:10px;text-decoration:none;font-size:0.9375rem;font-weight:600;transition:background 0.18s,transform 0.12s;box-shadow:0 1px 4px rgba(220,38,38,0.2);cursor:pointer;border:none;}
 .btn-primary:hover{background:#b91c1c;transform:translateY(-1px);}
-.btn-ghost{display:block;margin-top:0.875rem;font-size:0.875rem;color:#6b7280;text-decoration:none;transition:color 0.18s;}
+.btn-ghost{display:block;margin-top:0.875rem;font-size:0.875rem;color:#6b7280;text-decoration:none;transition:color 0.18s;background:none;border:none;cursor:pointer;width:100%;}
 .btn-ghost:hover{color:#dc2626;}
 </style>
 </head>
 <body>
 <div class="card">
-<div class="logo-wrap"><img src="logo.png" alt="iDonate"></div>
-<div id="stateLoading">
-<div class="spinner"></div>
-<p class="state-title">Verifying your email</p>
-<p class="state-sub">Please wait a moment…</p>
+    <div class="logo-wrap"><img src="logo.png" alt="iDonate"></div>
+
+    <div id="stateLoading">
+        <div class="spinner"></div>
+        <p class="state-title">Verifying your email</p>
+        <p class="state-sub">Please wait a moment…</p>
+    </div>
+
+    <div id="stateSuccess">
+        <div class="state-icon">✅</div>
+        <p class="state-title">Email Verified Successfully</p>
+        <p class="state-sub">Redirecting you to login…</p>
+        <div class="countdown-wrap">Taking you there in <strong id="countdown">3</strong>s</div>
+    </div>
+
+    <div id="stateError">
+        <div class="state-icon">❌</div>
+        <p class="state-title">Verification Failed</p>
+        <div class="error-box" id="errorMessage">The verification link is invalid or has expired.</div>
+        <button class="btn-primary" onclick="navTo('./Register.html')">Register Again</button>
+        <button class="btn-ghost"   onclick="navTo('./Login.html')">← Back to Login</button>
+    </div>
 </div>
-<div id="stateSuccess">
-<div class="state-icon">✅</div>
-<p class="state-title">Email Verified Successfully</p>
-<p class="state-sub">Redirecting you to login…</p>
-<div class="countdown-wrap">Taking you there in <strong id="countdown">3</strong>s</div>
-</div>
-<div id="stateError">
-<div class="state-icon">❌</div>
-<p class="state-title">Verification Failed</p>
-<div class="error-box" id="errorMessage">The verification link is invalid or has expired.</div>
-<a class="btn-primary" href="./Register.html">Register Again</a>
-<a class="btn-ghost" href="./Login.html">← Back to Login</a>
-</div>
-</div>
+
+<script src="/nav.js"></script>
 <script>
 const API_BASE='https://idonate-backend-hy7w.onrender.com';
-function showState(name){['Loading','Success','Error'].forEach(s=>{document.getElementById('state'+s).style.display=(s===name)?'block':'none';});}
+
+function showState(name){
+    ['Loading','Success','Error'].forEach(s=>{
+        document.getElementById('state'+s).style.display=(s===name)?'block':'none';
+    });
+}
+
 async function verifyToken(){
-const params=new URLSearchParams(window.location.search);
-const token=params.get('token');
-if(!token){
-document.getElementById('errorMessage').textContent='No verification token found. Please use the link from your email.';
-showState('Error');
-return;
+    const params=new URLSearchParams(window.location.search);
+    const token=params.get('token');
+    if(!token){
+        document.getElementById('errorMessage').textContent='No verification token found. Please use the link from your email.';
+        showState('Error');
+        return;
+    }
+    try{
+        const res=await fetch(`${API_BASE}/auth/verify-email?token=${encodeURIComponent(token)}`,{method:'GET',redirect:'manual'});
+        if(res.ok||res.status===200){
+            showState('Success');
+            let secs=3;
+            const cd=document.getElementById('countdown');
+            const timer=setInterval(()=>{
+                secs--;
+                cd.textContent=secs;
+                if(secs<=0){
+                    clearInterval(timer);
+                    navTo('./Login.html');
+                }
+            },1000);
+        }else{
+            let msg='The verification link is invalid or has expired. Please register again.';
+            try{
+                const text=await res.text();
+                const match=text.match(/<div class="msg">([^<]+)<\/div>/);
+                if(match)msg=match[1];
+            }catch(_){}
+            document.getElementById('errorMessage').textContent=msg;
+            showState('Error');
+        }
+    }catch(err){
+        document.getElementById('errorMessage').textContent='Unable to connect to the server. Please check your connection.';
+        showState('Error');
+    }
 }
-try{
-const res=await fetch(`${API_BASE}/auth/verify-email?token=${encodeURIComponent(token)}`,{method:'GET',redirect:'manual'});
-if(res.ok||res.status===200){
-showState('Success');
-let secs=3;
-const cd=document.getElementById('countdown');
-const timer=setInterval(()=>{
-secs--;
-cd.textContent=secs;
-if(secs<=0){
-clearInterval(timer);
-window.location.replace('./Login.html');
-}
-},1000);
-}else{
-let msg='The verification link is invalid or has expired. Please register again.';
-try{
-const text=await res.text();
-const match=text.match(/<div class="msg">([^<]+)<\/div>/);
-if(match)msg=match[1];
-}catch(_){}
-document.getElementById('errorMessage').textContent=msg;
-showState('Error');
-}
-}catch(err){
-document.getElementById('errorMessage').textContent='Unable to connect to the server. Please check your connection.';
-showState('Error');
-}
-}
+
 verifyToken();
 </script>
 <script src="/pwa-register.js"></script>

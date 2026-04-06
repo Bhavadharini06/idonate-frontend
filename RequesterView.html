@@ -17,1091 +17,503 @@
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
         <style>
             * { margin: 0; padding: 0; box-sizing: border-box; }
-            body {
-                font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                min-height: 100vh;
-                background-color: #f9fafb;
-                -webkit-font-smoothing: antialiased;
-                -moz-osx-font-smoothing: grayscale;
-            }
-            .navbar {
-                background: white;
-                box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-            }
-            .navbar-content {
-                max-width: 80rem;
-                margin: 0 auto;
-                padding: 1rem;
-            }
-            .navbar img {
-                height: 40px;
-            }
-            .container {
-                max-width: 80rem;
-                margin: 0 auto;
-                padding: 2rem 1rem;
-            }
-            .header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 2rem;
-            }
-            .header h2 {
-                font-size: 1.875rem;
-                font-weight: 700;
-                color: #1f2937;
-                letter-spacing: -0.025em;
-            }
-            .btn-create {
-                padding: 0.75rem 1.5rem;
-                background-color: #dc2626;
-                color: white;
-                border-radius: 0.5rem;
-                font-weight: 600;
-                border: none;
-                cursor: pointer;
-                transition: all 0.2s ease;
-                box-shadow: 0 1px 3px rgba(220, 38, 38, 0.2);
-            }
-            .btn-create:hover {
-                background-color: #b91c1c;
-                box-shadow: 0 4px 6px rgba(220, 38, 38, 0.3);
-                transform: translateY(-1px);
-            }
-            .modal {
-                position: fixed;
-                inset: 0;
-                background-color: rgba(0, 0, 0, 0.6);
-                backdrop-filter: blur(4px);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                padding: 1rem;
-                z-index: 50;
-                animation: fadeIn 0.2s ease;
-            }
-            @keyframes fadeIn {
-                from { opacity: 0; }
-                to { opacity: 1; }
-            }
-            .modal-content {
-                background: white;
-                border-radius: 16px;
-                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-                padding: 0;
-                max-width: 56rem;
-                width: 100%;
-                max-height: 92vh;
-                overflow: hidden;
-                display: flex;
-                flex-direction: column;
-                animation: slideUp 0.3s ease;
-            }
-            @keyframes slideUp {
-                from { opacity: 0; transform: translateY(20px); }
-                to { opacity: 1; transform: translateY(0); }
-            }
-            .modal-header {
-                background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-                color: white;
-                padding: 1.75rem 2rem;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            }
-            .modal-header h3 {
-                font-size: 1.5rem;
-                font-weight: 700;
-                letter-spacing: -0.025em;
-                display: flex;
-                align-items: center;
-                gap: 0.75rem;
-            }
-            .modal-header-icon {
-                font-size: 1.75rem;
-            }
-            .modal-body {
-                padding: 2rem;
-                overflow-y: auto;
-                flex: 1;
-            }
-            .form-section {
-                margin-bottom: 2rem;
-            }
-            .form-section:last-child {
-                margin-bottom: 0;
-            }
-            .form-section-title {
-                font-size: 1rem;
-                font-weight: 600;
-                color: #374151;
-                margin-bottom: 1rem;
-                padding-bottom: 0.5rem;
-                border-bottom: 2px solid #f3f4f6;
-                letter-spacing: -0.015em;
-            }
-            .form-grid {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 1.25rem;
-            }
-            @media (max-width: 768px) {
-                .form-grid {
-                    grid-template-columns: 1fr;
-                }
-            }
-            .form-group {
-                margin-bottom: 1.25rem;
-            }
-            .form-group.full-width {
-                grid-column: 1 / -1;
-            }
-            .form-group label {
-                display: block;
-                font-size: 0.875rem;
-                font-weight: 600;
-                color: #374151;
-                margin-bottom: 0.5rem;
-                letter-spacing: -0.01em;
-            }
-            .form-group label .required {
-                color: #dc2626;
-                margin-left: 2px;
-            }
-            .form-group input,
-            .form-group select,
-            .form-group textarea {
-                width: 100%;
-                padding: 0.75rem 1rem;
-                border: 1.5px solid #d1d5db;
-                border-radius: 8px;
-                font-size: 0.9375rem;
-                font-family: 'Inter', sans-serif;
-                transition: all 0.2s ease;
-                background: white;
-                color: #1f2937;
-            }
-            .form-group input:focus,
-            .form-group select:focus,
-            .form-group textarea:focus {
-                outline: none;
-                border-color: #dc2626;
-                box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
-            }
-            .form-group textarea {
-                resize: vertical;
-                min-height: 100px;
-                line-height: 1.6;
-            }
-            .form-helper-text {
-                font-size: 0.8125rem;
-                color: #6b7280;
-                margin-top: 0.375rem;
-                line-height: 1.4;
-            }
-            .location-section {
-                background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
-                border: 2px solid #fbbf24;
-                border-radius: 12px;
-                padding: 1.75rem;
-                margin-bottom: 1.5rem;
-                box-shadow: 0 2px 8px rgba(251, 191, 36, 0.15);
-            }
-            .location-section-header {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                margin-bottom: 1.25rem;
-            }
-            .location-section-header h4 {
-                font-size: 1.0625rem;
-                font-weight: 700;
-                color: #78350f;
-                display: flex;
-                align-items: center;
-                gap: 0.625rem;
-                letter-spacing: -0.015em;
-            }
-            .location-icon {
-                font-size: 1.375rem;
-            }
-            .smart-badge {
-                background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-                color: white;
-                padding: 0.3125rem 0.875rem;
-                border-radius: 999px;
-                font-size: 0.75rem;
-                font-weight: 700;
-                letter-spacing: 0.025em;
-                text-transform: uppercase;
-                box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
-            }
-            .location-inputs {
-                display: grid;
-                grid-template-columns: 2fr 1fr 1fr;
-                gap: 1rem;
-                margin-bottom: 1.25rem;
-            }
-            @media (max-width: 768px) {
-                .location-inputs {
-                    grid-template-columns: 1fr;
-                }
-            }
-            .location-inputs input {
-                background: white;
-                border: 1.5px solid #fbbf24;
-                font-weight: 500;
-            }
-            .location-inputs input:focus {
-                border-color: #f59e0b;
-                box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
-            }
-            .btn-locate {
-                width: 100%;
-                padding: 0.875rem 1.25rem;
-                background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-                color: white;
-                border: none;
-                border-radius: 8px;
-                font-weight: 600;
-                font-size: 0.9375rem;
-                cursor: pointer;
-                transition: all 0.25s ease;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 0.625rem;
-                box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
-                letter-spacing: -0.01em;
-            }
-            .btn-locate:hover:not(:disabled) {
-                background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
-                transform: translateY(-2px);
-                box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35);
-            }
-            .btn-locate:active:not(:disabled) {
-                transform: translateY(0);
-            }
-            .btn-locate:disabled {
-                background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
-                cursor: not-allowed;
-                transform: none;
-                opacity: 0.7;
-            }
-            .btn-locate-icon {
-                font-size: 1.125rem;
-            }
-            .location-info {
-                background: white;
-                border: 1.5px solid #fbbf24;
-                border-radius: 10px;
-                padding: 1.25rem;
-                margin-top: 1.25rem;
-                display: none;
-                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-            }
-            .location-info.active {
-                display: block;
-                animation: slideIn 0.3s ease;
-            }
-            @keyframes slideIn {
-                from { opacity: 0; transform: translateY(-10px); }
-                to { opacity: 1; transform: translateY(0); }
-            }
-            .location-info-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 1rem;
-                padding-bottom: 0.875rem;
-                border-bottom: 1px solid #fef3c7;
-            }
-            .location-info-header h5 {
-                color: #78350f;
-                font-size: 0.9375rem;
-                font-weight: 700;
-                letter-spacing: -0.015em;
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-            }
-            .confidence-badge {
-                padding: 0.3125rem 0.875rem;
-                border-radius: 999px;
-                font-size: 0.6875rem;
-                font-weight: 700;
-                letter-spacing: 0.025em;
-                text-transform: uppercase;
-            }
-            .confidence-high {
-                background: #d1fae5;
-                color: #065f46;
-            }
-            .confidence-medium {
-                background: #fef3c7;
-                color: #92400e;
-            }
-            .confidence-low {
-                background: #fee2e2;
-                color: #991b1b;
-            }
-            .location-details {
-                font-size: 0.875rem;
-                color: #4b5563;
-                line-height: 1.75;
-                letter-spacing: -0.01em;
-            }
-            .location-details strong {
-                color: #1f2937;
-                font-weight: 600;
-            }
-            .map-section {
-                margin-top: 1.5rem;
-            }
-            .map-section-header {
-                display: flex;
-                align-items: center;
-                gap: 0.625rem;
-                margin-bottom: 1rem;
-            }
-            .map-section-header h5 {
-                font-size: 0.9375rem;
-                font-weight: 600;
-                color: #374151;
-                letter-spacing: -0.015em;
-            }
-            .map-section-icon {
-                font-size: 1.125rem;
-            }
-            #map {
-                height: 380px;
-                width: 100%;
-                border-radius: 10px;
-                border: 2px solid #e5e7eb;
-                pointer-events: none;
-                opacity: 0.65;
-                transition: all 0.3s ease;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            }
-            #map.active {
-                pointer-events: auto;
-                opacity: 1;
-                border-color: #10b981;
-                box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
-            }
-            .map-overlay {
-                position: relative;
-            }
-            .map-lock-message {
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background: rgba(255, 255, 255, 0.97);
-                padding: 1.25rem 1.75rem;
-                border-radius: 10px;
-                box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-                z-index: 1000;
-                text-align: center;
-                color: #6b7280;
-                font-weight: 600;
-                font-size: 0.9375rem;
-                pointer-events: none;
-                backdrop-filter: blur(8px);
-                letter-spacing: -0.01em;
-            }
-            .modal-actions {
-                display: flex;
-                gap: 1rem;
-                padding: 1.5rem 2rem;
-                background: #fafafa;
-                border-top: 1px solid #e5e7eb;
-            }
-            .btn {
-                flex: 1;
-                padding: 0.875rem 1.25rem;
-                border-radius: 8px;
-                font-weight: 600;
-                font-size: 0.9375rem;
-                border: none;
-                cursor: pointer;
-                transition: all 0.2s ease;
-                letter-spacing: -0.01em;
-            }
-            .btn-primary {
-                background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-                color: white;
-                box-shadow: 0 2px 6px rgba(220, 38, 38, 0.25);
-            }
-            .btn-primary:hover:not(:disabled) {
-                background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
-                box-shadow: 0 4px 10px rgba(220, 38, 38, 0.35);
-                transform: translateY(-1px);
-            }
-            .btn-primary:disabled {
-                background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
-                cursor: not-allowed;
-                transform: none;
-                opacity: 0.7;
-            }
-            .btn-secondary {
-                background-color: #f3f4f6;
-                color: #374151;
-                border: 1.5px solid #d1d5db;
-            }
-            .btn-secondary:hover {
-                background-color: #e5e7eb;
-                border-color: #9ca3af;
-            }
-            .request-card {
-                background: white;
-                border-radius: 0.75rem;
-                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-                padding: 1.5rem;
-                margin-bottom: 1rem;
-            }
-            .request-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: start;
-                margin-bottom: 1rem;
-            }
-            .request-title {
-                font-size: 1.25rem;
-                font-weight: bold;
-                color: #1f2937;
-            }
-            .badges {
-                display: flex;
-                gap: 0.5rem;
-                flex-wrap: wrap;
-                align-items: center;
-            }
-            .badge {
-                padding: 0.25rem 0.75rem;
-                border-radius: 999px;
-                font-size: 0.75rem;
-                font-weight: 600;
-            }
+            body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; min-height: 100vh; background-color: #f9fafb; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+            .navbar { background: white; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1); }
+            .navbar-content { max-width: 80rem; margin: 0 auto; padding: 1rem; }
+            .navbar img { height: 40px; }
+            .container { max-width: 80rem; margin: 0 auto; padding: 2rem 1rem; }
+            .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+            .header h2 { font-size: 1.875rem; font-weight: 700; color: #1f2937; letter-spacing: -0.025em; }
+            .btn-create { padding: 0.75rem 1.5rem; background-color: #dc2626; color: white; border-radius: 0.5rem; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 1px 3px rgba(220, 38, 38, 0.2); }
+            .btn-create:hover { background-color: #b91c1c; box-shadow: 0 4px 6px rgba(220, 38, 38, 0.3); transform: translateY(-1px); }
+            .modal { position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; padding: 1rem; z-index: 50; animation: fadeIn 0.2s ease; }
+            @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+            .modal-content { background: white; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); padding: 0; max-width: 56rem; width: 100%; max-height: 92vh; overflow: hidden; display: flex; flex-direction: column; animation: slideUp 0.3s ease; }
+            @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+            .modal-header { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 1.75rem 2rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+            .modal-header h3 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.025em; display: flex; align-items: center; gap: 0.75rem; }
+            .modal-header-icon { font-size: 1.75rem; }
+            .modal-body { padding: 2rem; overflow-y: auto; flex: 1; }
+            .form-section { margin-bottom: 2rem; }
+            .form-section:last-child { margin-bottom: 0; }
+            .form-section-title { font-size: 1rem; font-weight: 600; color: #374151; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #f3f4f6; letter-spacing: -0.015em; }
+            .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+            @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } }
+            .form-group { margin-bottom: 1.25rem; }
+            .form-group.full-width { grid-column: 1 / -1; }
+            .form-group label { display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.5rem; letter-spacing: -0.01em; }
+            .form-group label .required { color: #dc2626; margin-left: 2px; }
+            .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #d1d5db; border-radius: 8px; font-size: 0.9375rem; font-family: 'Inter', sans-serif; transition: all 0.2s ease; background: white; color: #1f2937; }
+            .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #dc2626; box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1); }
+            .form-group textarea { resize: vertical; min-height: 100px; line-height: 1.6; }
+            .form-helper-text { font-size: 0.8125rem; color: #6b7280; margin-top: 0.375rem; line-height: 1.4; }
+            .location-section { background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border: 2px solid #fbbf24; border-radius: 12px; padding: 1.75rem; margin-bottom: 1.5rem; box-shadow: 0 2px 8px rgba(251, 191, 36, 0.15); }
+            .location-section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
+            .location-section-header h4 { font-size: 1.0625rem; font-weight: 700; color: #78350f; display: flex; align-items: center; gap: 0.625rem; letter-spacing: -0.015em; }
+            .location-icon { font-size: 1.375rem; }
+            .smart-badge { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 0.3125rem 0.875rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.025em; text-transform: uppercase; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3); }
+            .location-inputs { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem; }
+            @media (max-width: 768px) { .location-inputs { grid-template-columns: 1fr; } }
+            .location-inputs input { background: white; border: 1.5px solid #fbbf24; font-weight: 500; }
+            .location-inputs input:focus { border-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1); }
+            .btn-locate { width: 100%; padding: 0.875rem 1.25rem; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 0.9375rem; cursor: pointer; transition: all 0.25s ease; display: flex; align-items: center; justify-content: center; gap: 0.625rem; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25); letter-spacing: -0.01em; }
+            .btn-locate:hover:not(:disabled) { background: linear-gradient(135deg, #d97706 0%, #b45309 100%); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35); }
+            .btn-locate:active:not(:disabled) { transform: translateY(0); }
+            .btn-locate:disabled { background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%); cursor: not-allowed; transform: none; opacity: 0.7; }
+            .btn-locate-icon { font-size: 1.125rem; }
+            .location-info { background: white; border: 1.5px solid #fbbf24; border-radius: 10px; padding: 1.25rem; margin-top: 1.25rem; display: none; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); }
+            .location-info.active { display: block; animation: slideIn 0.3s ease; }
+            @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+            .location-info-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.875rem; border-bottom: 1px solid #fef3c7; }
+            .location-info-header h5 { color: #78350f; font-size: 0.9375rem; font-weight: 700; letter-spacing: -0.015em; display: flex; align-items: center; gap: 0.5rem; }
+            .confidence-badge { padding: 0.3125rem 0.875rem; border-radius: 999px; font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.025em; text-transform: uppercase; }
+            .confidence-high { background: #d1fae5; color: #065f46; }
+            .confidence-medium { background: #fef3c7; color: #92400e; }
+            .confidence-low { background: #fee2e2; color: #991b1b; }
+            .location-details { font-size: 0.875rem; color: #4b5563; line-height: 1.75; letter-spacing: -0.01em; }
+            .location-details strong { color: #1f2937; font-weight: 600; }
+            .map-section { margin-top: 1.5rem; }
+            .map-section-header { display: flex; align-items: center; gap: 0.625rem; margin-bottom: 1rem; }
+            .map-section-header h5 { font-size: 0.9375rem; font-weight: 600; color: #374151; letter-spacing: -0.015em; }
+            .map-section-icon { font-size: 1.125rem; }
+            #map { height: 380px; width: 100%; border-radius: 10px; border: 2px solid #e5e7eb; pointer-events: none; opacity: 0.65; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); }
+            #map.active { pointer-events: auto; opacity: 1; border-color: #10b981; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); }
+            .map-overlay { position: relative; }
+            .map-lock-message { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255, 255, 255, 0.97); padding: 1.25rem 1.75rem; border-radius: 10px; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15); z-index: 1000; text-align: center; color: #6b7280; font-weight: 600; font-size: 0.9375rem; pointer-events: none; backdrop-filter: blur(8px); letter-spacing: -0.01em; }
+            .modal-actions { display: flex; gap: 1rem; padding: 1.5rem 2rem; background: #fafafa; border-top: 1px solid #e5e7eb; }
+            .btn { flex: 1; padding: 0.875rem 1.25rem; border-radius: 8px; font-weight: 600; font-size: 0.9375rem; border: none; cursor: pointer; transition: all 0.2s ease; letter-spacing: -0.01em; }
+            .btn-primary { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; box-shadow: 0 2px 6px rgba(220, 38, 38, 0.25); }
+            .btn-primary:hover:not(:disabled) { background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%); box-shadow: 0 4px 10px rgba(220, 38, 38, 0.35); transform: translateY(-1px); }
+            .btn-primary:disabled { background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%); cursor: not-allowed; transform: none; opacity: 0.7; }
+            .btn-secondary { background-color: #f3f4f6; color: #374151; border: 1.5px solid #d1d5db; }
+            .btn-secondary:hover { background-color: #e5e7eb; border-color: #9ca3af; }
+            .request-card { background: white; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); padding: 1.5rem; margin-bottom: 1rem; }
+            .request-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem; }
+            .request-title { font-size: 1.25rem; font-weight: bold; color: #1f2937; }
+            .badges { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+            .badge { padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
             .badge-low { background: #dbeafe; color: #1e40af; }
             .badge-medium { background: #fef3c7; color: #92400e; }
             .badge-high { background: #fee2e2; color: #991b1b; }
             .badge-critical { background: #991b1b; color: white; }
-            .btn-share {
-                background: transparent;
-                border: none;
-                font-size: 1.25rem;
-                cursor: pointer;
-                padding: 0.25rem 0.5rem;
-                margin-left: 0.5rem;
-                border-radius: 0.375rem;
-                transition: all 0.2s ease;
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                line-height: 1;
-            }
-            .btn-share:hover {
-                transform: scale(1.15);
-                background: rgba(220, 38, 38, 0.1);
-            }
-            .btn-share:active {
-                transform: scale(1.05);
-            }
-            .request-details {
-                color: #6b7280;
-                margin-bottom: 0.5rem;
-                line-height: 1.6;
-            }
+            .btn-share { background: transparent; border: none; font-size: 1.25rem; cursor: pointer; padding: 0.25rem 0.5rem; margin-left: 0.5rem; border-radius: 0.375rem; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
+            .btn-share:hover { transform: scale(1.15); background: rgba(220, 38, 38, 0.1); }
+            .btn-share:active { transform: scale(1.05); }
+            .request-details { color: #6b7280; margin-bottom: 0.5rem; line-height: 1.6; }
             .request-details strong { color: #374151; }
-            /* REDESIGNED ACCEPTORS SECTION */
-            .acceptors-section {
-                margin-top: 1.5rem;
-                padding-top: 1.5rem;
-                border-top: 1px solid #e5e7eb;
-            }
-            .acceptor-category {
-                background: #f9fafb;
-                border: 1px solid #e5e7eb;
-                border-radius: 10px;
-                margin-bottom: 0.75rem;
-                overflow: hidden;
-                transition: all 0.3s ease;
-            }
-            .acceptor-category-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 0.875rem 1.125rem;
-                cursor: pointer;
-                user-select: none;
-                transition: all 0.2s ease;
-            }
-            .acceptor-category-header:hover {
-                background: #f3f4f6;
-            }
-            .acceptor-category-title {
-                display: flex;
-                align-items: center;
-                gap: 0.625rem;
-                font-size: 0.9375rem;
-                font-weight: 600;
-                color: #374151;
-            }
-            .acceptor-count-badge {
-                background: #e5e7eb;
-                color: #4b5563;
-                padding: 0.125rem 0.5rem;
-                border-radius: 999px;
-                font-size: 0.75rem;
-                font-weight: 700;
-            }
-            .acceptor-category.donor-category .acceptor-count-badge {
-                background: #dcfce7;
-                color: #166534;
-            }
-            .acceptor-category.helper-category .acceptor-count-badge {
-                background: #dbeafe;
-                color: #1e40af;
-            }
-            .expand-arrow {
-                font-size: 1rem;
-                color: #9ca3af;
-                transition: transform 0.3s ease;
-            }
-            .acceptor-category.expanded .expand-arrow {
-                transform: rotate(90deg);
-            }
-            .acceptor-list-container {
-                max-height: 0;
-                overflow: hidden;
-                transition: max-height 0.3s ease;
-            }
-            .acceptor-category.expanded .acceptor-list-container {
-                max-height: 400px;
-                overflow-y: auto;
-            }
-            .acceptor-list {
-                padding: 0.5rem 0;
-            }
-            .acceptor-row {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 0.75rem 1.125rem;
-                border-bottom: 1px solid #f3f4f6;
-                transition: background 0.2s ease;
-            }
-            .acceptor-row:last-child {
-                border-bottom: none;
-            }
-            .acceptor-row:hover {
-                background: #f9fafb;
-            }
-            .acceptor-info {
-                display: flex;
-                align-items: center;
-                gap: 0.75rem;
-                flex: 1;
-            }
-            .acceptor-name-text {
-                font-size: 0.9375rem;
-                font-weight: 500;
-                color: #1f2937;
-            }
-            .blood-pill {
-                background: #fee2e2;
-                color: #991b1b;
-                padding: 0.1875rem 0.5rem;
-                border-radius: 999px;
-                font-size: 0.75rem;
-                font-weight: 600;
-            }
-            .acceptor-action {
-                display: flex;
-                align-items: center;
-            }
-            .btn-call-compact {
-                padding: 0.4375rem 0.875rem;
-                border: none;
-                border-radius: 6px;
-                font-size: 0.8125rem;
-                font-weight: 600;
-                cursor: pointer;
-                transition: all 0.2s ease;
-                white-space: nowrap;
-            }
-            .btn-call-donor {
-                background: #16a34a;
-                color: white;
-            }
-            .btn-call-donor:hover {
-                background: #15803d;
-                transform: translateY(-1px);
-                box-shadow: 0 2px 4px rgba(22, 163, 74, 0.3);
-            }
-            .btn-call-helper {
-                background: #2563eb;
-                color: white;
-            }
-            .btn-call-helper:hover {
-                background: #1d4ed8;
-                transform: translateY(-1px);
-                box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3);
-            }
-            .empty-acceptors {
-                padding: 1.5rem;
-                text-align: center;
-                color: #9ca3af;
-                font-size: 0.875rem;
-            }
-            .empty-state {
-                text-align: center;
-                padding: 3rem 1rem;
-                color: #9ca3af;
-            }
-            .btn-delete {
-                padding: 0.5rem 1rem;
-                background: #ef4444;
-                color: white;
-                border: none;
-                border-radius: 0.375rem;
-                font-weight: 600;
-                cursor: pointer;
-                transition: background 0.3s;
-                margin-top: 1rem;
-            }
-            .btn-delete:hover {
-                background: #dc2626;
-            }
-            /* Scrollbar styling for acceptor lists */
-            .acceptor-list-container::-webkit-scrollbar {
-                width: 6px;
-            }
-            .acceptor-list-container::-webkit-scrollbar-track {
-                background: #f3f4f6;
-                border-radius: 10px;
-            }
-            .acceptor-list-container::-webkit-scrollbar-thumb {
-                background: #d1d5db;
-                border-radius: 10px;
-            }
-            .acceptor-list-container::-webkit-scrollbar-thumb:hover {
-                background: #9ca3af;
-            }
-            </style>
-        </head>
-        <body>
-            <nav class="navbar">
-                <div class="navbar-content">
-                    <img src="logo.png" alt="iDonate Logo">
-                </div>
-            </nav>
-            <div class="container">
-                <div class="header">
-                    <h2>&#128203; My Blood Requests</h2>
-                    <button class="btn-create" onclick="openCreateModal()">+ Create Request</button>
-                </div>
-                <div id="requestsList"></div>
+            .acceptors-section { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb; }
+            .acceptor-category { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; margin-bottom: 0.75rem; overflow: hidden; transition: all 0.3s ease; }
+            .acceptor-category-header { display: flex; justify-content: space-between; align-items: center; padding: 0.875rem 1.125rem; cursor: pointer; user-select: none; transition: all 0.2s ease; }
+            .acceptor-category-header:hover { background: #f3f4f6; }
+            .acceptor-category-title { display: flex; align-items: center; gap: 0.625rem; font-size: 0.9375rem; font-weight: 600; color: #374151; }
+            .acceptor-count-badge { background: #e5e7eb; color: #4b5563; padding: 0.125rem 0.5rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; }
+            .acceptor-category.donor-category .acceptor-count-badge { background: #dcfce7; color: #166534; }
+            .acceptor-category.helper-category .acceptor-count-badge { background: #dbeafe; color: #1e40af; }
+            .expand-arrow { font-size: 1rem; color: #9ca3af; transition: transform 0.3s ease; }
+            .acceptor-category.expanded .expand-arrow { transform: rotate(90deg); }
+            .acceptor-list-container { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+            .acceptor-category.expanded .acceptor-list-container { max-height: 400px; overflow-y: auto; }
+            .acceptor-list { padding: 0.5rem 0; }
+            .acceptor-row { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1.125rem; border-bottom: 1px solid #f3f4f6; transition: background 0.2s ease; }
+            .acceptor-row:last-child { border-bottom: none; }
+            .acceptor-row:hover { background: #f9fafb; }
+            .acceptor-info { display: flex; align-items: center; gap: 0.75rem; flex: 1; }
+            .acceptor-name-text { font-size: 0.9375rem; font-weight: 500; color: #1f2937; }
+            .blood-pill { background: #fee2e2; color: #991b1b; padding: 0.1875rem 0.5rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
+            .acceptor-action { display: flex; align-items: center; }
+            .btn-call-compact { padding: 0.4375rem 0.875rem; border: none; border-radius: 6px; font-size: 0.8125rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; white-space: nowrap; }
+            .btn-call-donor { background: #16a34a; color: white; }
+            .btn-call-donor:hover { background: #15803d; transform: translateY(-1px); box-shadow: 0 2px 4px rgba(22, 163, 74, 0.3); }
+            .btn-call-helper { background: #2563eb; color: white; }
+            .btn-call-helper:hover { background: #1d4ed8; transform: translateY(-1px); box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3); }
+            .empty-acceptors { padding: 1.5rem; text-align: center; color: #9ca3af; font-size: 0.875rem; }
+            .empty-state { text-align: center; padding: 3rem 1rem; color: #9ca3af; }
+            .btn-delete { padding: 0.5rem 1rem; background: #ef4444; color: white; border: none; border-radius: 0.375rem; font-weight: 600; cursor: pointer; transition: background 0.3s; margin-top: 1rem; }
+            .btn-delete:hover { background: #dc2626; }
+            .acceptor-list-container::-webkit-scrollbar { width: 6px; }
+            .acceptor-list-container::-webkit-scrollbar-track { background: #f3f4f6; border-radius: 10px; }
+            .acceptor-list-container::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
+            .acceptor-list-container::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+        </style>
+    </head>
+    <body>
+        <nav class="navbar">
+            <div class="navbar-content">
+                <img src="logo.png" alt="iDonate Logo">
             </div>
-            <div id="createModal" class="modal" style="display: none;">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h3><span class="modal-header-icon">&#129656;</span> Create Blood Request</h3>
-                    </div>
-                    <div class="modal-body">
-                        <form id="createRequestForm">
-                            <div class="form-section">
-                                <h4 class="form-section-title">Patient &amp; Blood Information</h4>
-                                <div class="form-grid">
-                                    <div class="form-group">
-                                        <label>Patient Name <span class="required">*</span></label>
-                                        <input type="text" id="patientName" required placeholder="Enter patient's full name">
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Blood Group <span class="required">*</span></label>
-                                        <select id="bloodgroup" required>
-                                            <option value="">Select Blood Group</option>
-                                            <option value="A+">A+</option>
-                                            <option value="A-">A-</option>
-                                            <option value="B+">B+</option>
-                                            <option value="B-">B-</option>
-                                            <option value="AB+">AB+</option>
-                                            <option value="AB-">AB-</option>
-                                            <option value="O+">O+</option>
-                                            <option value="O-">O-</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Urgency Level <span class="required">*</span></label>
-                                        <select id="urgency" required>
-                                            <option value="low">Low - Can wait several days</option>
-                                            <option value="medium">Medium - Needed within 48 hours</option>
-                                            <option value="high">High - Needed within 24 hours</option>
-                                            <option value="critical">Critical - Needed immediately</option>
-                                        </select>
-                                    </div>
+        </nav>
+        <div class="container">
+            <div class="header">
+                <h2>📋 My Blood Requests</h2>
+                <button class="btn-create" onclick="openCreateModal()">+ Create Request</button>
+            </div>
+            <div id="requestsList"></div>
+        </div>
+
+        <div id="createModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><span class="modal-header-icon">🩸</span> Create Blood Request</h3>
+                </div>
+                <div class="modal-body">
+                    <form id="createRequestForm">
+                        <div class="form-section">
+                            <h4 class="form-section-title">Patient &amp; Blood Information</h4>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>Patient Name <span class="required">*</span></label>
+                                    <input type="text" id="patientName" required placeholder="Enter patient's full name">
+                                </div>
+                                <div class="form-group">
+                                    <label>Blood Group <span class="required">*</span></label>
+                                    <select id="bloodgroup" required>
+                                        <option value="">Select Blood Group</option>
+                                        <option value="A+">A+</option>
+                                        <option value="A-">A-</option>
+                                        <option value="B+">B+</option>
+                                        <option value="B-">B-</option>
+                                        <option value="AB+">AB+</option>
+                                        <option value="AB-">AB-</option>
+                                        <option value="O+">O+</option>
+                                        <option value="O-">O-</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Urgency Level <span class="required">*</span></label>
+                                    <select id="urgency" required>
+                                        <option value="low">Low - Can wait several days</option>
+                                        <option value="medium">Medium - Needed within 48 hours</option>
+                                        <option value="high">High - Needed within 24 hours</option>
+                                        <option value="critical">Critical - Needed immediately</option>
+                                    </select>
                                 </div>
                             </div>
-                            <div class="form-section">
-                                <div class="location-section">
-                                    <div class="location-section-header">
-                                        <h4><span class="location-icon">&#127973;</span> Hospital Location</h4>
-                                        <span class="smart-badge">AI Powered</span>
+                        </div>
+                        <div class="form-section">
+                            <div class="location-section">
+                                <div class="location-section-header">
+                                    <h4><span class="location-icon">🏥</span> Hospital Location</h4>
+                                    <span class="smart-badge">AI Powered</span>
+                                </div>
+                                <div class="location-inputs">
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label>Hospital Name <span class="required">*</span></label>
+                                        <input type="text" id="hospitalName" required placeholder="e.g., Apollo Hospital">
+                                        <p class="form-helper-text">Enter the hospital name for automatic location detection</p>
                                     </div>
-                                    <div class="location-inputs">
-                                        <div class="form-group" style="margin-bottom: 0;">
-                                            <label>Hospital Name <span class="required">*</span></label>
-                                            <input type="text" id="hospitalName" required placeholder="e.g., Apollo Hospital">
-                                            <p class="form-helper-text">Enter the hospital name for automatic location detection</p>
-                                        </div>
-                                        <div class="form-group" style="margin-bottom: 0;">
-                                            <label>City (Optional)</label>
-                                            <input type="text" id="city" placeholder="e.g., Chennai">
-                                            <p class="form-helper-text">For better accuracy</p>
-                                        </div>
-                                        <div class="form-group" style="margin-bottom: 0;">
-                                            <label>District (Optional)</label>
-                                            <input type="text" id="district" placeholder="e.g., T Nagar">
-                                            <p class="form-helper-text">Refine location</p>
-                                        </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label>City (Optional)</label>
+                                        <input type="text" id="city" placeholder="e.g., Chennai">
+                                        <p class="form-helper-text">For better accuracy</p>
                                     </div>
-                                    <button type="button" class="btn-locate" id="locateBtn" onclick="autoLocateHospital()">
-                                        <span class="btn-locate-icon">&#128205;</span>
-                                        <span>Auto-Locate Hospital</span>
-                                    </button>
-                                    <div id="locationInfo" class="location-info">
-                                        <div class="location-info-header">
-                                            <h5>&#x2705; Hospital Located</h5>
-                                            <span id="confidenceBadge" class="confidence-badge confidence-high">High Confidence</span>
-                                        </div>
-                                        <div id="locationDetails" class="location-details"></div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label>District (Optional)</label>
+                                        <input type="text" id="district" placeholder="e.g., T Nagar">
+                                        <p class="form-helper-text">Refine location</p>
                                     </div>
                                 </div>
-                                <div class="map-section">
-                                    <div class="map-section-header">
-                                        <span class="map-section-icon">&#128506;&#65039;</span>
-                                        <h5>Hospital Location on Map</h5>
+                                <button type="button" class="btn-locate" id="locateBtn" onclick="autoLocateHospital()">
+                                    <span class="btn-locate-icon">📍</span>
+                                    <span>Auto-Locate Hospital</span>
+                                </button>
+                                <div id="locationInfo" class="location-info">
+                                    <div class="location-info-header">
+                                        <h5>✅ Hospital Located</h5>
+                                        <span id="confidenceBadge" class="confidence-badge confidence-high">High Confidence</span>
                                     </div>
-                                    <div class="map-overlay">
-                                        <div id="map"></div>
-                                        <div id="mapLockMessage" class="map-lock-message">
-                                            &#128274; Map will activate after locating hospital
-                                        </div>
-                                    </div>
+                                    <div id="locationDetails" class="location-details"></div>
                                 </div>
                             </div>
-                            <div class="form-section">
-                                <h4 class="form-section-title">Additional Information</h4>
-                                <div class="form-group full-width">
-                                    <label>Notes (Optional)</label>
-                                    <textarea id="notes" placeholder="Add any additional information about the patient's condition, preferred contact method, or special requirements..."></textarea>
-                                    <p class="form-helper-text">Provide any relevant details that might help donors</p>
+                            <div class="map-section">
+                                <div class="map-section-header">
+                                    <span class="map-section-icon">🗺️</span>
+                                    <h5>Hospital Location on Map</h5>
+                                </div>
+                                <div class="map-overlay">
+                                    <div id="map"></div>
+                                    <div id="mapLockMessage" class="map-lock-message">🔒 Map will activate after locating hospital</div>
                                 </div>
                             </div>
-                        </form>
-                    </div>
-                    <div class="modal-actions">
-                        <button type="button" class="btn btn-secondary" onclick="closeCreateModal()">Cancel</button>
-                        <button type="submit" form="createRequestForm" class="btn btn-primary" id="createBtn" disabled>Create Request</button>
-                    </div>
+                        </div>
+                        <div class="form-section">
+                            <h4 class="form-section-title">Additional Information</h4>
+                            <div class="form-group full-width">
+                                <label>Notes (Optional)</label>
+                                <textarea id="notes" placeholder="Add any additional information about the patient's condition, preferred contact method, or special requirements..."></textarea>
+                                <p class="form-helper-text">Provide any relevant details that might help donors</p>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeCreateModal()">Cancel</button>
+                    <button type="submit" form="createRequestForm" class="btn btn-primary" id="createBtn" disabled>Create Request</button>
                 </div>
             </div>
-            <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-                <script src="./global.js"></script>
-                    <script>
-                        let user = null;
-                        let requests = [];
-                        let map = null;
-                        let marker = null;
-                        let selectedLocation = null;
-                        async function loadData() {
-                            try {
-                                await restoreOnlineStatus();
-                                user = await apiRequest('auth/me');
-                                requests = await apiRequest('requests/my-requests');
-                                await renderRequests();
-                            } catch (err) {
-                                console.error('Failed to load data:', err);
-                            }
-                        }
-                        function goToDashboard() {
-                            window.location.href = './Dashboard.html';
-                        }
-                        function handleLogout() {
-                            localStorage.removeItem('user_is_online');
-                            localStorage.removeItem('token');
-                            window.location.href = './Login.html';
-                        }
-                        function openCreateModal() {
-                            document.getElementById('createModal').style.display = 'flex';
-                            if (!map) {
-                                setTimeout(() => {
-                                    map = L.map('map').setView([13.0827, 80.2707], 13);
-                                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                                        attribution: '&copy; OpenStreetMap contributors'
-                                    }).addTo(map);
-                                }, 100);
-                            }
-                        }
-                        function closeCreateModal() {
-                            document.getElementById('createModal').style.display = 'none';
-                            document.getElementById('createRequestForm').reset();
-                            selectedLocation = null;
-                            document.getElementById('locationInfo').classList.remove('active');
-                            document.getElementById('mapLockMessage').style.display = 'block';
-                            document.getElementById('map').classList.remove('active');
-                            document.getElementById('createBtn').disabled = true;
-                            if (marker) {
-                                map.removeLayer(marker);
-                                marker = null;
-                            }
-                        }
-                        async function reverseGeocode(lat, lng) {
-                            try {
-                                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
-                                const data = await response.json();
-                                return data.display_name || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-                            } catch {
-                                return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-                            }
-                        }
-                        async function autoLocateHospital() {
-                            const hospitalName = document.getElementById('hospitalName').value.trim();
-                            const city = document.getElementById('city').value.trim();
-                            const district = document.getElementById('district').value.trim();
-                            if (!hospitalName) {
-                                alert('Please enter a hospital name');
-                                return;
-                            }
-                            const locateBtn = document.getElementById('locateBtn');
-                            const originalText = locateBtn.innerHTML;
-                            locateBtn.disabled = true;
-                            locateBtn.innerHTML = '<span class="btn-locate-icon">&#x23F3;</span><span>Locating Hospital...</span>';
-                            try {
-                                let searchQuery = hospitalName;
-                                if (city) searchQuery += `, ${city}`;
-                                if (district) searchQuery += `, ${district}`;
-                                const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&limit=5&countrycodes=in`);
-                                const results = await response.json();
-                                if (!results || results.length === 0) {
-                                    throw new Error('Hospital not found. Please check the name and try adding city/district.');
-                                }
-                                const location = results[0];
-                                selectedLocation = {
-                                    lat: parseFloat(location.lat),
-                                    lng: parseFloat(location.lon),
-                                    name: location.display_name
-                                };
-                                if (marker) {
-                                    map.removeLayer(marker);
-                                }
-                                marker = L.marker([selectedLocation.lat, selectedLocation.lng]).addTo(map);
-                                map.setView([selectedLocation.lat, selectedLocation.lng], 15);
-                                const confidence = results.length === 1 ? 'high' : results.length <= 3 ? 'medium' : 'low';
-                                const confidenceClass = `confidence-${confidence}`;
-                                const confidenceText = confidence === 'high' ? 'High Confidence' :
-                                confidence === 'medium' ? 'Medium Confidence' : 'Low Confidence';
-                                document.getElementById('confidenceBadge').className = `confidence-badge ${confidenceClass}`;
-                                document.getElementById('confidenceBadge').textContent = confidenceText;
-                                document.getElementById('locationDetails').innerHTML = `
-                                <strong>Hospital:</strong> ${hospitalName}<br>
-                                <strong>Address:</strong>
-                                ${location.display_name}<br>
-                                <strong>Coordinates:</strong>
-                                ${selectedLocation.lat.toFixed(6)},
-                                ${selectedLocation.lng.toFixed(6)}<br>
-                                <strong>Type:</strong> ${location.type}
-                                ${results.length > 1 ?
-                                '<br><br><em style="font-size: 0.75rem; color: #9ca3af;">Multiple matches found. If incorrect, add city/district for better accuracy.</em>' :
-                                ''}
-                                `;
-                                document.getElementById('locationInfo').classList.add('active');
-                                document.getElementById('createBtn').disabled = false;
-                                document.getElementById('mapLockMessage').style.display = 'none';
-                                document.getElementById('map').classList.add('active');
-                                locateBtn.innerHTML = '<span class="btn-locate-icon">&#x2705;</span><span>Hospital Located</span>';
-                                setTimeout(() => {
-                                    locateBtn.innerHTML = originalText;
-                                    locateBtn.disabled = false;
-                                }, 2000);
-                            } catch (err) {
-                                alert(err.message || 'Failed to locate hospital. Please check the name and try again.');
-                                locateBtn.innerHTML = originalText;
-                                locateBtn.disabled = false;
-                            }
-                        }
-                        document.getElementById('createRequestForm').addEventListener('submit',
-                        async (e) => {
-                            e.preventDefault();
-                            if (!selectedLocation) {
-                                alert('Please locate the hospital first using the "Auto-Locate Hospital" button');
-                                return;
-                            }
-                            const submitBtn = document.getElementById('createBtn');
-                            submitBtn.disabled = true;
-                            submitBtn.textContent = 'Creating Request...';
-                            try {
-                                const notesValue = document.getElementById('notes').value.trim();
-                                const requestData = {
-                                    patientName: document.getElementById('patientName').value,
-                                    hospitalName: document.getElementById('hospitalName').value,
-                                    bloodgroup: document.getElementById('bloodgroup').value,
-                                    urgency: document.getElementById('urgency').value,
-                                    hospitalLatitude: selectedLocation.lat,
-                                    hospitalLongitude: selectedLocation.lng,
-                                    notes: notesValue || ''
-                                };
-                                const result = await apiRequest('requests/', {
-                                    method: 'POST',
-                                    body: JSON.stringify(requestData)
-                                });
-                                const requestId = result.id;
-                                closeCreateModal();
-                                await loadData();
-                                alert('Request Created Successfully!');
-                            } catch (err) {
-                                alert('Failed to Create Request: ' + err.message);
-                                submitBtn.disabled = false;
-                                submitBtn.textContent = 'Create Request';
-                            }
-                        });
-                        function getUrgencyBadgeClass(urgency) {
-                            return `badge-${urgency || 'low'}`;
-                        }
-                        function toggleAcceptorCategory(categoryId) {
-                            const category = document.getElementById(categoryId);
-                            const allCategories = document.querySelectorAll('.acceptor-category');
-                            allCategories.forEach(cat => {
-                                if (cat.id !== categoryId) {
-                                    cat.classList.remove('expanded');
-                                }
-                            });
-                            category.classList.toggle('expanded');
-                        }
-                        function renderDonorRow(donor, type) {
-                            const buttonText = type === 'donor' ? 'Call Donor' : 'Call Helper';
-                            const buttonClass = type === 'donor' ? 'btn-call-donor' : 'btn-call-helper';
-                            return `
-                            <div class="acceptor-row">
-                            <div class="acceptor-info">
+        </div>
+
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        <script src="/nav.js"></script>
+        <script src="./global.js"></script>
+        <script>
+            let user = null;
+            let requests = [];
+            let map = null;
+            let marker = null;
+            let selectedLocation = null;
+
+            async function loadData() {
+                try {
+                    await restoreOnlineStatus();
+                    user = await apiRequest('auth/me');
+                    requests = await apiRequest('requests/my-requests');
+                    await renderRequests();
+                } catch (err) {
+                    console.error('Failed to load data:', err);
+                }
+            }
+
+            function goToDashboard() { navTo('./Dashboard.html'); }
+
+            function handleLogout() {
+                localStorage.removeItem('user_is_online');
+                localStorage.removeItem('token');
+                navTo('./Login.html');
+            }
+
+            function openCreateModal() {
+                document.getElementById('createModal').style.display = 'flex';
+                if (!map) {
+                    setTimeout(() => {
+                        map = L.map('map').setView([13.0827, 80.2707], 13);
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '&copy; OpenStreetMap contributors'
+                        }).addTo(map);
+                    }, 100);
+                }
+            }
+
+            function closeCreateModal() {
+                document.getElementById('createModal').style.display = 'none';
+                document.getElementById('createRequestForm').reset();
+                selectedLocation = null;
+                document.getElementById('locationInfo').classList.remove('active');
+                document.getElementById('mapLockMessage').style.display = 'block';
+                document.getElementById('map').classList.remove('active');
+                document.getElementById('createBtn').disabled = true;
+                if (marker) { map.removeLayer(marker); marker = null; }
+            }
+
+            async function reverseGeocode(lat, lng) {
+                try {
+                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+                    const data = await response.json();
+                    return data.display_name || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+                } catch {
+                    return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+                }
+            }
+
+            async function autoLocateHospital() {
+                const hospitalName = document.getElementById('hospitalName').value.trim();
+                const city         = document.getElementById('city').value.trim();
+                const district     = document.getElementById('district').value.trim();
+                if (!hospitalName) { alert('Please enter a hospital name'); return; }
+                const locateBtn  = document.getElementById('locateBtn');
+                const originalText = locateBtn.innerHTML;
+                locateBtn.disabled = true;
+                locateBtn.innerHTML = '<span class="btn-locate-icon">⏳</span><span>Locating Hospital...</span>';
+                try {
+                    let searchQuery = hospitalName;
+                    if (city)     searchQuery += `, ${city}`;
+                    if (district) searchQuery += `, ${district}`;
+                    const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&limit=5&countrycodes=in`);
+                    const results  = await response.json();
+                    if (!results || results.length === 0) {
+                        throw new Error('Hospital not found. Please check the name and try adding city/district.');
+                    }
+                    const location = results[0];
+                    selectedLocation = { lat: parseFloat(location.lat), lng: parseFloat(location.lon), name: location.display_name };
+                    if (marker) { map.removeLayer(marker); }
+                    marker = L.marker([selectedLocation.lat, selectedLocation.lng]).addTo(map);
+                    map.setView([selectedLocation.lat, selectedLocation.lng], 15);
+                    const confidence = results.length === 1 ? 'high' : results.length <= 3 ? 'medium' : 'low';
+                    const confidenceText = confidence === 'high' ? 'High Confidence' : confidence === 'medium' ? 'Medium Confidence' : 'Low Confidence';
+                    document.getElementById('confidenceBadge').className = `confidence-badge confidence-${confidence}`;
+                    document.getElementById('confidenceBadge').textContent = confidenceText;
+                    document.getElementById('locationDetails').innerHTML = `
+                        <strong>Hospital:</strong> ${hospitalName}<br>
+                        <strong>Address:</strong> ${location.display_name}<br>
+                        <strong>Coordinates:</strong> ${selectedLocation.lat.toFixed(6)}, ${selectedLocation.lng.toFixed(6)}<br>
+                        <strong>Type:</strong> ${location.type}
+                        ${results.length > 1 ? '<br><br><em style="font-size: 0.75rem; color: #9ca3af;">Multiple matches found. If incorrect, add city/district for better accuracy.</em>' : ''}
+                    `;
+                    document.getElementById('locationInfo').classList.add('active');
+                    document.getElementById('createBtn').disabled = false;
+                    document.getElementById('mapLockMessage').style.display = 'none';
+                    document.getElementById('map').classList.add('active');
+                    locateBtn.innerHTML = '<span class="btn-locate-icon">✅</span><span>Hospital Located</span>';
+                    setTimeout(() => { locateBtn.innerHTML = originalText; locateBtn.disabled = false; }, 2000);
+                } catch (err) {
+                    alert(err.message || 'Failed to locate hospital. Please check the name and try again.');
+                    locateBtn.innerHTML = originalText;
+                    locateBtn.disabled = false;
+                }
+            }
+
+            document.getElementById('createRequestForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (!selectedLocation) { alert('Please locate the hospital first using the "Auto-Locate Hospital" button'); return; }
+                const submitBtn = document.getElementById('createBtn');
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Creating Request...';
+                try {
+                    const notesValue  = document.getElementById('notes').value.trim();
+                    const requestData = {
+                        patientName:       document.getElementById('patientName').value,
+                        hospitalName:      document.getElementById('hospitalName').value,
+                        bloodgroup:        document.getElementById('bloodgroup').value,
+                        urgency:           document.getElementById('urgency').value,
+                        hospitalLatitude:  selectedLocation.lat,
+                        hospitalLongitude: selectedLocation.lng,
+                        notes:             notesValue || ''
+                    };
+                    await apiRequest('requests/', { method: 'POST', body: JSON.stringify(requestData) });
+                    closeCreateModal();
+                    await loadData();
+                    alert('Request Created Successfully!');
+                } catch (err) {
+                    alert('Failed to Create Request: ' + err.message);
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Create Request';
+                }
+            });
+
+            function getUrgencyBadgeClass(urgency) { return `badge-${urgency || 'low'}`; }
+
+            function toggleAcceptorCategory(categoryId) {
+                const category     = document.getElementById(categoryId);
+                const allCategories = document.querySelectorAll('.acceptor-category');
+                allCategories.forEach(cat => { if (cat.id !== categoryId) cat.classList.remove('expanded'); });
+                category.classList.toggle('expanded');
+            }
+
+            function renderDonorRow(donor, type) {
+                const buttonText  = type === 'donor' ? 'Call Donor' : 'Call Helper';
+                const buttonClass = type === 'donor' ? 'btn-call-donor' : 'btn-call-helper';
+                return `
+                    <div class="acceptor-row">
+                        <div class="acceptor-info">
                             <span class="acceptor-name-text">${donor.name}</span>
                             <span class="blood-pill">${donor.bloodgroup}</span>
-                            </div>
-                            <div class="acceptor-action">
+                        </div>
+                        <div class="acceptor-action">
                             <button class="btn-call-compact ${buttonClass}" onclick="callDonor('${donor.phone}', '${donor.name}')">
-                            ${buttonText}
+                                ${buttonText}
                             </button>
-                            </div>
-                            </div>
-                            `;
-                        }
-                        function callDonor(phone, name) {
-                            window.location.href = `tel:${phone}`;
-                        }
-                        async function deleteRequest(id) {
-                            if (!confirm('Are you sure you want to delete this request?'))
-                            return;
-                            try {
-                                await apiRequest(`requests/${id}`, { method: 'DELETE' });
-                                await loadData();
-                                alert('Request deleted successfully');
-                            } catch (err) {
-                                alert('Failed to delete request: ' + err.message);
-                            }
-                        }
-                        function generateShareText(r) {
-                            return `\uD83E\uDE78 BLOOD REQUEST\n\nBlood Group: ${r.bloodgroup || 'N/A'}\nPatient: ${r.patient_name || 'N/A'}\nHospital: ${r.hospital_name || 'N/A'}\nLocation: ${r.hospital_address || 'N/A'}\n\nIf you are eligible, please consider donating.\nKindly share this message.`;
-                        }
-                        function shareRequest(r) {
-                            const message = generateShareText(r);
-                            const encodedText = encodeURIComponent(message);
-                            window.location.href = `https://wa.me/?text=${encodedText}`;
-                        }
-                        async function renderRequests() {
-                            const listContainer = document.getElementById('requestsList');
-                            if (requests.length === 0) {
-                                listContainer.innerHTML = '<div class="empty-state">No blood requests yet</div>';
-                                return;
-                            }
-                            const htmlPromises = requests.map(async req => {
-                                const donors = req.acceptors.filter(a => a.type === 'donor');
-                                const helpers = req.acceptors.filter(a => a.type === 'helper');
-                                const locationText = await reverseGeocode(req.hospitalLatitude, req.hospitalLongitude);
-                                req.hospital_address = locationText;
-                                const reqJSON = JSON.stringify(req).replace(/"/g, '&quot;');
-                                return `
-                                <div class="request-card">
-                                <div class="request-header">
+                        </div>
+                    </div>
+                `;
+            }
+
+            function callDonor(phone, name) {
+                window.location.href = `tel:${phone}`;
+            }
+
+            async function deleteRequest(id) {
+                if (!confirm('Are you sure you want to delete this request?')) return;
+                try {
+                    await apiRequest(`requests/${id}`, { method: 'DELETE' });
+                    await loadData();
+                    alert('Request deleted successfully');
+                } catch (err) {
+                    alert('Failed to delete request: ' + err.message);
+                }
+            }
+
+            function generateShareText(r) {
+                return `🩸 BLOOD REQUEST\n\nBlood Group: ${r.bloodgroup || 'N/A'}\nPatient: ${r.patient_name || 'N/A'}\nHospital: ${r.hospital_name || 'N/A'}\nLocation: ${r.hospital_address || 'N/A'}\n\nIf you are eligible, please consider donating.\nKindly share this message.`;
+            }
+
+            function shareRequest(r) {
+                const message     = generateShareText(r);
+                const encodedText = encodeURIComponent(message);
+                window.location.href = `https://wa.me/?text=${encodedText}`;
+            }
+
+            async function renderRequests() {
+                const listContainer = document.getElementById('requestsList');
+                if (requests.length === 0) {
+                    listContainer.innerHTML = '<div class="empty-state">No blood requests yet</div>';
+                    return;
+                }
+                const htmlPromises = requests.map(async req => {
+                    const donors   = req.acceptors.filter(a => a.type === 'donor');
+                    const helpers  = req.acceptors.filter(a => a.type === 'helper');
+                    const locationText = await reverseGeocode(req.hospitalLatitude, req.hospitalLongitude);
+                    req.hospital_address = locationText;
+                    const reqJSON = JSON.stringify(req).replace(/"/g, '&quot;');
+                    return `
+                        <div class="request-card">
+                            <div class="request-header">
                                 <div>
-                                <div class="request-title">${req.bloodgroup} Blood Needed</div>
+                                    <div class="request-title">${req.bloodgroup} Blood Needed</div>
                                 </div>
                                 <div class="badges">
-                                <span class="badge ${getUrgencyBadgeClass(req.urgency)}">
-                                ${(req.urgency || 'LOW').toUpperCase()}
-                                </span>
-                                <button class="btn-share" onclick='shareRequest(${reqJSON})'>
-                                &#128228;
-                                </button>
+                                    <span class="badge ${getUrgencyBadgeClass(req.urgency)}">${(req.urgency || 'LOW').toUpperCase()}</span>
+                                    <button class="btn-share" onclick='shareRequest(${reqJSON})'>📤</button>
                                 </div>
-                                </div>
-                                <div class="request-details">
-                                ${req.patient_name ? `<strong>Patient:</strong> ${req.patient_name}<br>` : ''}
+                            </div>
+                            <div class="request-details">
+                                ${req.patient_name  ? `<strong>Patient:</strong> ${req.patient_name}<br>` : ''}
                                 ${req.hospital_name ? `<strong>Hospital:</strong> ${req.hospital_name}<br>` : ''}
-                                <strong>Location:</strong>
-                                ${locationText}<br>
+                                <strong>Location:</strong> ${locationText}<br>
                                 ${req.notes ? `<strong>Notes:</strong> ${req.notes}<br>` : ''}
-                                </div>
-                                ${req.acceptors.length > 0 ? `
+                            </div>
+                            ${req.acceptors.length > 0 ? `
                                 <div class="acceptors-section">
-                                <div class="acceptor-category donor-category" id="donors-${req.id}">
-                                <div class="acceptor-category-header" onclick="toggleAcceptorCategory('donors-${req.id}')">
-                                <div class="acceptor-category-title">
-                                <span>&#128137; Donors</span>
-                                <span class="acceptor-count-badge">${donors.length}</span>
+                                    <div class="acceptor-category donor-category" id="donors-${req.id}">
+                                        <div class="acceptor-category-header" onclick="toggleAcceptorCategory('donors-${req.id}')">
+                                            <div class="acceptor-category-title">
+                                                <span>🩸 Donors</span>
+                                                <span class="acceptor-count-badge">${donors.length}</span>
+                                            </div>
+                                            <span class="expand-arrow">›</span>
+                                        </div>
+                                        <div class="acceptor-list-container">
+                                            <div class="acceptor-list">
+                                                ${donors.length > 0 ? donors.map(d => renderDonorRow(d, 'donor')).join('') : '<div class="empty-acceptors">No donors yet</div>'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="acceptor-category helper-category" id="helpers-${req.id}">
+                                        <div class="acceptor-category-header" onclick="toggleAcceptorCategory('helpers-${req.id}')">
+                                            <div class="acceptor-category-title">
+                                                <span>🤝 Helpers</span>
+                                                <span class="acceptor-count-badge">${helpers.length}</span>
+                                            </div>
+                                            <span class="expand-arrow">›</span>
+                                        </div>
+                                        <div class="acceptor-list-container">
+                                            <div class="acceptor-list">
+                                                ${helpers.length > 0 ? helpers.map(h => renderDonorRow(h, 'helper')).join('') : '<div class="empty-acceptors">No helpers yet</div>'}
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <span class="expand-arrow">&#x203A;</span>
-                                </div>
-                                <div class="acceptor-list-container">
-                                <div class="acceptor-list">
-                                ${donors.length > 0 ?
-                                donors.map(d =>
-                                renderDonorRow(d, 'donor')).join('') :
-                                '<div class="empty-acceptors">No donors yet</div>'}
-                                </div>
-                                </div>
-                                </div>
-                                <div class="acceptor-category helper-category" id="helpers-${req.id}">
-                                <div class="acceptor-category-header" onclick="toggleAcceptorCategory('helpers-${req.id}')">
-                                <div class="acceptor-category-title">
-                                <span>&#129309; Helpers</span>
-                                <span class="acceptor-count-badge">${helpers.length}</span>
-                                </div>
-                                <span class="expand-arrow">&#x203A;</span>
-                                </div>
-                                <div class="acceptor-list-container">
-                                <div class="acceptor-list">
-                                ${helpers.length > 0 ?
-                                helpers.map(h =>
-                                renderDonorRow(h, 'helper')).join('') :
-                                '<div class="empty-acceptors">No helpers yet</div>'}
-                                </div>
-                                </div>
-                                </div>
-                                </div>
-                                ` : '<div style="color: #9ca3af; font-size: 0.875rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e5e7eb;">No acceptors yet</div>'}
-                                <div>
-                                <button class="btn-delete" onclick="deleteRequest('${req.id}')">
-                                &#128465;&#65039; Delete Request
-                                </button>
-                                </div>
-                                </div>
-                                `;
-                            });
-                            const html = await Promise.all(htmlPromises);
-                            listContainer.innerHTML = html.join('');
-                        }
-                        window.addEventListener('load', loadData);
-                        </script>
-                        <script src="/pwa-register.js"></script>
+                            ` : '<div style="color: #9ca3af; font-size: 0.875rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e5e7eb;">No acceptors yet</div>'}
+                            <div>
+                                <button class="btn-delete" onclick="deleteRequest('${req.id}')">🗑️ Delete Request</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                const html = await Promise.all(htmlPromises);
+                listContainer.innerHTML = html.join('');
+            }
+
+            window.addEventListener('load', loadData);
+        </script>
+        <script src="/pwa-register.js"></script>
     </body>
 </html>
