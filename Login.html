@@ -1,223 +1,182 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iDonate - Login</title>
-    <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#ffffff">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="white">
-    <meta name="apple-mobile-web-app-title" content="iDonate">
-    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- Instant redirect — runs in <head> before ANY paint. Zero login-page flash. -->
-    <script>
-        if (localStorage.getItem('token')) {
-            window.location.replace('./Dashboard.html');
-        }
-    </script>
+<title>iDonate - Login</title>
 
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#ffffff">
 
-        /* ── Splash Screen ─────────────────────────────────────── */
-        #splash {
-            position: fixed;
-            inset: 0;
-            background: #ffffff;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            transition: opacity 0.35s ease;
-        }
-        #splash.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-        #splash img {
-            width: 140px;
-            height: auto;
-        }
+<!-- PWA iOS -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="iDonate">
+<link rel="apple-touch-icon" href="/icons/icon-192x192.png">
 
-        /* ── Login page ────────────────────────────────────────── */
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            min-height: 100vh;
-            background: #fce7f3;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 1.25rem;
-        }
-        .card {
-            background: #ffffff;
-            border-radius: 16px;
-            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-            padding: 2.5rem 2rem;
-            max-width: 25rem;
-            width: 100%;
-        }
-        .logo-wrap {
-            text-align: center;
-            margin-bottom: 1.5rem;
-        }
-        .logo-wrap img { max-width: 130px; height: auto; }
-        .alert {
-            border-radius: 8px;
-            padding: 0.8rem 1rem;
-            font-size: 0.875rem;
-            line-height: 1.55;
-            margin-bottom: 1.25rem;
-        }
-        .alert-error { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; }
-        .alert-info  { background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; }
-        form { display: flex; flex-direction: column; gap: 0.875rem; }
-        input {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border: 1.5px solid #e5e7eb;
-            border-radius: 10px;
-            font-size: 0.9375rem;
-            color: #111827;
-            background: #f9fafb;
-            transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
-        }
-        input:focus {
-            outline: none;
-            background: #fff;
-            border-color: #dc2626;
-            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.08);
-        }
-        .btn-submit {
-            width: 100%;
-            background: #dc2626;
-            color: #fff;
-            padding: 0.8125rem;
-            border-radius: 10px;
-            font-size: 0.9375rem;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-            margin-top: 0.25rem;
-            transition: background 0.18s, transform 0.12s, box-shadow 0.18s;
-            box-shadow: 0 1px 4px rgba(220, 38, 38, 0.2);
-        }
-        .btn-submit:hover:not(:disabled) {
-            background: #b91c1c;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
-        }
-        .btn-submit:active:not(:disabled) { transform: translateY(0); }
-        .btn-submit:disabled { background: #d1d5db; cursor: not-allowed; box-shadow: none; }
-        .footer-link {
-            margin-top: 1.5rem;
-            text-align: center;
-            font-size: 0.875rem;
-            color: #6b7280;
-        }
-        .footer-link a { color: #dc2626; font-weight: 600; text-decoration: none; }
-        .footer-link a:hover { text-decoration: underline; }
-    </style>
+<!-- Instant Redirect -->
+<script>
+if (localStorage.getItem('token')) {
+    window.location.replace('./Dashboard.html');
+}
+</script>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Splash-like first screen */
+body {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #ffffff;
+    font-family: system-ui, -apple-system, sans-serif;
+    transition: background 0.4s ease;
+}
+
+/* Center logo */
+#logo {
+    text-align: center;
+}
+
+#logo img {
+    width: 140px;
+}
+
+/* Login UI hidden initially */
+#app {
+    display: none;
+    width: 100%;
+    padding: 20px;
+}
+
+/* Card */
+.card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 30px 20px;
+    max-width: 400px;
+    margin: auto;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+.logo-wrap {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.logo-wrap img {
+    width: 120px;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+input {
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+}
+
+input:focus {
+    outline: none;
+    border-color: #dc2626;
+}
+
+button {
+    padding: 12px;
+    background: #dc2626;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.footer {
+    margin-top: 15px;
+    text-align: center;
+    font-size: 14px;
+}
+
+.footer a {
+    color: #dc2626;
+    text-decoration: none;
+}
+</style>
 </head>
+
 <body>
 
-    <!-- Splash Screen: shown on launch, fades out before login UI appears -->
-    <div id="splash">
-        <img src="logo.png" alt="iDonate">
-    </div>
+<!-- Logo only -->
+<div id="logo">
+    <img src="logo.png" alt="iDonate">
+</div>
 
+<!-- Login UI -->
+<div id="app">
     <div class="card">
         <div class="logo-wrap">
-            <img src="logo.png" alt="iDonate">
+            <img src="logo.png">
         </div>
-        <div id="alertError" class="alert alert-error" style="display:none;"></div>
-        <div id="alertInfo"  class="alert alert-info"  style="display:none;"></div>
+
         <form id="loginForm">
-            <input type="email"    id="email"    placeholder="Email address" required autocomplete="email">
-            <input type="password" id="password" placeholder="Password"      required autocomplete="current-password">
-            <button type="submit" id="submitBtn" class="btn-submit">Sign In</button>
+            <input type="email" id="email" placeholder="Email" required>
+            <input type="password" id="password" placeholder="Password" required>
+            <button type="submit">Sign In</button>
         </form>
-        <p class="footer-link">
+
+        <div class="footer">
             Don't have an account? <a href="./Register.html">Sign Up</a>
-        </p>
+        </div>
     </div>
+</div>
 
-    <script>
-        // ── Splash: fade out after 1.2 s ──────────────────────────
-        window.addEventListener('load', function () {
-            setTimeout(function () {
-                var splash = document.getElementById('splash');
-                splash.classList.add('hidden');
-                setTimeout(function () { splash.remove(); }, 380);
-            }, 1200);
-        });
+<script>
+// Smooth transition (logo → login)
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        document.getElementById('logo').style.display = 'none';
+        document.body.style.background = "#fce7f3";
+        document.getElementById('app').style.display = 'block';
+    }, 900);
+});
 
-        // ── Login logic (unchanged) ───────────────────────────────
-        const API_BASE = 'https://idonate-backend-hy7w.onrender.com';
+// Login API
+const API_BASE = 'https://idonate-backend-hy7w.onrender.com';
 
-        function showError(msg) {
-            const el = document.getElementById('alertError');
-            el.textContent = msg;
-            el.style.display = 'block';
-            document.getElementById('alertInfo').style.display = 'none';
-        }
-        function showInfo(msg) {
-            const el = document.getElementById('alertInfo');
-            el.textContent = msg;
-            el.style.display = 'block';
-            document.getElementById('alertError').style.display = 'none';
-        }
-        function hideAlerts() {
-            document.getElementById('alertError').style.display = 'none';
-            document.getElementById('alertInfo').style.display  = 'none';
-        }
-        function clearPreviousSession() {
-            ['fcm_last_token', 'fcm_device_id', 'fcm_needs_reregister', 'user_is_online']
-                .forEach(k => localStorage.removeItem(k));
-        }
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            hideAlerts();
-            const email    = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const btn      = document.getElementById('submitBtn');
-            btn.disabled    = true;
-            btn.textContent = 'Signing in…';
-            try {
-                const res = await fetch(`${API_BASE}/auth/login`, {
-                    method:  'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body:    new URLSearchParams({ username: email, password }),
-                });
-                if (res.status === 403) {
-                    const err = await res.json().catch(() => null);
-                    showInfo(err?.detail || 'Please verify your email before signing in. Check your inbox for the verification link.');
-                    btn.disabled    = false;
-                    btn.textContent = 'Sign In';
-                    return;
-                }
-                if (!res.ok) {
-                    const err = await res.json().catch(() => null);
-                    throw new Error(err?.detail || 'Incorrect email or password.');
-                }
-                const data = await res.json();
-                clearPreviousSession();
-                localStorage.setItem('token', data.access_token);
-                history.replaceState(null, '', './Dashboard.html');
-                window.location.replace('./Dashboard.html');
-            } catch (err) {
-                showError(err.message);
-                btn.disabled    = false;
-                btn.textContent = 'Sign In';
-            }
-        });
-    </script>
+    const email = email.value;
+    const password = password.value;
 
-    <script src="/pwa-register.js"></script>
+    const res = await fetch(`${API_BASE}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ username: email, password })
+    });
+
+    if (res.ok) {
+        const data = await res.json();
+        localStorage.setItem('token', data.access_token);
+        window.location.replace('./Dashboard.html');
+    } else {
+        alert("Login failed");
+    }
+});
+</script>
+
+<script src="/pwa-register.js"></script>
+
 </body>
 </html>
