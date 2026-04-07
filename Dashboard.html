@@ -21,14 +21,16 @@
         }
 
         /* ── Navbar ── */
-        .navbar {
-            background: white;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-            padding: 0.75rem 1.25rem;
+        .navbar { background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .navbar-content {
+            max-width: 80rem;
+            margin: auto;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        .navbar img {
-            height: 38px;
-        }
+        .navbar img { height: 40px; cursor: pointer; }
 
         /* ── Main container ── */
         .container {
@@ -197,7 +199,9 @@
 
             app.innerHTML = `
                 <nav class="navbar">
-                    <img src="logo.png" alt="iDonate Logo">
+                    <div class="navbar-content">
+                        <img src="logo.png" alt="iDonate Logo">
+                    </div>
                 </nav>
                 <div class="container">
                     <div class="welcome-section">
