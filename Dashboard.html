@@ -14,98 +14,113 @@
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
             font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
-            min-height: 100vh;
-            background-color: #f8f8f8;
+            min-height: 100dvh;
+            background-color: #f4f4f4;
+            display: flex;
+            flex-direction: column;
         }
 
         /* ── Navbar ── */
-        .navbar { background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .navbar {
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            flex-shrink: 0;
+        }
         .navbar-content {
-            max-width: 80rem;
+            max-width: 480px;
             margin: auto;
-            padding: 1rem;
+            padding: 0.85rem 1.25rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        .navbar img { height: 40px; cursor: pointer; }
+        .navbar img { height: 38px; cursor: pointer; }
 
-        /* ── Main container ── */
+        /* ── Main container fills remaining height ── */
         .container {
             max-width: 480px;
+            width: 100%;
             margin: 0 auto;
-            padding: 0.85rem 1.25rem 1rem;
+            padding: 0 1.25rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-evenly;
         }
 
         /* ── Welcome section ── */
         .welcome-section {
             text-align: center;
-            margin-bottom: 0.85rem;
+            padding: 0.5rem 0;
         }
         .welcome-section h2 {
-            font-size: 1.3rem;
+            font-size: 1.35rem;
             font-weight: 800;
             color: #1a1a1a;
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.3rem;
+            line-height: 1.4;
         }
         .tagline {
             font-size: 0.9rem;
-            color: #555;
+            color: #666;
             font-weight: 700;
-            line-height: 1.5;
         }
-
-        
 
         /* ── Action cards ── */
         .action-cards {
             display: flex;
             flex-direction: column;
-            gap: 0.75rem;
+            gap: 1rem;
         }
+
         .action-card {
             background: white;
-            border-radius: 1.25rem;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.07);
-            padding: 0.9rem 1.5rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 2px 14px rgba(0,0,0,0.07);
+            padding: 1.25rem 1.5rem 1.4rem;
             display: flex;
             flex-direction: column;
             align-items: center;
             text-align: center;
         }
+
         .card-img {
-            width: 80px;
-            height: 80px;
+            width: 88px;
+            height: 88px;
             object-fit: contain;
-            margin-bottom: 0.4rem;
+            margin-bottom: 0.55rem;
         }
+
         .action-card h3 {
-            font-size: 1rem;
+            font-size: 1.05rem;
             font-weight: 800;
             color: #1a1a1a;
-            margin-bottom: 0.15rem;
+            margin-bottom: 0.2rem;
         }
+
         .action-card p {
-            color: #888;
-            font-size: 0.8rem;
+            color: #999;
+            font-size: 0.82rem;
             font-weight: 600;
-            margin-bottom: 0.75rem;
+            margin-bottom: 0.9rem;
         }
+
         .btn {
             border: none;
-            border-radius: 0.75rem;
-            padding: 0.6rem 2rem;
+            border-radius: 0.85rem;
+            padding: 0.65rem 2rem;
             cursor: pointer;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             font-weight: 800;
             font-family: 'Nunito', sans-serif;
             transition: opacity 0.2s, transform 0.15s;
             width: 100%;
-            max-width: 260px;
+            max-width: 280px;
         }
-        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn:hover  { opacity: 0.9; transform: translateY(-1px); }
         .btn:active { transform: translateY(0); }
         .btn-donate  { background-color: #dc2626; color: white; }
         .btn-request { background-color: #2563eb; color: white; }
@@ -115,18 +130,17 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 60vh;
+            flex: 1;
             font-size: 1.1rem;
             color: #9ca3af;
         }
     </style>
 </head>
 <body>
-    <div id="app"></div>
+    <div id="app" style="display:contents"></div>
 
     <script src="./global.js"></script>
     <script>
-        // ── Route protection — redirect to Login if no token
         (function guardRoute() {
             const token = localStorage.getItem('token');
             if (!token) {
@@ -137,7 +151,7 @@
 
         history.replaceState({ page: 'dashboard' }, '', './Dashboard.html');
 
-        window.addEventListener('popstate', function (e) {
+        window.addEventListener('popstate', function () {
             const token = localStorage.getItem('token');
             if (!token) {
                 window.location.replace('./Login.html');
@@ -151,7 +165,6 @@
         async function loadDashboard() {
             try {
                 await restoreOnlineStatus();
-
                 const userData = await apiRequest('auth/me');
                 user = userData;
                 render();
@@ -160,17 +173,13 @@
                     requestNotificationPermission()
                         .then(async (success) => {
                             if (success) {
-                                try {
-                                    user = await apiRequest('auth/me');
-                                    render();
-                                } catch (_) {}
+                                try { user = await apiRequest('auth/me'); render(); } catch (_) {}
                             }
                         })
                         .catch(err => console.error('⚠️ FCM setup failed:', err));
                 }
 
                 startLocationTracking();
-
             } catch (err) {
                 console.error(err);
                 history.replaceState(null, '', './Login.html');
@@ -195,7 +204,10 @@
 
         function render() {
             const app = document.getElementById('app');
-            if (!user) { app.innerHTML = '<div class="loading">Loading...</div>'; return; }
+            if (!user) {
+                app.innerHTML = '<div class="loading">Loading...</div>';
+                return;
+            }
 
             app.innerHTML = `
                 <nav class="navbar">
@@ -228,7 +240,6 @@
 
         loadDashboard();
 
-        // Poll every 5s
         setInterval(() => {
             if (user) {
                 apiRequest('auth/me').then(userData => {
