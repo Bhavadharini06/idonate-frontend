@@ -42,17 +42,23 @@
             text-align: center;
             margin-bottom: 2rem;
         }
+        .welcome-section .welcome-line {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #777;
+            margin-bottom: 0.2rem;
+        }
         .welcome-section h2 {
-            font-size: 1.4rem;
+            font-size: 1.5rem;
             font-weight: 800;
             color: #1a1a1a;
-            margin-bottom: 0.6rem;
+            margin-bottom: 0.75rem;
         }
         .tagline {
-            font-size: 0.92rem;
+            font-size: 0.88rem;
             color: #555;
             font-weight: 600;
-            line-height: 1.5;
+            line-height: 1.9;
         }
 
         /* ── Divider ── */
@@ -102,7 +108,7 @@
             padding: 0.75rem 2rem;
             cursor: pointer;
             font-size: 0.95rem;
-            font-weight: 700;
+            font-weight: 800;
             font-family: 'Nunito', sans-serif;
             transition: opacity 0.2s, transform 0.15s;
             width: 100%;
@@ -206,8 +212,9 @@
                 </nav>
                 <div class="container">
                     <div class="welcome-section">
-                        <h2>Welcome back, ${user.name}</h2>
-                        <p class="tagline">🩸 Donate blood to save lives or request blood when needed 🤝</p>
+                        <p class="welcome-line">Welcome back,</p>
+                        <h2>${user.name} 💓</h2>
+                        <p class="tagline">🩸 Donate blood to save lives<br>Request blood when needed 🤝</p>
                     </div>
                     <div class="divider"></div>
                     <div class="action-cards">
