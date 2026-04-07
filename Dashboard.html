@@ -11,39 +11,117 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="iDonate">
     <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; min-height: 100vh; background-color: #f9fafb; }
-        .navbar { background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .navbar-content { max-width: 80rem; margin: auto; padding: 1rem; display: flex; justify-content: space-between; align-items: center; }
-        .navbar img { height: 40px; cursor: pointer; }
-        .navbar-right { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
-        .blood-badge { background: #fee2e2; color: #dc2626; padding: 0.25rem 0.75rem; border-radius: 9999px; font-weight: 700; font-size: 0.875rem; }
-        .online-badge { background: #d1fae5; color: #065f46; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 600; }
-        .offline-badge { background: #e5e7eb; color: #374151; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 600; }
-        .logout-btn { background: none; border: 1px solid #d1d5db; border-radius: 0.5rem; padding: 0.375rem 0.75rem; cursor: pointer; font-size: 0.875rem; color: #374151; }
-        .logout-btn:hover { background: #f3f4f6; }
-        .container { max-width: 48rem; margin: auto; padding: 2rem 1rem; }
-        .welcome-section { text-align: center; margin-bottom: 2rem; }
-        .welcome-section h2 { font-size: 1.875rem; color: #1f2937; margin-bottom: 0.5rem; }
-        .welcome-section p { color: #6b7280; }
-        .status-info { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 0.75rem; padding: 1rem 1.25rem; margin-bottom: 1.5rem; text-align: center; color: #166534; font-size: 0.95rem; }
-        .status-info.offline { background: #f9fafb; border-color: #e5e7eb; color: #6b7280; }
-        .notif-banner { background: #fef3c7; border: 1px solid #fcd34d; border-radius: 0.75rem; padding: 1rem 1.25rem; margin-bottom: 1.5rem; text-align: center; color: #92400e; font-size: 0.9rem; }
-        .btn-enable-notif { margin-top: 0.5rem; display: inline-block; background: #dc2626; color: white; border: none; border-radius: 0.5rem; padding: 0.5rem 1rem; cursor: pointer; font-size: 0.875rem; }
-        .action-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-        @media (max-width: 640px) { .action-cards { grid-template-columns: 1fr; } }
-        .action-card { background: white; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 2rem 1.5rem; text-align: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
-        .action-card:hover { transform: translateY(-2px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
-        .card-icon { font-size: 3rem; margin-bottom: 1rem; }
-        .action-card h3 { font-size: 1.25rem; color: #1f2937; margin-bottom: 0.5rem; }
-        .action-card p { color: #6b7280; font-size: 0.875rem; margin-bottom: 1.5rem; }
-        .btn { border: none; border-radius: 0.5rem; padding: 0.75rem 1.5rem; cursor: pointer; font-size: 1rem; font-weight: 600; width: 100%; transition: background-color 0.3s ease; }
-        .btn-donate { background-color: #dc2626; color: white; }
-        .btn-donate:hover { background-color: #b91c1c; }
+        body {
+            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            background-color: #f8f8f8;
+        }
+
+        /* ── Navbar ── */
+        .navbar {
+            background: white;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            padding: 0.75rem 1.25rem;
+        }
+        .navbar img {
+            height: 38px;
+        }
+
+        /* ── Main container ── */
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 2rem 1.25rem 3rem;
+        }
+
+        /* ── Welcome section ── */
+        .welcome-section {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .welcome-section h2 {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #1a1a1a;
+            margin-bottom: 0.6rem;
+        }
+        .tagline {
+            font-size: 0.92rem;
+            color: #555;
+            font-weight: 600;
+            line-height: 1.5;
+        }
+
+        /* ── Divider ── */
+        .divider {
+            height: 1px;
+            background: #e5e7eb;
+            margin: 0 0 1.75rem;
+        }
+
+        /* ── Action cards ── */
+        .action-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+        .action-card {
+            background: white;
+            border-radius: 1.25rem;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+            padding: 1.75rem 1.5rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        .card-img {
+            width: 110px;
+            height: 110px;
+            object-fit: contain;
+            margin-bottom: 1rem;
+        }
+        .action-card h3 {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: #1a1a1a;
+            margin-bottom: 0.3rem;
+        }
+        .action-card p {
+            color: #888;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 1.25rem;
+        }
+        .btn {
+            border: none;
+            border-radius: 0.75rem;
+            padding: 0.75rem 2rem;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 700;
+            font-family: 'Nunito', sans-serif;
+            transition: opacity 0.2s, transform 0.15s;
+            width: 100%;
+            max-width: 260px;
+        }
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
+        .btn-donate  { background-color: #dc2626; color: white; }
         .btn-request { background-color: #2563eb; color: white; }
-        .btn-request:hover { background-color: #1d4ed8; }
-        .loading { display: flex; justify-content: center; align-items: center; height: 60vh; font-size: 1.25rem; color: #6b7280; }
+
+        /* ── Loading ── */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 60vh;
+            font-size: 1.1rem;
+            color: #9ca3af;
+        }
     </style>
 </head>
 <body>
@@ -51,7 +129,7 @@
 
     <script src="./global.js"></script>
     <script>
-        // ── FIX 1 & 5: Route protection — redirect to Login if no token
+        // ── Route protection — redirect to Login if no token
         (function guardRoute() {
             const token = localStorage.getItem('token');
             if (!token) {
@@ -60,18 +138,13 @@
             }
         })();
 
-        // ── FIX 2: Push Dashboard state into history so the back button
-        // stays inside the app and never goes to auth pages.
         history.replaceState({ page: 'dashboard' }, '', './Dashboard.html');
 
-        // If back button is pressed on Dashboard, keep the user here
-        // (they are at the root of the app session).
         window.addEventListener('popstate', function (e) {
             const token = localStorage.getItem('token');
             if (!token) {
                 window.location.replace('./Login.html');
             } else {
-                // Re-push Dashboard so back doesn't escape
                 history.pushState({ page: 'dashboard' }, '', './Dashboard.html');
             }
         });
@@ -80,19 +153,12 @@
 
         async function loadDashboard() {
             try {
-                // FIX (Problem 1 & 2): restoreOnlineStatus uses _setOnlineRaw internally,
-                // so ANY failure is silently ignored --- it will NEVER throw or cause the
-                // catch block below to redirect to Login. Only apiRequest() can throw here.
                 await restoreOnlineStatus();
 
                 const userData = await apiRequest('auth/me');
                 user = userData;
                 render();
 
-                // FIX (Problem 1): Attempt FCM setup whenever permission is granted or
-                // still pending. After FCM token registration, registerFCMToken() calls
-                // _setOnlineRaw(true) which sets is_online=true in the DB. We then
-                // re-fetch auth/me and re-render so the badge immediately shows 🟢 Online.
                 if (Notification.permission === 'default' || Notification.permission === 'granted') {
                     requestNotificationPermission()
                         .then(async (success) => {
@@ -106,12 +172,9 @@
                         .catch(err => console.error('⚠️ FCM setup failed:', err));
                 }
 
-                // Start tracking location so donors are locatable for the notification loop
                 startLocationTracking();
 
             } catch (err) {
-                // Only reaches here on 401 (token expired) from apiRequest('auth/me').
-                // restoreOnlineStatus failures are silent and never land here.
                 console.error(err);
                 history.replaceState(null, '', './Login.html');
                 window.location.replace('./Login.html');
@@ -125,8 +188,6 @@
             localStorage.removeItem('fcm_device_id');
             updateOnlineStatus(false).finally(() => {
                 localStorage.removeItem('token');
-                // ── FIX 2: Replace Dashboard in history with Login on logout
-                // so forward/back history is clean.
                 history.replaceState(null, '', './Login.html');
                 window.location.replace('./Login.html');
             });
@@ -135,68 +196,32 @@
         function navigateToDonor()     { window.location.href = './DonorView.html'; }
         function navigateToRequester() { window.location.href = './RequesterView.html'; }
 
-        async function enableNotifications() {
-            const success = await requestNotificationPermission();
-            if (success) {
-                try { user = await apiRequest('auth/me'); } catch (_) {}
-            }
-            render();
-        }
-
         function render() {
             const app = document.getElementById('app');
             if (!user) { app.innerHTML = '<div class="loading">Loading...</div>'; return; }
 
-            const onlineStatusBadge = user.is_online
-                ? `<span class="online-badge">🟢 Online</span>`
-                : `<span class="offline-badge">⚫ Offline</span>`;
-
-            const statusClass   = user.is_online ? '' : 'offline';
-            const statusMessage = user.is_online
-                ? '✅ You are online and will receive blood request notifications nearby'
-                : '⚫ You are offline. Blood requests will still be available in Donate Blood section';
-
-            let notifBanner = '';
-            if (Notification.permission === 'denied') {
-                notifBanner = `<div class="notif-banner">🔕 Notifications are blocked. Please enable them in your browser settings to receive blood request alerts.</div>`;
-            } else if (Notification.permission === 'default') {
-                notifBanner = `<div class="notif-banner">
-                    🔔 Enable notifications to get alerted for nearby blood requests instantly.
-                    <br><button class="btn-enable-notif" onclick="enableNotifications()">Enable Notifications</button>
-                </div>`;
-            }
-
             app.innerHTML = `
                 <nav class="navbar">
-                    <div class="navbar-content">
-                        <img src="logo.png" alt="iDonate Logo">
-                        <div class="navbar-right">
-                            <span>${user.name}</span>
-                            <span class="blood-badge">${user.bloodgroup}</span>
-                            ${onlineStatusBadge}
-                            <button class="logout-btn" onclick="handleLogout()">Logout</button>
-                        </div>
-                    </div>
+                    <img src="logo.png" alt="iDonate Logo">
                 </nav>
                 <div class="container">
                     <div class="welcome-section">
-                        <h2>Welcome back, ${user.name}!</h2>
-                        <p>What would you like to do today?</p>
+                        <h2>Welcome back, ${user.name}</h2>
+                        <p class="tagline">🩸 Donate blood to save lives or request blood when needed 🤝</p>
                     </div>
-                    ${notifBanner}
-                    <div class="status-info ${statusClass}">${statusMessage}</div>
+                    <div class="divider"></div>
                     <div class="action-cards">
-                        <div class="action-card" onclick="navigateToDonor()">
-                            <div class="card-icon">💉</div>
+                        <div class="action-card">
+                            <img class="card-img" src="donate.png" alt="Donate Blood">
                             <h3>Donate Blood</h3>
-                            <p>View blood requests and help save lives</p>
-                            <button class="btn btn-donate">View Requests</button>
+                            <p>Be a Lifesaver</p>
+                            <button class="btn btn-donate" onclick="navigateToDonor()">Donate Blood</button>
                         </div>
-                        <div class="action-card" onclick="navigateToRequester()">
-                            <div class="card-icon">🩸</div>
+                        <div class="action-card">
+                            <img class="card-img" src="request.png" alt="Request Blood">
                             <h3>Request Blood</h3>
-                            <p>Create a request and find donors nearby</p>
-                            <button class="btn btn-request">My Requests</button>
+                            <p>Find a Lifesaver</p>
+                            <button class="btn btn-request" onclick="navigateToRequester()">Request Blood</button>
                         </div>
                     </div>
                 </div>
@@ -205,7 +230,7 @@
 
         loadDashboard();
 
-        // Poll every 5s --- refreshes badge if DB online status changes externally
+        // Poll every 5s
         setInterval(() => {
             if (user) {
                 apiRequest('auth/me').then(userData => {
