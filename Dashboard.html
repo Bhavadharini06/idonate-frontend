@@ -14,62 +14,79 @@
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
+        html, body {
             font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
-            min-height: 100vh;
+            height: 100%;
             background-color: #f8f8f8;
+            overflow: hidden;
+        }
+
+        /* ── Full-screen layout ── */
+        #app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
         }
 
         /* ── Navbar ── */
-        .navbar { background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .navbar {
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+        }
         .navbar-content {
             max-width: 80rem;
             margin: auto;
-            padding: 1rem;
+            padding: 0.9rem 1.25rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
         .navbar img { height: 40px; cursor: pointer; }
 
-        /* ── Main container ── */
+        /* ── Main container fills remaining height ── */
         .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-evenly;
             max-width: 480px;
+            width: 100%;
             margin: 0 auto;
-            padding: 0.85rem 1.25rem 1rem;
+            padding: 1.25rem 1.5rem;
+            overflow: hidden;
         }
 
         /* ── Welcome section ── */
         .welcome-section {
             text-align: center;
-            margin-bottom: 0.85rem;
         }
         .welcome-section h2 {
-            font-size: 1.3rem;
+            font-size: 1.4rem;
             font-weight: 800;
             color: #1a1a1a;
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.4rem;
+            line-height: 1.35;
         }
         .tagline {
-            font-size: 0.9rem;
+            font-size: 1.1rem;
             color: #555;
             font-weight: 700;
             line-height: 1.5;
         }
 
-        
-
         /* ── Action cards ── */
         .action-cards {
             display: flex;
             flex-direction: column;
-            gap: 0.75rem;
+            gap: 1rem;
         }
         .action-card {
             background: white;
             border-radius: 1.25rem;
             box-shadow: 0 2px 12px rgba(0,0,0,0.07);
-            padding: 0.9rem 1.5rem;
+            padding: 1.1rem 1.5rem 1.25rem;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -79,31 +96,31 @@
             width: 80px;
             height: 80px;
             object-fit: contain;
-            margin-bottom: 0.4rem;
+            margin-bottom: 0.5rem;
         }
         .action-card h3 {
-            font-size: 1rem;
+            font-size: 1.05rem;
             font-weight: 800;
             color: #1a1a1a;
-            margin-bottom: 0.15rem;
+            margin-bottom: 0.2rem;
         }
         .action-card p {
             color: #888;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             font-weight: 600;
-            margin-bottom: 0.75rem;
+            margin-bottom: 0.85rem;
         }
         .btn {
             border: none;
             border-radius: 0.75rem;
-            padding: 0.6rem 2rem;
+            padding: 0.65rem 2rem;
             cursor: pointer;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             font-weight: 800;
             font-family: 'Nunito', sans-serif;
             transition: opacity 0.2s, transform 0.15s;
             width: 100%;
-            max-width: 260px;
+            max-width: 280px;
         }
         .btn:hover { opacity: 0.9; transform: translateY(-1px); }
         .btn:active { transform: translateY(0); }
@@ -126,7 +143,6 @@
 
     <script src="./global.js"></script>
     <script>
-        // ── Route protection — redirect to Login if no token
         (function guardRoute() {
             const token = localStorage.getItem('token');
             if (!token) {
@@ -228,7 +244,6 @@
 
         loadDashboard();
 
-        // Poll every 5s
         setInterval(() => {
             if (user) {
                 apiRequest('auth/me').then(userData => {
