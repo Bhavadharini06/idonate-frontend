@@ -14,127 +14,98 @@
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        html, body {
-            height: 100%;
-            height: 100dvh;
-            overflow: hidden;
-            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: #f4f4f4;
-        }
-
-        /* Body is a flex column that fills exactly the viewport */
         body {
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* app wrapper inherits flex column */
-        #app {
-            display: contents;
+            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            background-color: #f8f8f8;
         }
 
         /* ── Navbar ── */
-        .navbar {
-            background: white;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-            flex-shrink: 0;
-        }
+        .navbar { background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .navbar-content {
-            max-width: 480px;
+            max-width: 80rem;
             margin: auto;
-            padding: 0.75rem 1.25rem;
+            padding: 1rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        .navbar img { height: 36px; cursor: pointer; }
+        .navbar img { height: 40px; cursor: pointer; }
 
-        /* ── Main container: fills remaining height, no overflow ── */
+        /* ── Main container ── */
         .container {
             max-width: 480px;
-            width: 100%;
             margin: 0 auto;
-            padding: 0 1.1rem;
-            flex: 1;
-            min-height: 0;          /* critical: lets flex child shrink */
-            display: flex;
-            flex-direction: column;
-            justify-content: space-evenly;
+            padding: 0.85rem 1.25rem 1rem;
         }
 
         /* ── Welcome section ── */
         .welcome-section {
             text-align: center;
-            flex-shrink: 0;
+            margin-bottom: 0.85rem;
         }
         .welcome-section h2 {
-            font-size: 1.25rem;
+            font-size: 1.3rem;
             font-weight: 800;
             color: #1a1a1a;
             margin-bottom: 0.25rem;
-            line-height: 1.4;
         }
         .tagline {
-            font-size: 1.05rem;     /* increased from 0.9rem */
+            font-size: 0.9rem;
             color: #555;
             font-weight: 700;
+            line-height: 1.5;
         }
 
-        /* ── Action cards container ── */
+        
+
+        /* ── Action cards ── */
         .action-cards {
             display: flex;
             flex-direction: column;
             gap: 0.75rem;
-            flex-shrink: 0;
         }
-
-        /* ── Each card ── */
         .action-card {
             background: white;
             border-radius: 1.25rem;
             box-shadow: 0 2px 12px rgba(0,0,0,0.07);
-            padding: 0.85rem 1.25rem 1rem;
+            padding: 0.9rem 1.5rem;
             display: flex;
             flex-direction: column;
             align-items: center;
             text-align: center;
         }
-
         .card-img {
-            width: 72px;
-            height: 72px;
+            width: 80px;
+            height: 80px;
             object-fit: contain;
-            margin-bottom: 0.35rem;
+            margin-bottom: 0.4rem;
         }
-
         .action-card h3 {
             font-size: 1rem;
             font-weight: 800;
             color: #1a1a1a;
             margin-bottom: 0.15rem;
         }
-
         .action-card p {
-            color: #999;
+            color: #888;
             font-size: 0.8rem;
             font-weight: 600;
-            margin-bottom: 0.65rem;
+            margin-bottom: 0.75rem;
         }
-
         .btn {
             border: none;
-            border-radius: 0.8rem;
+            border-radius: 0.75rem;
             padding: 0.6rem 2rem;
             cursor: pointer;
-            font-size: 0.92rem;
+            font-size: 0.9rem;
             font-weight: 800;
             font-family: 'Nunito', sans-serif;
             transition: opacity 0.2s, transform 0.15s;
             width: 100%;
-            max-width: 280px;
+            max-width: 260px;
         }
-        .btn:hover  { opacity: 0.9; transform: translateY(-1px); }
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
         .btn:active { transform: translateY(0); }
         .btn-donate  { background-color: #dc2626; color: white; }
         .btn-request { background-color: #2563eb; color: white; }
@@ -144,7 +115,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            flex: 1;
+            height: 60vh;
             font-size: 1.1rem;
             color: #9ca3af;
         }
@@ -155,6 +126,7 @@
 
     <script src="./global.js"></script>
     <script>
+        // ── Route protection — redirect to Login if no token
         (function guardRoute() {
             const token = localStorage.getItem('token');
             if (!token) {
@@ -165,7 +137,7 @@
 
         history.replaceState({ page: 'dashboard' }, '', './Dashboard.html');
 
-        window.addEventListener('popstate', function () {
+        window.addEventListener('popstate', function (e) {
             const token = localStorage.getItem('token');
             if (!token) {
                 window.location.replace('./Login.html');
@@ -179,6 +151,7 @@
         async function loadDashboard() {
             try {
                 await restoreOnlineStatus();
+
                 const userData = await apiRequest('auth/me');
                 user = userData;
                 render();
@@ -187,13 +160,17 @@
                     requestNotificationPermission()
                         .then(async (success) => {
                             if (success) {
-                                try { user = await apiRequest('auth/me'); render(); } catch (_) {}
+                                try {
+                                    user = await apiRequest('auth/me');
+                                    render();
+                                } catch (_) {}
                             }
                         })
                         .catch(err => console.error('⚠️ FCM setup failed:', err));
                 }
 
                 startLocationTracking();
+
             } catch (err) {
                 console.error(err);
                 history.replaceState(null, '', './Login.html');
@@ -218,10 +195,7 @@
 
         function render() {
             const app = document.getElementById('app');
-            if (!user) {
-                app.innerHTML = '<div class="loading">Loading...</div>';
-                return;
-            }
+            if (!user) { app.innerHTML = '<div class="loading">Loading...</div>'; return; }
 
             app.innerHTML = `
                 <nav class="navbar">
@@ -254,6 +228,7 @@
 
         loadDashboard();
 
+        // Poll every 5s
         setInterval(() => {
             if (user) {
                 apiRequest('auth/me').then(userData => {
