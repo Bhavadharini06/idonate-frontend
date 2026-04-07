@@ -11,7 +11,6 @@
         <meta name="apple-mobile-web-app-status-bar-style" content="default">
         <meta name="apple-mobile-web-app-title" content="iDonate">
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
-        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -102,7 +101,6 @@
                 from { opacity: 0; transform: translateY(20px); }
                 to { opacity: 1; transform: translateY(0); }
             }
-            /* ── MODAL HEADER: single-line, no icon, no wrapping ── */
             .modal-header {
                 background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
                 color: white;
@@ -116,14 +114,16 @@
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
+                text-align: center;
+                width: 100%;
             }
             .modal-body {
-                padding: 2rem;
+                padding: 1.25rem 1.5rem;
                 overflow-y: auto;
                 flex: 1;
             }
             .form-section {
-                margin-bottom: 2rem;
+                margin-bottom: 1.25rem;
             }
             .form-section:last-child {
                 margin-bottom: 0;
@@ -132,7 +132,7 @@
                 font-size: 1rem;
                 font-weight: 600;
                 color: #374151;
-                margin-bottom: 1rem;
+                margin-bottom: 0.875rem;
                 padding-bottom: 0.5rem;
                 border-bottom: 2px solid #f3f4f6;
                 letter-spacing: -0.015em;
@@ -140,25 +140,26 @@
             .form-grid {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
-                gap: 1.25rem;
+                gap: 0.875rem;
             }
             @media (max-width: 768px) {
                 .form-grid {
                     grid-template-columns: 1fr;
                 }
             }
+            /* ── REDUCED SPACING: form-group margin tightened ── */
             .form-group {
-                margin-bottom: 1.25rem;
+                margin-bottom: 0.75rem;
             }
             .form-group.full-width {
                 grid-column: 1 / -1;
             }
             .form-group label {
                 display: block;
-                font-size: 0.875rem;
+                font-size: 0.8125rem;
                 font-weight: 600;
                 color: #374151;
-                margin-bottom: 0.5rem;
+                margin-bottom: 0.3125rem;
                 letter-spacing: -0.01em;
             }
             .form-group label .required {
@@ -169,7 +170,7 @@
             .form-group select,
             .form-group textarea {
                 width: 100%;
-                padding: 0.75rem 1rem;
+                padding: 0.625rem 0.875rem;
                 border: 1.5px solid #d1d5db;
                 border-radius: 8px;
                 font-size: 0.9375rem;
@@ -187,25 +188,25 @@
             }
             .form-group textarea {
                 resize: vertical;
-                min-height: 100px;
+                min-height: 80px;
                 line-height: 1.6;
             }
-            /* ── LOCATION SECTION: no AI badge, single-line heading, no helper texts ── */
+            /* ── LOCATION SECTION ── */
             .location-section {
                 background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
                 border: 2px solid #fbbf24;
                 border-radius: 12px;
-                padding: 1.5rem;
-                margin-bottom: 1.5rem;
+                padding: 1.125rem;
+                margin-bottom: 0;
                 box-shadow: 0 2px 8px rgba(251, 191, 36, 0.15);
             }
             .location-section-header {
                 display: flex;
                 align-items: center;
-                margin-bottom: 1.25rem;
+                margin-bottom: 0.875rem;
             }
             .location-section-header h4 {
-                font-size: 1rem;
+                font-size: 0.9375rem;
                 font-weight: 700;
                 color: #78350f;
                 display: flex;
@@ -215,14 +216,14 @@
                 white-space: nowrap;
             }
             .location-icon {
-                font-size: 1.25rem;
+                font-size: 1.125rem;
             }
-            /* Location inputs: stacked vertically for clean mobile layout */
+            /* Location inputs: stacked vertically, tighter gaps */
             .location-inputs {
                 display: flex;
                 flex-direction: column;
-                gap: 0.875rem;
-                margin-bottom: 1.25rem;
+                gap: 0.625rem;
+                margin-bottom: 0.875rem;
             }
             .location-inputs .form-group {
                 margin-bottom: 0;
@@ -238,7 +239,7 @@
             }
             .btn-locate {
                 width: 100%;
-                padding: 0.875rem 1.25rem;
+                padding: 0.75rem 1.25rem;
                 background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
                 color: white;
                 border: none;
@@ -271,129 +272,38 @@
             .btn-locate-icon {
                 font-size: 1.125rem;
             }
-            .location-info {
-                background: white;
-                border: 1.5px solid #fbbf24;
-                border-radius: 10px;
-                padding: 1.25rem;
-                margin-top: 1.25rem;
+
+            /* ── SIMPLIFIED HOSPITAL LOCATED MESSAGE ── */
+            .location-success {
                 display: none;
-                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-            }
-            .location-info.active {
-                display: block;
-                animation: slideIn 0.3s ease;
-            }
-            @keyframes slideIn {
-                from { opacity: 0; transform: translateY(-10px); }
-                to { opacity: 1; transform: translateY(0); }
-            }
-            .location-info-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 1rem;
-                padding-bottom: 0.875rem;
-                border-bottom: 1px solid #fef3c7;
-            }
-            .location-info-header h5 {
-                color: #78350f;
-                font-size: 0.9375rem;
-                font-weight: 700;
-                letter-spacing: -0.015em;
-                display: flex;
                 align-items: center;
                 gap: 0.5rem;
-            }
-            .confidence-badge {
-                padding: 0.3125rem 0.875rem;
-                border-radius: 999px;
-                font-size: 0.6875rem;
-                font-weight: 700;
-                letter-spacing: 0.025em;
-                text-transform: uppercase;
-            }
-            .confidence-high {
-                background: #d1fae5;
-                color: #065f46;
-            }
-            .confidence-medium {
-                background: #fef3c7;
-                color: #92400e;
-            }
-            .confidence-low {
-                background: #fee2e2;
-                color: #991b1b;
-            }
-            .location-details {
+                margin-top: 0.75rem;
+                padding: 0.625rem 0.875rem;
+                background: #f0fdf4;
+                border: 1.5px solid #86efac;
+                border-radius: 8px;
                 font-size: 0.875rem;
-                color: #4b5563;
-                line-height: 1.75;
-                letter-spacing: -0.01em;
-            }
-            .location-details strong {
-                color: #1f2937;
                 font-weight: 600;
+                color: #166534;
             }
-            .map-section {
-                margin-top: 1.5rem;
-            }
-            .map-section-header {
+            .location-success.active {
                 display: flex;
-                align-items: center;
-                gap: 0.625rem;
-                margin-bottom: 1rem;
+                animation: slideIn 0.25s ease;
             }
-            .map-section-header h5 {
-                font-size: 0.9375rem;
-                font-weight: 600;
-                color: #374151;
-                letter-spacing: -0.015em;
+            @keyframes slideIn {
+                from { opacity: 0; transform: translateY(-6px); }
+                to { opacity: 1; transform: translateY(0); }
             }
-            .map-section-icon {
-                font-size: 1.125rem;
+            .location-success-icon {
+                font-size: 1rem;
+                flex-shrink: 0;
             }
-            #map {
-                height: 380px;
-                width: 100%;
-                border-radius: 10px;
-                border: 2px solid #e5e7eb;
-                pointer-events: none;
-                opacity: 0.65;
-                transition: all 0.3s ease;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            }
-            #map.active {
-                pointer-events: auto;
-                opacity: 1;
-                border-color: #10b981;
-                box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
-            }
-            .map-overlay {
-                position: relative;
-            }
-            .map-lock-message {
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background: rgba(255, 255, 255, 0.97);
-                padding: 1.25rem 1.75rem;
-                border-radius: 10px;
-                box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-                z-index: 1000;
-                text-align: center;
-                color: #6b7280;
-                font-weight: 600;
-                font-size: 0.9375rem;
-                pointer-events: none;
-                backdrop-filter: blur(8px);
-                letter-spacing: -0.01em;
-            }
+
             .modal-actions {
                 display: flex;
                 gap: 1rem;
-                padding: 1.5rem 2rem;
+                padding: 1.25rem 1.5rem;
                 background: #fafafa;
                 border-top: 1px solid #e5e7eb;
             }
@@ -686,7 +596,6 @@
             </div>
             <div id="createModal" class="modal" style="display: none;">
                 <div class="modal-content">
-                    <!-- CHANGED: removed blood drop icon, single-line title only -->
                     <div class="modal-header">
                         <h3>Create Blood Request</h3>
                     </div>
@@ -694,43 +603,39 @@
                         <form id="createRequestForm">
                             <div class="form-section">
                                 <h4 class="form-section-title">Patient &amp; Blood Information</h4>
-                                <div class="form-grid">
-                                    <div class="form-group">
-                                        <label>Patient Name <span class="required">*</span></label>
-                                        <input type="text" id="patientName" required placeholder="Enter patient's full name">
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Blood Group <span class="required">*</span></label>
-                                        <select id="bloodgroup" required>
-                                            <option value="">Select Blood Group</option>
-                                            <option value="A+">A+</option>
-                                            <option value="A-">A-</option>
-                                            <option value="B+">B+</option>
-                                            <option value="B-">B-</option>
-                                            <option value="AB+">AB+</option>
-                                            <option value="AB-">AB-</option>
-                                            <option value="O+">O+</option>
-                                            <option value="O-">O-</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Urgency Level <span class="required">*</span></label>
-                                        <select id="urgency" required>
-                                            <option value="low">Low - Can wait several days</option>
-                                            <option value="medium">Medium - Needed within 48 hours</option>
-                                            <option value="high">High - Needed within 24 hours</option>
-                                            <option value="critical">Critical - Needed immediately</option>
-                                        </select>
-                                    </div>
+                                <div class="form-group">
+                                    <label>Patient Name <span class="required">*</span></label>
+                                    <input type="text" id="patientName" required placeholder="Enter patient's full name">
+                                </div>
+                                <div class="form-group">
+                                    <label>Blood Group <span class="required">*</span></label>
+                                    <select id="bloodgroup" required>
+                                        <option value="">Select Blood Group</option>
+                                        <option value="A+">A+</option>
+                                        <option value="A-">A-</option>
+                                        <option value="B+">B+</option>
+                                        <option value="B-">B-</option>
+                                        <option value="AB+">AB+</option>
+                                        <option value="AB-">AB-</option>
+                                        <option value="O+">O+</option>
+                                        <option value="O-">O-</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Urgency Level <span class="required">*</span></label>
+                                    <select id="urgency" required>
+                                        <option value="low">Low - Can wait several days</option>
+                                        <option value="medium">Medium - Needed within 48 hours</option>
+                                        <option value="high">High - Needed within 24 hours</option>
+                                        <option value="critical">Critical - Needed immediately</option>
+                                    </select>
                                 </div>
                             </div>
                             <div class="form-section">
                                 <div class="location-section">
-                                    <!-- CHANGED: removed AI badge, single-line heading -->
                                     <div class="location-section-header">
                                         <h4><span class="location-icon">&#127973;</span> Hospital Location</h4>
                                     </div>
-                                    <!-- CHANGED: stacked layout, no helper texts -->
                                     <div class="location-inputs">
                                         <div class="form-group">
                                             <label>Hospital Name <span class="required">*</span></label>
@@ -749,24 +654,10 @@
                                         <span class="btn-locate-icon">&#128205;</span>
                                         <span>Locate Hospital</span>
                                     </button>
-                                    <div id="locationInfo" class="location-info">
-                                        <div class="location-info-header">
-                                            <h5>&#x2705; Hospital Located</h5>
-                                            <span id="confidenceBadge" class="confidence-badge confidence-high">High Confidence</span>
-                                        </div>
-                                        <div id="locationDetails" class="location-details"></div>
-                                    </div>
-                                </div>
-                                <div class="map-section">
-                                    <div class="map-section-header">
-                                        <span class="map-section-icon">&#128506;&#65039;</span>
-                                        <h5>Hospital Location on Map</h5>
-                                    </div>
-                                    <div class="map-overlay">
-                                        <div id="map"></div>
-                                        <div id="mapLockMessage" class="map-lock-message">
-                                            &#128274; Map will activate after locating hospital
-                                        </div>
+                                    <!-- CHANGED: Simplified success message, no detailed card -->
+                                    <div id="locationSuccess" class="location-success">
+                                        <span class="location-success-icon">&#x2705;</span>
+                                        <span>Hospital Located</span>
                                     </div>
                                 </div>
                             </div>
@@ -785,13 +676,10 @@
                     </div>
                 </div>
             </div>
-            <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
                 <script src="./global.js"></script>
                     <script>
                         let user = null;
                         let requests = [];
-                        let map = null;
-                        let marker = null;
                         let selectedLocation = null;
                         async function loadData() {
                             try {
@@ -813,27 +701,13 @@
                         }
                         function openCreateModal() {
                             document.getElementById('createModal').style.display = 'flex';
-                            if (!map) {
-                                setTimeout(() => {
-                                    map = L.map('map').setView([13.0827, 80.2707], 13);
-                                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                                        attribution: '&copy; OpenStreetMap contributors'
-                                    }).addTo(map);
-                                }, 100);
-                            }
                         }
                         function closeCreateModal() {
                             document.getElementById('createModal').style.display = 'none';
                             document.getElementById('createRequestForm').reset();
                             selectedLocation = null;
-                            document.getElementById('locationInfo').classList.remove('active');
-                            document.getElementById('mapLockMessage').style.display = 'block';
-                            document.getElementById('map').classList.remove('active');
+                            document.getElementById('locationSuccess').classList.remove('active');
                             document.getElementById('createBtn').disabled = true;
-                            if (marker) {
-                                map.removeLayer(marker);
-                                marker = null;
-                            }
                         }
                         async function reverseGeocode(lat, lng) {
                             try {
@@ -871,33 +745,9 @@
                                     lng: parseFloat(location.lon),
                                     name: location.display_name
                                 };
-                                if (marker) {
-                                    map.removeLayer(marker);
-                                }
-                                marker = L.marker([selectedLocation.lat, selectedLocation.lng]).addTo(map);
-                                map.setView([selectedLocation.lat, selectedLocation.lng], 15);
-                                const confidence = results.length === 1 ? 'high' : results.length <= 3 ? 'medium' : 'low';
-                                const confidenceClass = `confidence-${confidence}`;
-                                const confidenceText = confidence === 'high' ? 'High Confidence' :
-                                confidence === 'medium' ? 'Medium Confidence' : 'Low Confidence';
-                                document.getElementById('confidenceBadge').className = `confidence-badge ${confidenceClass}`;
-                                document.getElementById('confidenceBadge').textContent = confidenceText;
-                                document.getElementById('locationDetails').innerHTML = `
-                                <strong>Hospital:</strong> ${hospitalName}<br>
-                                <strong>Address:</strong>
-                                ${location.display_name}<br>
-                                <strong>Coordinates:</strong>
-                                ${selectedLocation.lat.toFixed(6)},
-                                ${selectedLocation.lng.toFixed(6)}<br>
-                                <strong>Type:</strong> ${location.type}
-                                ${results.length > 1 ?
-                                '<br><br><em style="font-size: 0.75rem; color: #9ca3af;">Multiple matches found. If incorrect, add city/district for better accuracy.</em>' :
-                                ''}
-                                `;
-                                document.getElementById('locationInfo').classList.add('active');
+                                // Show simplified success message only
+                                document.getElementById('locationSuccess').classList.add('active');
                                 document.getElementById('createBtn').disabled = false;
-                                document.getElementById('mapLockMessage').style.display = 'none';
-                                document.getElementById('map').classList.add('active');
                                 locateBtn.innerHTML = '<span class="btn-locate-icon">&#x2705;</span><span>Hospital Located</span>';
                                 setTimeout(() => {
                                     locateBtn.innerHTML = originalText;
@@ -918,7 +768,7 @@
                             }
                             const submitBtn = document.getElementById('createBtn');
                             submitBtn.disabled = true;
-                            submitBtn.textContent = 'Creating Request...';
+                            submitBtn.textContent = 'Creating Request';
                             try {
                                 const notesValue = document.getElementById('notes').value.trim();
                                 const requestData = {
