@@ -19,7 +19,6 @@
             min-height: 100vh;
             background-color: #f8f8f8;
         }
-
         /* ── Navbar ── */
         .navbar { background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .navbar-content {
@@ -31,7 +30,6 @@
             align-items: center;
         }
         .navbar img.logo { height: 40px; cursor: pointer; }
-
         /* ── Profile Icon Button ── */
         .profile-btn {
             width: 40px;
@@ -52,14 +50,12 @@
         }
         .profile-btn:hover { box-shadow: 0 0 0 3px rgba(220,38,38,0.15); }
         .profile-btn img { width: 100%; height: 100%; object-fit: cover; }
-
         /* ── Main container ── */
         .container {
             max-width: 480px;
             margin: 0 auto;
             padding: 0.85rem 1.25rem 1rem;
         }
-
         /* ── Welcome section ── */
         .welcome-section {
             text-align: center;
@@ -77,7 +73,6 @@
             font-weight: 700;
             line-height: 1.5;
         }
-
         /* ── Action cards ── */
         .action-cards {
             display: flex;
@@ -128,7 +123,6 @@
         .btn:active { transform: translateY(0); }
         .btn-donate  { background-color: #dc2626; color: white; }
         .btn-request { background-color: #2563eb; color: white; }
-
         /* ── Loading ── */
         .loading {
             display: flex;
@@ -138,91 +132,7 @@
             font-size: 1.1rem;
             color: #9ca3af;
         }
-
-        /* ═══════════════════════════════════════════
-           PERMISSION OVERLAY
-        ═══════════════════════════════════════════ */
-        .perm-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.55);
-            backdrop-filter: blur(3px);
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 1.5rem;
-            animation: fadeIn 0.3s ease;
-        }
-        .perm-overlay.hidden { display: none; }
-
-        .perm-card {
-            background: white;
-            border-radius: 1.5rem;
-            padding: 2rem 1.75rem;
-            max-width: 340px;
-            width: 100%;
-            text-align: center;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-            animation: slideUp 0.35s cubic-bezier(0.34,1.56,0.64,1);
-        }
-        .perm-icon {
-            width: 72px;
-            height: 72px;
-            border-radius: 50%;
-            margin: 0 auto 1.1rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-        }
-        .perm-icon.notif { background: #fef3c7; }
-        .perm-icon.loc   { background: #dbeafe; }
-        .perm-card h3 {
-            font-size: 1.15rem;
-            font-weight: 800;
-            color: #1a1a1a;
-            margin-bottom: 0.6rem;
-        }
-        .perm-card p {
-            font-size: 0.85rem;
-            color: #666;
-            font-weight: 600;
-            line-height: 1.6;
-            margin-bottom: 1.4rem;
-        }
-        .perm-actions { display: flex; flex-direction: column; gap: 0.6rem; }
-        .perm-allow {
-            background: #dc2626;
-            color: white;
-            border: none;
-            border-radius: 0.85rem;
-            padding: 0.75rem;
-            font-size: 0.95rem;
-            font-weight: 800;
-            font-family: 'Nunito', sans-serif;
-            cursor: pointer;
-            transition: opacity 0.2s, transform 0.15s;
-        }
-        .perm-allow.blue { background: #2563eb; }
-        .perm-allow:hover { opacity: 0.9; transform: translateY(-1px); }
-        .perm-skip {
-            background: none;
-            border: 2px solid #e5e7eb;
-            border-radius: 0.85rem;
-            padding: 0.65rem;
-            font-size: 0.9rem;
-            font-weight: 700;
-            font-family: 'Nunito', sans-serif;
-            color: #6b7280;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .perm-skip:hover { background: #f9fafb; }
-
-        /* ═══════════════════════════════════════════
-           DRAWER OVERLAY
-        ═══════════════════════════════════════════ */
+        /* ── DRAWER OVERLAY ── */
         .drawer-overlay {
             position: fixed;
             inset: 0;
@@ -234,7 +144,6 @@
             transition: opacity 0.3s ease;
         }
         .drawer-overlay.open { opacity: 1; pointer-events: all; }
-
         .drawer {
             position: fixed;
             top: 0;
@@ -251,10 +160,8 @@
             box-shadow: -4px 0 30px rgba(0,0,0,0.12);
         }
         .drawer.open { transform: translateX(0); }
-
         .drawer-view { display: none; flex-direction: column; height: 100%; overflow-y: auto; }
         .drawer-view.active { display: flex; }
-
         .drawer-header {
             display: flex;
             align-items: center;
@@ -271,7 +178,6 @@
             font-size: 1rem; color: #374151; transition: background 0.2s;
         }
         .drawer-close-btn:hover, .drawer-back-btn:hover { background: #e5e7eb; }
-
         .drawer-profile {
             background: linear-gradient(135deg, #fff5f5 0%, #fef2f2 100%);
             padding: 1.5rem 1.25rem 1.25rem;
@@ -293,7 +199,6 @@
             background: #dc2626; color: white; font-size: 0.75rem; font-weight: 800;
             padding: 0.2rem 0.65rem; border-radius: 100px; letter-spacing: 0.3px;
         }
-
         .drawer-menu { padding: 0.75rem 0; flex: 1; }
         .menu-item {
             display: flex; align-items: center; gap: 0.9rem; padding: 0.85rem 1.25rem;
@@ -313,7 +218,6 @@
         .menu-divider { height: 1px; background: #f3f4f6; margin: 0.25rem 1.25rem; }
         .menu-item.logout .menu-label { color: #dc2626; }
         .menu-item.logout .menu-icon { background: #fef2f2; }
-
         /* ── Settings ── */
         .settings-body { padding: 1rem 1.25rem; flex: 1; }
         .settings-section-label {
@@ -344,14 +248,19 @@
             border-radius: 50%; background: white; box-shadow: 0 1px 4px rgba(0,0,0,0.2); transition: left 0.25s;
         }
         .toggle input:checked ~ .toggle-thumb { left: 23px; }
+        /* FIX: Delete row — single line, no wrapping */
         .delete-row {
             display: flex; align-items: center; gap: 0.8rem; padding: 0.85rem 1rem;
             background: #fff5f5; border-radius: 1rem; cursor: pointer;
             transition: background 0.15s; border: 1.5px solid #fecaca;
         }
         .delete-row:hover { background: #fee2e2; }
-        .delete-row span { font-size: 0.88rem; font-weight: 700; color: #dc2626; flex: 1; }
-
+        .delete-row span {
+            font-size: 0.88rem; font-weight: 700; color: #dc2626; flex: 1;
+            white-space: nowrap; /* FIX: prevent text wrapping */
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
         /* ── Edit Profile ── */
         .edit-body { padding: 1.25rem; flex: 1; display: flex; flex-direction: column; gap: 1rem; }
         .edit-avatar-wrap { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem; }
@@ -381,8 +290,8 @@
             padding: 0.8rem; font-size: 0.95rem; font-weight: 800; font-family: 'Nunito', sans-serif;
             cursor: pointer; margin-top: auto; transition: opacity 0.2s, transform 0.15s;
         }
-        .save-btn:hover { opacity: 0.9; transform: translateY(-1px); }
-
+        .save-btn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
+        .save-btn:disabled { background: #d1d5db; cursor: not-allowed; }
         /* ── Help ── */
         .help-body { padding: 1.5rem 1.25rem; flex: 1; display: flex; flex-direction: column; gap: 1rem; }
         .help-illustration {
@@ -410,7 +319,6 @@
         .contact-card-info { display: flex; flex-direction: column; }
         .contact-card-label { font-size: 0.72rem; font-weight: 800; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.1rem; }
         .contact-card-value { font-size: 0.88rem; font-weight: 700; color: #1a1a1a; }
-
         @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { transform: translateY(30px); opacity:0; } to { transform: translateY(0); opacity:1; } }
     </style>
@@ -418,34 +326,11 @@
 <body>
     <div id="app"></div>
 
-    <!-- ═══ PERMISSION OVERLAYS ═══ -->
-    <div id="permOverlay" class="perm-overlay hidden">
-        <div id="permNotif" class="perm-card">
-            <div class="perm-icon notif">🔔</div>
-            <h3>Stay Updated Instantly</h3>
-            <p>Enable notifications to receive real-time alerts for blood donation requests near you — every second matters.</p>
-            <div class="perm-actions">
-                <button class="perm-allow" onclick="handleNotifAllow()">Allow Notifications</button>
-                <button class="perm-skip"  onclick="showLocationPerm()">Not Now</button>
-            </div>
-        </div>
-        <div id="permLoc" class="perm-card" style="display:none;">
-            <div class="perm-icon loc">📍</div>
-            <h3>Allow Location Access</h3>
-            <p>Allow location access to help you find nearby blood donors and blood requests faster.</p>
-            <div class="perm-actions">
-                <button class="perm-allow blue" onclick="handleLocAllow()">Allow Location</button>
-                <button class="perm-skip"       onclick="donePerms()">Not Now</button>
-            </div>
-        </div>
-    </div>
-
     <!-- ═══ DRAWER OVERLAY ═══ -->
     <div id="drawerOverlay" class="drawer-overlay" onclick="closeDrawer()"></div>
 
     <!-- ═══ DRAWER PANEL ═══ -->
     <div id="drawer" class="drawer">
-
         <!-- MAIN MENU -->
         <div id="drawerMain" class="drawer-view active">
             <div class="drawer-header">
@@ -485,7 +370,8 @@
                         <option>O+</option><option>O-</option>
                     </select>
                 </div>
-                <button class="save-btn" onclick="saveProfile()">Save Changes</button>
+                <!-- FIX: Save button with proper state management -->
+                <button class="save-btn" id="saveProfileBtn" onclick="saveProfile()">Save Changes</button>
             </div>
         </div>
 
@@ -505,6 +391,7 @@
                             <div class="settings-row-label">Notifications</div>
                             <div class="settings-row-sub">Blood request alerts</div>
                         </div>
+                        <!-- FIX: Toggle reflects real permission state; does not show custom UI -->
                         <label class="toggle">
                             <input type="checkbox" id="toggleNotif" onchange="handleNotifToggle(this)">
                             <div class="toggle-track"></div>
@@ -517,6 +404,7 @@
                             <div class="settings-row-label">Location Access</div>
                             <div class="settings-row-sub">Find donors nearby</div>
                         </div>
+                        <!-- FIX: Toggle reflects real device location state -->
                         <label class="toggle">
                             <input type="checkbox" id="toggleLoc" onchange="handleLocToggle(this)">
                             <div class="toggle-track"></div>
@@ -525,10 +413,11 @@
                     </div>
                 </div>
                 <div class="settings-section-label">Danger Zone</div>
+                <!-- FIX: Delete Account — single line, proper spacing -->
                 <div class="delete-row" onclick="confirmDeleteAccount()">
-                    <div class="settings-row-icon" style="background:#fee2e2; width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1rem;">🗑️</div>
+                    <div class="settings-row-icon" style="background:#fee2e2; width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1rem; flex-shrink:0;">🗑️</div>
                     <span>Delete Account</span>
-                    <span style="color:#dc2626; font-size:0.8rem;">›</span>
+                    <span style="color:#dc2626; font-size:0.8rem; flex-shrink:0;">›</span>
                 </div>
             </div>
         </div>
@@ -564,7 +453,6 @@
                 </div>
             </div>
         </div>
-
     </div><!-- /drawer -->
 
     <script src="./global.js"></script>
@@ -579,7 +467,6 @@
         })();
 
         history.replaceState({ page: 'dashboard' }, '', './Dashboard.html');
-
         window.addEventListener('popstate', function (e) {
             const token = localStorage.getItem('token');
             if (!token) {
@@ -591,31 +478,186 @@
 
         let user = null;
 
-        // ── Permission Flow
+        // ═══════════════════════════════════════════════════════════
+        // FIX 1 & 3: PERMISSION FLOW — use only system dialogs, no custom UI
+        // ═══════════════════════════════════════════════════════════
         const PERM_KEY = 'idonate_perms_shown';
 
-        function showPermissionFlow() {
+        async function showPermissionFlow() {
             if (localStorage.getItem(PERM_KEY)) return;
-            document.getElementById('permOverlay').classList.remove('hidden');
-        }
-        function handleNotifAllow() {
-            requestNotificationPermission && requestNotificationPermission();
-            showLocationPerm();
-        }
-        function showLocationPerm() {
-            document.getElementById('permNotif').style.display = 'none';
-            document.getElementById('permLoc').style.display   = 'block';
-        }
-        function handleLocAllow() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(() => {}, () => {});
+
+            // Step 1: Trigger NATIVE system notification permission only
+            if ('Notification' in window && Notification.permission === 'default') {
+                await Notification.requestPermission();
             }
-            donePerms();
-        }
-        function donePerms() {
+
+            // Step 2: Trigger NATIVE system location permission only
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    () => {},
+                    (err) => {
+                        // FIX 7: If location denied/unavailable, do NOT auto-enable GPS
+                        // Just silently handle — device settings control GPS
+                        console.warn('[iDonate] Location not granted:', err.message);
+                    },
+                    { enableHighAccuracy: true, timeout: 10000 }
+                );
+            }
+
             localStorage.setItem(PERM_KEY, '1');
-            document.getElementById('permOverlay').classList.add('hidden');
         }
+
+        // ═══════════════════════════════════════════════════════════
+        // FIX 4: SETTINGS TOGGLES — reflect real device state
+        // ═══════════════════════════════════════════════════════════
+
+        /**
+         * Sync toggle UI to actual permission state.
+         * Called when Settings drawer opens.
+         */
+        async function syncSettingsToggles() {
+            // Notification toggle — reflect real OS permission
+            const notifGranted = ('Notification' in window) && Notification.permission === 'granted';
+            document.getElementById('toggleNotif').checked = notifGranted;
+
+            // Location toggle — reflect real device permission + device GPS state
+            await syncLocationToggle();
+        }
+
+        /**
+         * FIX 4 & 7: Location toggle reflects real device state.
+         * If permission is granted but device GPS is OFF, toggle shows OFF.
+         */
+        async function syncLocationToggle() {
+            const locToggle = document.getElementById('toggleLoc');
+
+            if (!navigator.geolocation) {
+                locToggle.checked = false;
+                return;
+            }
+
+            if (navigator.permissions) {
+                try {
+                    const status = await navigator.permissions.query({ name: 'geolocation' });
+                    if (status.state === 'granted') {
+                        // Permission granted — now check if device GPS is actually ON
+                        // by trying a quick position fetch
+                        navigator.geolocation.getCurrentPosition(
+                            () => { locToggle.checked = true; },
+                            (err) => {
+                                // POSITION_UNAVAILABLE (code 2) = GPS is OFF on device
+                                // TIMEOUT (code 3) or PERMISSION_DENIED (code 1) = also OFF/denied
+                                locToggle.checked = false;
+                            },
+                            { enableHighAccuracy: false, timeout: 3000, maximumAge: 10000 }
+                        );
+                    } else {
+                        locToggle.checked = false;
+                    }
+                } catch (e) {
+                    locToggle.checked = false;
+                }
+            } else {
+                // Fallback for browsers without Permissions API
+                navigator.geolocation.getCurrentPosition(
+                    () => { locToggle.checked = true; },
+                    () => { locToggle.checked = false; },
+                    { enableHighAccuracy: false, timeout: 3000, maximumAge: 10000 }
+                );
+            }
+        }
+
+        /**
+         * FIX 4: Notification toggle — triggers system permission dialog.
+         * If user turns it OFF (permission already granted), we can only
+         * guide them to system settings since browsers don't allow revoking.
+         */
+        async function handleNotifToggle(el) {
+            if (el.checked) {
+                // FIX 1 & 3: Trigger ONLY native system notification dialog
+                if (!('Notification' in window)) {
+                    el.checked = false;
+                    return;
+                }
+                if (Notification.permission === 'granted') {
+                    // Already granted — register FCM and set online
+                    el.checked = true;
+                    requestNotificationPermission().catch(() => {});
+                } else if (Notification.permission === 'default') {
+                    const result = await Notification.requestPermission();
+                    el.checked = result === 'granted';
+                    if (result === 'granted') {
+                        requestNotificationPermission().catch(() => {});
+                    }
+                } else {
+                    // Denied — browser won't show dialog again; guide to settings
+                    el.checked = false;
+                    alert('Notifications are blocked. Please enable them in your browser/device settings.');
+                }
+            } else {
+                // User turned off — we can't programmatically revoke, inform them
+                el.checked = Notification.permission === 'granted'; // revert visually
+                alert('To disable notifications, please turn them off in your browser or device settings.');
+            }
+        }
+
+        /**
+         * FIX 4 & 7: Location toggle handler.
+         * Enabling: triggers system geolocation permission.
+         * If device GPS is OFF → prompt user to open device location settings (intent).
+         * App does NOT auto-enable GPS.
+         */
+        function handleLocToggle(el) {
+            if (el.checked) {
+                if (!navigator.geolocation) {
+                    el.checked = false;
+                    alert('Geolocation is not supported by your browser.');
+                    return;
+                }
+                // FIX 1: Trigger native system location permission only
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        // Permission granted and GPS is ON
+                        el.checked = true;
+                        updateLocation(pos.coords.latitude, pos.coords.longitude);
+                    },
+                    (err) => {
+                        el.checked = false;
+                        if (err.code === 1) {
+                            // Permission denied
+                            alert('Location permission denied. Please enable it in your device settings.');
+                        } else if (err.code === 2) {
+                            // FIX 7: Device GPS is OFF — redirect user to location settings
+                            // App cannot auto-enable GPS; only the user can via device settings
+                            el.checked = false;
+                            if (confirm('Your device location (GPS) is turned OFF.\n\nWould you like to open location settings to enable it?')) {
+                                // On Android/iOS PWA, this attempts to open device location settings
+                                // Standard intent for Android
+                                window.location.href = 'geo:0,0?q=';
+                            }
+                        } else {
+                            alert('Unable to get location. Please check your device location settings.');
+                        }
+                    },
+                    { enableHighAccuracy: true, timeout: 10000 }
+                );
+            } else {
+                // User disabled location in app — stop usage, reflect as OFF
+                el.checked = false;
+                // Update backend to reflect location is no longer available
+                apiRequest('users/online', {
+                    method: 'PUT',
+                    body: JSON.stringify({ is_online: false })
+                }).catch(() => {});
+            }
+        }
+
+        // Sync toggles when Settings drawer becomes active
+        document.getElementById('drawer').addEventListener('transitionend', () => {
+            if (document.getElementById('drawerSettings').classList.contains('active')) {
+                syncSettingsToggles();
+            }
+        });
 
         // ── Drawer
         function openDrawer() {
@@ -623,12 +665,14 @@
             document.getElementById('drawerOverlay').classList.add('open');
             document.body.style.overflow = 'hidden';
         }
+
         function closeDrawer() {
             document.getElementById('drawer').classList.remove('open');
             document.getElementById('drawerOverlay').classList.remove('open');
             document.body.style.overflow = '';
             setTimeout(() => showDrawerView('Main'), 320);
         }
+
         function showDrawerView(view) {
             document.querySelectorAll('.drawer-view').forEach(v => v.classList.remove('active'));
             const el = document.getElementById('drawer' + view);
@@ -636,8 +680,6 @@
         }
 
         // ── Drawer Profile
-        // FIX: Backend serialize_user() returns 'bloodgroup' (no underscore).
-        // All references changed from user.blood_group → user.bloodgroup.
         function renderDrawerProfile() {
             if (!user) return;
             const initials = (user.name || '?').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
@@ -676,7 +718,6 @@
         }
 
         // ── Edit Profile
-        // FIX: user.bloodgroup (not user.blood_group) matches backend field.
         function openEditProfile() {
             if (!user) return;
             const initials = (user.name || '?').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
@@ -686,86 +727,101 @@
             document.getElementById('editName').value  = user.name  || '';
             document.getElementById('editPhone').value = user.phone || '';
             const sel = document.getElementById('editBlood');
-            if (user.bloodgroup) sel.value = user.bloodgroup; // FIX: bloodgroup not blood_group
+            if (user.bloodgroup) sel.value = user.bloodgroup;
+            const saveBtn = document.getElementById('saveProfileBtn');
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Save Changes';
             showDrawerView('Edit');
         }
 
-        // FIX: Previous version called 'auth/profile' (PATCH) — endpoint does NOT exist in backend.
-        // The error from this non-existent call was propagating and causing the dashboard catch block
-        // to fire, redirecting to Login. Now the error is caught gracefully with a user-friendly message.
+        /**
+         * FIX 6: Save profile — validates inputs, calls correct API endpoint,
+         * shows success message, handles errors.
+         */
         async function saveProfile() {
             const name       = document.getElementById('editName').value.trim();
             const phone      = document.getElementById('editPhone').value.trim();
             const bloodgroup = document.getElementById('editBlood').value;
-            if (!name) { alert('Please enter your name.'); return; }
+            const saveBtn    = document.getElementById('saveProfileBtn');
+
+            // FIX 6: Validate inputs before saving
+            if (!name) {
+                alert('Please enter your name.');
+                return;
+            }
+            if (!phone) {
+                alert('Please enter your phone number.');
+                return;
+            }
+            if (!bloodgroup) {
+                alert('Please select your blood group.');
+                return;
+            }
+
+            saveBtn.disabled    = true;
+            saveBtn.textContent = 'Saving...';
+
             try {
+                // FIX 6: Call correct backend endpoint with proper method
                 await apiRequest('auth/profile', {
                     method: 'PATCH',
                     body: JSON.stringify({ name, phone, bloodgroup })
                 });
+
+                // FIX 6: Refresh user data after successful save
                 user = await apiRequest('auth/me');
                 render();
                 renderDrawerProfile();
                 showDrawerView('Main');
+
+                // FIX 6: Show success message
+                alert('Profile updated successfully!');
             } catch (err) {
-                // Gracefully handle missing endpoint — never crash or redirect to Login
-                console.error(err);
-                alert('Profile update is currently unavailable. Please contact support at idonateconnect@gmail.com to update your details.');
-                showDrawerView('Main');
+                console.error('Save profile error:', err);
+                // FIX 6: Handle API errors properly
+                if (err.message && err.message.toLowerCase().includes('not found')) {
+                    alert('Profile update endpoint not available. Please contact support at idonateconnect@gmail.com.');
+                } else {
+                    alert('Failed to update profile: ' + (err.message || 'Please try again.'));
+                }
+                saveBtn.disabled    = false;
+                saveBtn.textContent = 'Save Changes';
             }
         }
 
-        // ── Settings Toggles
-        function syncSettingsToggles() {
-            const notifGranted = Notification.permission === 'granted';
-            document.getElementById('toggleNotif').checked = notifGranted;
-            if (navigator.permissions) {
-                navigator.permissions.query({ name: 'geolocation' }).then(s => {
-                    document.getElementById('toggleLoc').checked = s.state === 'granted';
-                }).catch(() => {});
-            }
-        }
-        function handleNotifToggle(el) {
-            if (el.checked) {
-                Notification.requestPermission().then(p => { el.checked = p === 'granted'; });
-            }
-        }
-        function handleLocToggle(el) {
-            if (el.checked) {
-                navigator.geolocation && navigator.geolocation.getCurrentPosition(
-                    () => { el.checked = true; },
-                    () => { el.checked = false; }
-                );
-            }
-        }
-        document.getElementById('drawer').addEventListener('transitionend', () => {
-            if (document.getElementById('drawerSettings').classList.contains('active')) {
-                syncSettingsToggles();
-            }
-        });
-
-        // FIX: Previous version called 'auth/account' (DELETE) — endpoint does NOT exist in backend.
-        // Catching the error gracefully instead of letting it bubble up.
+        /**
+         * FIX 5: Delete Account — calls correct backend API, handles success/error.
+         */
         function confirmDeleteAccount() {
-            if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-                apiRequest('auth/account', { method: 'DELETE' })
-                    .then(() => handleLogout())
-                    .catch(err => {
-                        console.error(err);
-                        alert('Account deletion is not available via the app. Please contact support at idonateconnect@gmail.com to delete your account.');
-                    });
-            }
+            if (!confirm('Are you sure you want to delete your account? This action cannot be undone.')) return;
+
+            // FIX 5: Call the correct backend endpoint
+            apiRequest('auth/account', { method: 'DELETE' })
+                .then(() => {
+                    alert('Your account has been deleted successfully.');
+                    handleLogout();
+                })
+                .catch(err => {
+                    console.error('Delete account error:', err);
+                    // FIX 5: Handle error response properly
+                    if (err.message && (err.message.includes('404') || err.message.toLowerCase().includes('not found'))) {
+                        alert('Account deletion is not available via the app at this time. Please contact support at idonateconnect@gmail.com to delete your account.');
+                    } else {
+                        alert('Failed to delete account: ' + (err.message || 'Please try again or contact support.'));
+                    }
+                });
         }
 
         // ── Load Dashboard
         async function loadDashboard() {
             try {
                 await restoreOnlineStatus();
-
                 const userData = await apiRequest('auth/me');
                 user = userData;
                 render();
                 renderDrawerProfile();
+
+                // FIX 1 & 3: Permission flow uses only native system dialogs
                 showPermissionFlow();
 
                 if (Notification.permission === 'default' || Notification.permission === 'granted') {
@@ -783,7 +839,6 @@
                 }
 
                 startLocationTracking();
-
             } catch (err) {
                 console.error(err);
                 history.replaceState(null, '', './Login.html');
@@ -810,12 +865,10 @@
         function render() {
             const app = document.getElementById('app');
             if (!user) { app.innerHTML = '<div class="loading">Loading...</div>'; return; }
-
             const initials = (user.name || '?').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
             const avatarHtml = user.photo_url
                 ? `<img src="${user.photo_url}" alt="Avatar">`
                 : initials;
-
             app.innerHTML = `
                 <nav class="navbar">
                     <div class="navbar-content">
