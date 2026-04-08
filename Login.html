@@ -129,60 +129,116 @@
             el.style.display = 'block';
             document.getElementById('alertInfo').style.display = 'none';
         }
+
         function showInfo(msg) {
             const el = document.getElementById('alertInfo');
             el.textContent = msg;
             el.style.display = 'block';
             document.getElementById('alertError').style.display = 'none';
         }
+
         function hideAlerts() {
             document.getElementById('alertError').style.display = 'none';
             document.getElementById('alertInfo').style.display  = 'none';
         }
+
         function clearPreviousSession() {
             ['fcm_last_token', 'fcm_device_id', 'fcm_needs_reregister', 'user_is_online']
                 .forEach(k => localStorage.removeItem(k));
+        }
+
+        function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+        // FIX: Proactively wake the server when the login page loads.
+        // Render free tier sleeps after ~15 min of inactivity. The wake-up
+        // ping runs silently in the background so by the time the user
+        // fills in their credentials, the server is already warm.
+        async function wakeServer() {
+            try {
+                await fetch(`${API_BASE}/`, { signal: AbortSignal.timeout(60000) });
+                console.log('[iDonate] Server warm.');
+            } catch (e) {
+                console.warn('[iDonate] Wake ping failed (will retry on login):', e.message);
+            }
+        }
+        wakeServer(); // fire-and-forget on page load
+
+        // FIX: Login fetch now retries on network errors (ERR_FAILED) caused
+        // by Render cold start CORS preflight failures. Retries up to 3 times
+        // with 3s backoff. Auth/validation errors (4xx) are NOT retried.
+        async function loginWithRetry(email, password, retries = 3) {
+            for (let attempt = 1; attempt <= retries; attempt++) {
+                try {
+                    const res = await fetch(`${API_BASE}/auth/login`, {
+                        method:  'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body:    new URLSearchParams({ username: email, password }),
+                    });
+
+                    if (res.status === 403) {
+                        const err = await res.json().catch(() => null);
+                        throw Object.assign(
+                            new Error(err?.detail || 'Please verify your email before signing in.'),
+                            { isVerificationError: true }
+                        );
+                    }
+
+                    if (!res.ok) {
+                        // 4xx = real credential error, don't retry
+                        if (res.status < 500) {
+                            const err = await res.json().catch(() => null);
+                            throw new Error(err?.detail || 'Incorrect email or password.');
+                        }
+                        // 5xx = server error, retry
+                        if (attempt < retries) {
+                            console.warn(`[iDonate] Login 5xx (attempt ${attempt}/${retries}), retrying...`);
+                            await sleep(3000 * attempt);
+                            continue;
+                        }
+                        throw new Error('Server error. Please try again in a moment.');
+                    }
+
+                    return await res.json(); // success
+
+                } catch (err) {
+                    // Don't retry real errors (non-network)
+                    if (err.isVerificationError || !(err instanceof TypeError)) {
+                        throw err;
+                    }
+                    // Network/CORS error (TypeError) — retry
+                    if (attempt < retries) {
+                        console.warn(`[iDonate] Login network error (attempt ${attempt}/${retries}):`, err.message);
+                        await sleep(3000 * attempt);
+                        continue;
+                    }
+                    throw new Error('Unable to connect. The server may be starting up — please try again in 30 seconds.');
+                }
+            }
         }
 
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             hideAlerts();
 
-            const email = document.getElementById('email').value;
+            const email    = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            const btn = document.getElementById('submitBtn');
+            const btn      = document.getElementById('submitBtn');
 
             btn.disabled    = true;
-            btn.textContent = 'Signing in…';
+            btn.textContent = 'Signing in...';
 
             try {
-                const res = await fetch(`${API_BASE}/auth/login`, {
-                    method:  'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body:    new URLSearchParams({ username: email, password }),
-                });
-
-                if (res.status === 403) {
-                    const err = await res.json().catch(() => null);
-                    showInfo(err?.detail || 'Please verify your email before signing in. Check your inbox for the verification link.');
-                    btn.disabled    = false;
-                    btn.textContent = 'Sign In';
-                    return;
-                }
-
-                if (!res.ok) {
-                    const err = await res.json().catch(() => null);
-                    throw new Error(err?.detail || 'Incorrect email or password.');
-                }
-
-                const data = await res.json();
+                const data = await loginWithRetry(email, password);
                 clearPreviousSession();
                 localStorage.setItem('token', data.access_token);
                 history.replaceState(null, '', './Dashboard.html');
                 window.location.replace('./Dashboard.html');
-
             } catch (err) {
-                showError(err.message);
+                if (err.isVerificationError) {
+                    showInfo(err.message);
+                } else {
+                    showError(err.message);
+                }
                 btn.disabled    = false;
                 btn.textContent = 'Sign In';
             }
