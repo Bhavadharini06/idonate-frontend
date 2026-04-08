@@ -36,66 +36,118 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;m
 </head>
 <body>
 <div class="card">
-<div class="logo-wrap"><img src="logo.png" alt="iDonate"></div>
-<div id="stateLoading">
-<div class="spinner"></div>
-<p class="state-title">Verifying your email</p>
-<p class="state-sub">Please wait a moment…</p>
+  <div class="logo-wrap"><img src="logo.png" alt="iDonate"></div>
+
+  <div id="stateLoading">
+    <div class="spinner"></div>
+    <p class="state-title">Verifying your email</p>
+    <p class="state-sub">Please wait a moment...</p>
+  </div>
+
+  <div id="stateSuccess">
+    <div class="state-icon">✅</div>
+    <p class="state-title">Email Verified Successfully</p>
+    <p class="state-sub">Redirecting you to login...</p>
+    <div class="countdown-wrap">Taking you there in <strong id="countdown">3</strong>s</div>
+  </div>
+
+  <div id="stateError">
+    <div class="state-icon">❌</div>
+    <p class="state-title">Verification Failed</p>
+    <div class="error-box" id="errorMessage">The verification link is invalid or has expired.</div>
+    <a class="btn-primary" href="./Register.html">Register Again</a>
+    <a class="btn-ghost"   href="./Login.html">← Back to Login</a>
+  </div>
 </div>
-<div id="stateSuccess">
-<div class="state-icon">✅</div>
-<p class="state-title">Email Verified Successfully</p>
-<p class="state-sub">Redirecting you to login…</p>
-<div class="countdown-wrap">Taking you there in <strong id="countdown">3</strong>s</div>
-</div>
-<div id="stateError">
-<div class="state-icon">❌</div>
-<p class="state-title">Verification Failed</p>
-<div class="error-box" id="errorMessage">The verification link is invalid or has expired.</div>
-<a class="btn-primary" href="./Register.html">Register Again</a>
-<a class="btn-ghost" href="./Login.html">← Back to Login</a>
-</div>
-</div>
+
 <script>
-const API_BASE='https://idonate-backend-hy7w.onrender.com';
-function showState(name){['Loading','Success','Error'].forEach(s=>{document.getElementById('state'+s).style.display=(s===name)?'block':'none';});}
-async function verifyToken(){
-const params=new URLSearchParams(window.location.search);
-const token=params.get('token');
-if(!token){
-document.getElementById('errorMessage').textContent='No verification token found. Please use the link from your email.';
-showState('Error');
-return;
+const API_BASE = 'https://idonate-backend-hy7w.onrender.com';
+
+function showState(name) {
+  ['Loading','Success','Error'].forEach(s => {
+    document.getElementById('state' + s).style.display = (s === name) ? 'block' : 'none';
+  });
 }
-try{
-const res=await fetch(`${API_BASE}/auth/verify-email?token=${encodeURIComponent(token)}`,{method:'GET',redirect:'manual'});
-if(res.ok||res.status===200){
-showState('Success');
-let secs=3;
-const cd=document.getElementById('countdown');
-const timer=setInterval(()=>{
-secs--;
-cd.textContent=secs;
-if(secs<=0){
-clearInterval(timer);
-window.location.replace('./Login.html');
+
+function showError(msg) {
+  document.getElementById('errorMessage').textContent = msg || 'The verification link is invalid or has expired.';
+  showState('Error');
 }
-},1000);
-}else{
-let msg='The verification link is invalid or has expired. Please register again.';
-try{
-const text=await res.text();
-const match=text.match(/<div class="msg">([^<]+)<\/div>/);
-if(match)msg=match[1];
-}catch(_){}
-document.getElementById('errorMessage').textContent=msg;
-showState('Error');
+
+async function verifyToken() {
+  const params = new URLSearchParams(window.location.search);
+  const token  = params.get('token');
+
+  if (!token) {
+    showError('No verification token found. Please use the link from your email.');
+    return;
+  }
+
+  try {
+    /*
+     * FIX: The backend /auth/verify-email returns an HTML page (HTMLResponse),
+     * not JSON. We must:
+     *   1. Use redirect:'follow' so fetch doesn't break on any redirect.
+     *   2. Check res.ok (status 200-299).
+     *   3. Read the text body and look for known success/error markers
+     *      rather than trying to parse JSON or using a fragile regex.
+     *   4. Never assume a non-ok status means network failure.
+     */
+    const res = await fetch(
+      `${API_BASE}/auth/verify-email?token=${encodeURIComponent(token)}`,
+      { method: 'GET', redirect: 'follow' }
+    );
+
+    const text = await res.text();
+
+    if (res.ok) {
+      // Backend returns HTML with "verified successfully" on success
+      // Check the HTML content to be sure it's not an error page
+      const lowerText = text.toLowerCase();
+      if (
+        lowerText.includes('verified successfully') ||
+        lowerText.includes('you can now log in') ||
+        lowerText.includes('email verification') && !lowerText.includes('invalid') && !lowerText.includes('expired')
+      ) {
+        showState('Success');
+        let secs = 3;
+        const cd = document.getElementById('countdown');
+        const timer = setInterval(() => {
+          secs--;
+          cd.textContent = secs;
+          if (secs <= 0) {
+            clearInterval(timer);
+            window.location.replace('./Login.html');
+          }
+        }, 1000);
+      } else {
+        // Response was 200 but content looks like an error — extract message
+        const match = text.match(/<div class="msg">([^<]+)<\/div>/) ||
+                      text.match(/<div[^>]*class="[^"]*msg[^"]*"[^>]*>([^<]+)<\/div>/);
+        showError(match ? match[1].trim() : 'Verification could not be completed. Please register again.');
+      }
+    } else {
+      // Non-200: try to extract message from returned HTML
+      let msg = 'The verification link is invalid or has expired. Please register again.';
+      try {
+        const match = text.match(/<div class="msg">([^<]+)<\/div>/) ||
+                      text.match(/<div[^>]*class="[^"]*msg[^"]*"[^>]*>([^<]+)<\/div>/);
+        if (match) msg = match[1].trim();
+        // Also try JSON (in case the backend changes)
+        else {
+          const json = JSON.parse(text);
+          if (json.detail) msg = json.detail;
+        }
+      } catch (_) {}
+      showError(msg);
+    }
+
+  } catch (err) {
+    console.error('Verification network error:', err);
+    showError('Unable to connect to the server. Please check your connection and try again.');
+  }
 }
-}catch(err){
-document.getElementById('errorMessage').textContent='Unable to connect to the server. Please check your connection.';
-showState('Error');
-}
-}
+
 verifyToken();
 </script>
 <script src="/pwa-register.js"></script>
