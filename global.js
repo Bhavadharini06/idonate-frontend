@@ -4,31 +4,8 @@ const API_BASE  = 'https://idonate-backend-hy7w.onrender.com';
 const VAPID_KEY = 'BKM4qtaxUhKbxDc2uy1NpAgAeafz10fwKpJn6fdoIr9F1p7NXkGxR7viSyGDmx45mYNFOH3MCxbdvbYWUrIEEy4';
 const ONLINE_KEY = 'user_is_online';
 
-// ── Sleep helper ─────────────────────────────────────────────────────────────
-function _sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-// ── Wake-up ping ──────────────────────────────────────────────────────────────
-// FIX: Call this on page load for Login/Register/Dashboard so the server is
-// warmed up before the user submits a form. Render free tier sleeps after
-// ~15 min of inactivity; the first request after sleep fails with ERR_FAILED
-// (CORS preflight gets no response). This ping wakes the server silently.
-async function wakeUpServer() {
-    try {
-        await fetch(`${API_BASE}/`, {
-            method: 'GET',
-            signal: AbortSignal.timeout(60000) // wait up to 60s for cold start
-        });
-        console.log('[iDonate] Server is warm.');
-    } catch (err) {
-        // Server still waking up — that's fine, subsequent calls will retry
-        console.warn('[iDonate] Wake-up ping failed (server may still be starting):', err.message);
-    }
-}
-
-// ── Raw fetch for online status ───────────────────────────────────────────────
-// FIX: Retry logic to handle Render free-tier cold starts.
+// ── Raw fetch for online status ────────────────────────────────────────────
+// FIX: Added retry logic to handle Render free-tier cold starts.
 // When the server wakes up it can take 10-30s, during which CORS preflight
 // fails with ERR_FAILED (no response at all). We retry up to 3 times with
 // a 3-second delay before giving up silently — never redirecting to Login.
@@ -46,17 +23,14 @@ async function _setOnlineRaw(isOnline, retries = 3) {
                 },
                 body: JSON.stringify({ is_online: isOnline })
             });
-
             // Any HTTP response (even 4xx) means the server is up and CORS passed
             if (res.ok || res.status === 401 || res.status === 403) {
                 return; // success or auth issue — don't retry
             }
-
             // 5xx server error — wait and retry
             if (attempt < retries) {
                 await _sleep(3000 * attempt);
             }
-
         } catch (err) {
             // ERR_FAILED / network error — Render may still be waking up
             console.warn(`[iDonate] Online status attempt ${attempt}/${retries} failed:`, err.message);
@@ -68,7 +42,11 @@ async function _setOnlineRaw(isOnline, retries = 3) {
     // All retries exhausted — silently ignore, never redirect
 }
 
-// ── Heartbeat ─────────────────────────────────────────────────────────────────
+function _sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// ── Heartbeat ──────────────────────────────────────────────────────────────
 let _heartbeatTimer = null;
 
 function _startHeartbeat() {
@@ -82,11 +60,16 @@ function _stopHeartbeat() {
     if (_heartbeatTimer) { clearInterval(_heartbeatTimer); _heartbeatTimer = null; }
 }
 
-// ── restoreOnlineStatus ───────────────────────────────────────────────────────
+// ── restoreOnlineStatus ────────────────────────────────────────────────────
+// FIX: Wrapped in try/catch so it NEVER throws — the loadDashboard() catch
+// block must only fire on apiRequest() failures (expired token), not on
+// network errors from online-status updates.
 async function restoreOnlineStatus() {
     try {
         const stored = localStorage.getItem(ONLINE_KEY);
         if (stored === 'true' || Notification.permission === 'granted') {
+            // FIX: Don't await _setOnlineRaw here — it can take up to 9s with
+            // retries during a cold start, which would delay the dashboard render.
             // Fire-and-forget: the heartbeat will sync online status shortly after.
             _setOnlineRaw(true).catch(() => {});
             localStorage.setItem(ONLINE_KEY, 'true');
@@ -98,7 +81,7 @@ async function restoreOnlineStatus() {
     }
 }
 
-// ── SW + BroadcastChannel listeners ──────────────────────────────────────────
+// ── SW + BroadcastChannel listeners ───────────────────────────────────────
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.addEventListener('message', (event) => {
         if (!event.data) return;
@@ -122,78 +105,39 @@ function _dismissBanner(requestId) {
             .forEach(el => el.remove());
 }
 
-// ── API Request Helper ────────────────────────────────────────────────────────
-// FIX: Added retry logic for network errors (ERR_FAILED) caused by Render
-// cold starts. Retries up to 3 times with exponential backoff (2s, 4s, 6s).
-// Auth errors (401) are NOT retried — they redirect to login immediately.
-// 4xx errors (other than 401) are NOT retried — they are real errors.
-async function apiRequest(endpoint, options = {}, retries = 3) {
+// ── API Request Helper ─────────────────────────────────────────────────────
+async function apiRequest(endpoint, options = {}) {
     const token = localStorage.getItem('token');
     const headers = {
         'Content-Type': 'application/json',
         ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
         ...(options.headers || {})
     };
+    const response = await fetch(`${API_BASE}/${endpoint}`, { ...options, headers });
 
-    for (let attempt = 1; attempt <= retries; attempt++) {
-        try {
-            const response = await fetch(`${API_BASE}/${endpoint}`, { ...options, headers });
-
-            if (response.status === 401) {
-                localStorage.removeItem('token');
-                history.replaceState(null, '', './Login.html');
-                window.location.replace('./Login.html');
-                throw new Error('Unauthorized');
-            }
-
-            if (!response.ok) {
-                // 4xx errors are real errors — parse and throw immediately, no retry
-                if (response.status < 500) {
-                    const err = await response.json().catch(() => ({}));
-                    throw new Error(err.detail || `Request failed: ${response.status}`);
-                }
-                // 5xx server errors — retry
-                if (attempt < retries) {
-                    console.warn(`[iDonate] apiRequest ${endpoint} got ${response.status}, retrying (${attempt}/${retries})...`);
-                    await _sleep(2000 * attempt);
-                    continue;
-                }
-                const err = await response.json().catch(() => ({}));
-                throw new Error(err.detail || `Server error: ${response.status}`);
-            }
-
-            return response.json();
-
-        } catch (err) {
-            // Re-throw auth errors and parsed API errors immediately (they have a real message)
-            if (err.message === 'Unauthorized' || (err.message && !err.message.includes('fetch'))) {
-                // Check if it's a TypeError from fetch failure vs a real API error
-                if (!(err instanceof TypeError)) {
-                    throw err;
-                }
-            }
-
-            // TypeError (network error / ERR_FAILED / CORS preflight fail) — retry
-            if (attempt < retries) {
-                console.warn(`[iDonate] apiRequest ${endpoint} network error (attempt ${attempt}/${retries}):`, err.message);
-                await _sleep(2000 * attempt); // 2s, 4s backoff
-                continue;
-            }
-
-            // All retries exhausted
-            throw new Error('Unable to connect to server. Please check your connection and try again.');
-        }
+    if (response.status === 401) {
+        localStorage.removeItem('token');
+        history.replaceState(null, '', './Login.html');
+        window.location.replace('./Login.html');
+        throw new Error('Unauthorized');
     }
+
+    if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.detail || `Request failed: ${response.status}`);
+    }
+
+    return response.json();
 }
 
-// ── Online Status (public) ────────────────────────────────────────────────────
+// ── Online Status (public) ─────────────────────────────────────────────────
 async function updateOnlineStatus(isOnline) {
     await _setOnlineRaw(isOnline);
     localStorage.setItem(ONLINE_KEY, isOnline ? 'true' : 'false');
     if (isOnline) { _startHeartbeat(); } else { _stopHeartbeat(); }
 }
 
-// ── Location ──────────────────────────────────────────────────────────────────
+// ── Location ───────────────────────────────────────────────────────────────
 async function updateLocation(latitude, longitude) {
     try {
         await apiRequest('users/location', {
@@ -212,4 +156,231 @@ function startLocationTracking() {
         (err) => console.warn('[iDonate] Geolocation error:', err),
         { enableHighAccuracy: true, timeout: 10000 }
     );
+}
+
+// ── FCM Token Registration ─────────────────────────────────────────────────
+let _fcmRegistrationInProgress = false;
+let _fcmLastRegisteredToken    = null;
+
+async function registerFCMToken(token) {
+    if (_fcmRegistrationInProgress) {
+        console.log('[FCM] Registration already in progress, skipping duplicate');
+        return false;
+    }
+    if (_fcmLastRegisteredToken === token) {
+        console.log('[FCM] Token unchanged, skipping re-registration');
+        await _setOnlineRaw(true);
+        localStorage.setItem(ONLINE_KEY, 'true');
+        _startHeartbeat();
+        return true;
+    }
+
+    _fcmRegistrationInProgress = true;
+    try {
+        let deviceId = localStorage.getItem('fcm_device_id');
+        if (!deviceId) {
+            deviceId = 'web_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('fcm_device_id', deviceId);
+        }
+        await apiRequest('fcm/register', {
+            method: 'POST',
+            body:   JSON.stringify({ token, device_id: deviceId })
+        });
+        localStorage.setItem('fcm_last_token', token);
+        _fcmLastRegisteredToken = token;
+        console.log('[FCM] Token registered, device:', deviceId);
+        await _setOnlineRaw(true);
+        localStorage.setItem(ONLINE_KEY, 'true');
+        _startHeartbeat();
+        return true;
+    } catch (err) {
+        console.error('[FCM] Registration failed:', err);
+        return false;
+    } finally {
+        _fcmRegistrationInProgress = false;
+    }
+}
+
+// ── Notification Permission ────────────────────────────────────────────────
+async function requestNotificationPermission() {
+    try {
+        if (!('Notification' in window) || !('serviceWorker' in navigator)) return false;
+
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') return false;
+
+        const swReg = await navigator.serviceWorker.ready;
+
+        const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+        const { getMessaging, getToken, onMessage } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js');
+
+        const firebaseConfig = {
+            apiKey:            "AIzaSyBsg7HK7O1FCTv9UZRIt1e4Q_56XG9Rkgw",
+            authDomain:        "idonate-9f055.firebaseapp.com",
+            projectId:         "idonate-9f055",
+            storageBucket:     "idonate-9f055.firebasestorage.app",
+            messagingSenderId: "303354735816",
+            appId:             "1:303354735816:web:33c2fc8138cb063e75c9fd",
+        };
+
+        const app       = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+        const messaging = getMessaging(app);
+        const fcmToken  = await getToken(messaging, {
+            vapidKey:                  VAPID_KEY,
+            serviceWorkerRegistration: swReg,
+        });
+
+        if (!fcmToken) return false;
+
+        swReg.active?.postMessage({ type: 'PAGE_VISIBILITY', visible: !document.hidden });
+        document.addEventListener('visibilitychange', () => {
+            swReg.active?.postMessage({ type: 'PAGE_VISIBILITY', visible: !document.hidden });
+        });
+
+        onMessage(messaging, (payload) => {
+            const data = payload.data || {};
+            if (data.type !== 'dismiss_notification') {
+                showInAppNotification({
+                    title:      data.title      || '🩸 Blood Request',
+                    body:       data.body       || 'Someone needs blood nearby!',
+                    request_id: data.request_id || '',
+                    ...data,
+                });
+            }
+        });
+
+        return await registerFCMToken(fcmToken);
+    } catch (err) {
+        console.error('[FCM] Permission/token error:', err);
+        return false;
+    }
+}
+
+// ── In-app Notification Banner ─────────────────────────────────────────────
+function showInAppNotification(data) {
+    const title     = data.title      || '🩸 Blood Request';
+    const body      = data.body       || 'Someone needs blood nearby!';
+    const requestId = data.request_id || '';
+
+    if (requestId && document.querySelector(`.notification-banner[data-request-id="${requestId}"]`)) return;
+
+    const banner = document.createElement('div');
+    banner.className = 'notification-banner';
+    if (requestId) banner.dataset.requestId = requestId;
+    banner.style.cssText = `
+        position:fixed;top:16px;right:16px;z-index:99999;
+        background:white;border-left:4px solid #dc2626;
+        border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,0.18);
+        padding:14px 16px;max-width:340px;width:calc(100vw - 32px);
+        display:flex;flex-direction:column;gap:8px;
+        animation:_swipeIn 0.3s ease;
+    `;
+    banner.innerHTML = `
+        <style>@keyframes _swipeIn{from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1}}</style>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+            <strong style="color:#dc2626;font-size:0.95rem;line-height:1.3;">${title}</strong>
+            <button onclick="this.closest('.notification-banner').remove()"
+                style="background:none;border:none;cursor:pointer;color:#9ca3af;font-size:1.3rem;line-height:1;padding:0;flex-shrink:0;">✕</button>
+        </div>
+        <p style="margin:0;font-size:0.875rem;color:#374151;line-height:1.4;">${body}</p>
+        ${requestId ? `
+        <div style="display:flex;gap:8px;margin-top:4px;">
+            <a href="./DonorView.html?request=${requestId}"
+               style="flex:1;text-align:center;background:#dc2626;color:white;padding:7px 12px;
+                      border-radius:6px;text-decoration:none;font-size:0.875rem;font-weight:600;">View Request</a>
+            <button onclick="this.closest('.notification-banner').remove()"
+               style="flex:1;background:#f3f4f6;border:none;border-radius:6px;padding:7px 12px;
+                      cursor:pointer;font-size:0.875rem;font-weight:600;color:#374151;">Dismiss</button>
+        </div>` : ''}
+    `;
+    document.body.appendChild(banner);
+    setTimeout(() => banner.remove(), 15000);
+}
+
+// ── Script Loader ──────────────────────────────────────────────────────────
+function _loadScript(src) {
+    return new Promise((resolve, reject) => {
+        if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
+        const s = document.createElement('script');
+        s.src = src; s.onload = resolve; s.onerror = reject;
+        document.head.appendChild(s);
+    });
+}
+
+// ── Hospital Geocoding ─────────────────────────────────────────────────────
+async function locateHospital() {
+    const hospitalName = document.getElementById('hospitalName')?.value.trim();
+    const district     = document.getElementById('district')?.value.trim();
+    const city         = document.getElementById('city')?.value.trim();
+
+    if (!hospitalName) { alert('Please enter a hospital name'); return; }
+
+    const locateBtn = document.querySelector('.locate-btn');
+    const origText  = locateBtn?.innerHTML;
+    if (locateBtn) { locateBtn.innerHTML = '🔍 Locating Hospital...'; locateBtn.disabled = true; }
+
+    try {
+        const response = await fetch(`${API_BASE}/geocode/hospital`, {
+            method:  'POST',
+            headers: {
+                'Content-Type':  'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify({ hospitalName, district: district || null, city: city || null })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || 'Geocoding failed');
+        if (data.success && data.location) {
+            const { latitude, longitude, display_name } = data.location;
+            window.hospitalCoordinates = { latitude, longitude };
+            if (window.map) {
+                window.map.setView([latitude, longitude], 15);
+                if (window.hospitalMarker) window.map.removeLayer(window.hospitalMarker);
+                window.hospitalMarker = L.marker([latitude, longitude], {
+                    icon: L.icon({
+                        iconUrl:  'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                        shadowUrl:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+                        iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+                    })
+                }).addTo(window.map);
+                window.hospitalMarker.bindPopup(`<b>${hospitalName}</b><br>${display_name}`).openPopup();
+            }
+            alert(`✅ Hospital located: ${display_name}`);
+        } else {
+            throw new Error('Invalid response from geocoding service');
+        }
+    } catch (error) {
+        console.error('[iDonate] Geocoding error:', error);
+        let msg = 'Unable to locate hospital. ';
+        if (error.message.includes('not found'))    msg += 'Please check the spelling.';
+        else if (error.message.includes('timeout')) msg += 'Service timed out. Please try again.';
+        else                                        msg += error.message || 'Please try again.';
+        alert(msg);
+        if (confirm('Would you like to select the location manually on the map?')) {
+            enableManualLocationSelection();
+        }
+    } finally {
+        if (locateBtn) { locateBtn.innerHTML = origText; locateBtn.disabled = false; }
+    }
+}
+
+function enableManualLocationSelection() {
+    if (!window.map) return;
+    window.map.off('click');
+    window.map.on('click', (e) => {
+        const { lat, lng } = e.latlng;
+        if (window.hospitalMarker) window.map.removeLayer(window.hospitalMarker);
+        window.hospitalMarker = L.marker([lat, lng], {
+            icon: L.icon({
+                iconUrl:  'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                shadowUrl:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+                iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+            })
+        }).addTo(window.map);
+        const name = document.getElementById('hospitalName')?.value || 'Selected Location';
+        window.hospitalMarker.bindPopup(`<b>${name}</b><br>Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}`).openPopup();
+        window.hospitalCoordinates = { latitude: lat, longitude: lng };
+        window.map.off('click');
+        alert('✅ Location selected on map');
+    });
 }
