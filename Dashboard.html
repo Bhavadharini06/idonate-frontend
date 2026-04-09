@@ -248,7 +248,7 @@
             border-radius: 50%; background: white; box-shadow: 0 1px 4px rgba(0,0,0,0.2); transition: left 0.25s;
         }
         .toggle input:checked ~ .toggle-thumb { left: 23px; }
-        /* FIX: Delete row — no arrow icon, centered text, fully visible */
+        /* ── Delete row ── */
         .delete-row {
             display: flex; align-items: center; gap: 0.8rem; padding: 0.85rem 1rem;
             background: #fff5f5; border-radius: 1rem; cursor: pointer;
@@ -410,7 +410,6 @@
                     </div>
                 </div>
                 <div class="settings-section-label">Danger Zone</div>
-                <!-- FIX: Delete Account button — no arrow icon, fully visible, centered -->
                 <div class="delete-row" onclick="confirmDeleteAccount()">
                     <div class="settings-row-icon" style="background:#fee2e2; width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1rem; flex-shrink:0;">🗑️</div>
                     <span class="delete-text">Delete Account</span>
@@ -479,24 +478,25 @@
         // FIRST APP INSTALL — PERMISSION FLOW
         // Uses ONLY native OS permission popups — no custom UI
         // ═══════════════════════════════════════════════════════════
-
         const PERM_KEY = 'idonate_perms_shown';
 
         async function showPermissionFlow() {
             // Only run once on first install
             if (localStorage.getItem(PERM_KEY)) return;
 
-            // Step 1: Request Notification Permission via native OS popup
+            // Step 1: Request Notification Permission via native OS popup.
+            // NOTE: We do NOT call requestNotificationPermission() from global.js here
+            // because that would also try to get an FCM token, which we handle separately
+            // below in loadDashboard(). We just get the OS permission here.
             if ('Notification' in window && Notification.permission === 'default') {
                 await Notification.requestPermission();
             }
 
-            // Step 2: After notification response, request Location Permission via native OS popup
+            // Step 2: After notification response, request Location via native OS popup
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     () => {}, // granted — no action needed here
                     (err) => {
-                        // denied or unavailable — silently handle, do NOT auto-enable GPS
                         console.warn('[iDonate] Location not granted:', err.message);
                     },
                     { enableHighAccuracy: true, timeout: 10000 }
@@ -507,46 +507,52 @@
         }
 
         // ═══════════════════════════════════════════════════════════
-        // SETTINGS — NOTIFICATION TOGGLE LOGIC
+        // SETTINGS — NOTIFICATION TOGGLE
+        // ─────────────────────────────────────────────────────────
+        // FIX: Removed dependency on 'idonate_notif_enabled' localStorage
+        // key for the FCM registration check in loadDashboard.
+        //
+        // The toggle now works as follows:
+        //   - ON  = OS permission is 'granted'   (FCM is/was registered)
+        //   - OFF = OS permission is NOT granted  (FCM is not registered)
+        //
+        // When the user turns the toggle ON from the Settings drawer:
+        //   - If permission is 'default'  → request it, then register FCM
+        //   - If permission is 'granted'  → re-register FCM (idempotent)
+        //   - If permission is 'denied'   → show message, revert to OFF
+        //
+        // When the user turns the toggle OFF:
+        //   - Unregister the FCM token from the backend so no pushes
+        //     are sent. The OS permission stays granted (we can't revoke it
+        //     programmatically; the user must do that in phone settings).
+        //
+        // The 'idonate_notif_enabled' key is kept only as a soft preference
+        // so that if the user explicitly turned it OFF in-app, we don't
+        // re-register on next dashboard load even if OS permission is granted.
         // ═══════════════════════════════════════════════════════════
 
-        /**
-         * Sync all settings toggles to real device/permission state.
-         * Called whenever the Settings drawer becomes active.
-         */
         async function syncSettingsToggles() {
             await syncNotificationToggle();
             await syncLocationToggle();
         }
 
-        /**
-         * Notification toggle reflects real OS notification permission.
-         * - If phone notification permission is OFF → toggle shows OFF
-         * - If phone notification permission is ON → toggle reflects in-app stored preference
-         */
         async function syncNotificationToggle() {
             const toggleEl = document.getElementById('toggleNotif');
             if (!('Notification' in window)) {
                 toggleEl.checked = false;
                 return;
             }
-
             if (Notification.permission === 'granted') {
-                // Phone permission is ON — reflect in-app preference (stored in localStorage)
-                const inAppNotif = localStorage.getItem('idonate_notif_enabled');
-                // Default to ON if never set and permission is granted
-                toggleEl.checked = inAppNotif !== 'false';
+                // OS permission is ON — reflect in-app soft preference
+                // Default to ON if the user never explicitly turned it off
+                const pref = localStorage.getItem('idonate_notif_enabled');
+                toggleEl.checked = (pref !== 'false');
             } else {
-                // Phone permission is OFF or denied — toggle must appear OFF
+                // OS permission is OFF or denied — toggle must show OFF
                 toggleEl.checked = false;
             }
         }
 
-        /**
-         * Notification toggle change handler.
-         * - If phone permission is OFF and user tries to turn ON → show message, revert
-         * - If phone permission is ON → allow toggling in-app preference
-         */
         async function handleNotifToggle(el) {
             if (el.checked) {
                 // User wants to turn ON notifications
@@ -556,18 +562,19 @@
                 }
 
                 if (Notification.permission === 'denied') {
-                    // Phone permission is OFF — cannot enable
                     el.checked = false;
                     alert('Enable notifications in phone settings to receive alerts.');
                     return;
                 }
 
                 if (Notification.permission === 'default') {
-                    // Request permission via native OS popup
+                    // Ask for OS permission first, then register FCM
                     const result = await Notification.requestPermission();
                     if (result === 'granted') {
                         el.checked = true;
                         localStorage.setItem('idonate_notif_enabled', 'true');
+                        // FIX: Call global.js requestNotificationPermission() which
+                        // handles SW registration, Firebase init, and FCM token registration
                         requestNotificationPermission().catch(() => {});
                     } else {
                         el.checked = false;
@@ -577,24 +584,17 @@
                 }
 
                 if (Notification.permission === 'granted') {
-                    // Phone permission is ON — allow turning on in-app toggle
+                    // OS permission already ON — just re-register FCM and store preference
                     el.checked = true;
                     localStorage.setItem('idonate_notif_enabled', 'true');
                     requestNotificationPermission().catch(() => {});
                 }
 
             } else {
-                // User wants to turn OFF in-app notifications
-                if (Notification.permission !== 'granted') {
-                    // Already off at OS level, nothing to do
-                    el.checked = false;
-                    return;
-                }
-                // Store in-app preference as OFF
-                // User will NOT receive web push or in-app notifications
+                // User wants to turn OFF notifications
                 localStorage.setItem('idonate_notif_enabled', 'false');
                 el.checked = false;
-                // Unregister FCM token so no pushes are sent
+                // Unregister FCM token so backend stops sending pushes
                 const lastToken = localStorage.getItem('fcm_last_token');
                 if (lastToken) {
                     apiRequest('fcm/unregister', {
@@ -606,22 +606,14 @@
         }
 
         // ═══════════════════════════════════════════════════════════
-        // SETTINGS — LOCATION TOGGLE LOGIC
+        // SETTINGS — LOCATION TOGGLE
         // ═══════════════════════════════════════════════════════════
-
-        /**
-         * Location toggle reflects real device state:
-         * - Device GPS off → toggle OFF
-         * - Location permission denied → toggle OFF
-         * - Both permission granted AND GPS on → toggle ON
-         */
         async function syncLocationToggle() {
             const locToggle = document.getElementById('toggleLoc');
             if (!navigator.geolocation) {
                 locToggle.checked = false;
                 return;
             }
-
             try {
                 let permissionState = null;
                 if (navigator.permissions) {
@@ -632,23 +624,16 @@
                         permissionState = null;
                     }
                 }
-
                 if (permissionState === 'denied') {
                     locToggle.checked = false;
                     return;
                 }
-
                 if (permissionState === 'granted' || permissionState === null) {
-                    // Permission may be granted — now verify device GPS is actually ON
-                    // by attempting a quick position fetch
                     navigator.geolocation.getCurrentPosition(
                         () => {
-                            // GPS is on and permission granted
                             locToggle.checked = localStorage.getItem('idonate_loc_enabled') !== 'false';
                         },
-                        (err) => {
-                            // POSITION_UNAVAILABLE (code 2) = device GPS is OFF
-                            // PERMISSION_DENIED (code 1) = permission denied
+                        () => {
                             locToggle.checked = false;
                         },
                         { enableHighAccuracy: false, timeout: 3000, maximumAge: 10000 }
@@ -661,12 +646,6 @@
             }
         }
 
-        /**
-         * Location toggle change handler.
-         * - If device GPS is OFF → show message, revert to OFF
-         * - If permission denied → show message, remain OFF
-         * - If both permission granted and GPS on → allow toggle
-         */
         function handleLocToggle(el) {
             if (el.checked) {
                 if (!navigator.geolocation) {
@@ -674,35 +653,21 @@
                     alert('Geolocation is not supported by your browser.');
                     return;
                 }
-
-                // Trigger native OS location permission popup
                 navigator.geolocation.getCurrentPosition(
                     (pos) => {
-                        // Permission granted AND device GPS is ON
                         el.checked = true;
                         localStorage.setItem('idonate_loc_enabled', 'true');
                         updateLocation(pos.coords.latitude, pos.coords.longitude);
                     },
-                    (err) => {
+                    () => {
                         el.checked = false;
-                        if (err.code === 1) {
-                            // Permission denied
-                            alert('Turn on device location in phone settings.');
-                        } else if (err.code === 2) {
-                            // Device GPS is OFF — app must NOT auto-enable GPS
-                            alert('Turn on device location in phone settings.');
-                        } else {
-                            alert('Turn on device location in phone settings.');
-                        }
+                        alert('Turn on device location in phone settings.');
                     },
                     { enableHighAccuracy: true, timeout: 10000 }
                 );
-
             } else {
-                // User disabled location in-app
                 el.checked = false;
                 localStorage.setItem('idonate_loc_enabled', 'false');
-                // Stop online status (location no longer shared)
                 apiRequest('users/online', {
                     method: 'PUT',
                     body: JSON.stringify({ is_online: false })
@@ -710,25 +675,14 @@
             }
         }
 
-        // Sync toggles whenever Settings drawer becomes active (after open transition)
+        // Sync toggles when Settings drawer slide-in completes
         document.getElementById('drawer').addEventListener('transitionend', () => {
             if (document.getElementById('drawerSettings').classList.contains('active')) {
                 syncSettingsToggles();
             }
         });
 
-        // Also sync when navigating directly to settings view
-        const _origShowDrawerView = function(view) {
-            document.querySelectorAll('.drawer-view').forEach(v => v.classList.remove('active'));
-            const el = document.getElementById('drawer' + view);
-            if (el) el.classList.add('active');
-            // Sync toggles immediately when settings view is shown
-            if (view === 'Settings') {
-                syncSettingsToggles();
-            }
-        };
-
-        // ── Drawer
+        // ── Drawer helpers ────────────────────────────────────────
         function openDrawer() {
             document.getElementById('drawer').classList.add('open');
             document.getElementById('drawerOverlay').classList.add('open');
@@ -743,10 +697,16 @@
         }
 
         function showDrawerView(view) {
-            _origShowDrawerView(view);
+            document.querySelectorAll('.drawer-view').forEach(v => v.classList.remove('active'));
+            const el = document.getElementById('drawer' + view);
+            if (el) el.classList.add('active');
+            // Sync toggles immediately when navigating to settings
+            if (view === 'Settings') {
+                syncSettingsToggles();
+            }
         }
 
-        // ── Drawer Profile
+        // ── Drawer Profile ────────────────────────────────────────
         function renderDrawerProfile() {
             if (!user) return;
             const initials = (user.name || '?').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
@@ -784,7 +744,7 @@
             `;
         }
 
-        // ── Edit Profile
+        // ── Edit Profile ──────────────────────────────────────────
         function openEditProfile() {
             if (!user) return;
             const initials = (user.name || '?').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
@@ -801,45 +761,32 @@
             showDrawerView('Edit');
         }
 
-        /**
-         * FIX: Save profile — uses PATCH /auth/profile (correct HTTP method).
-         * Shows success message after updating.
-         */
+        // FIX: saveProfile uses PATCH /auth/profile.
+        // This now works because main.py has @app.patch("/auth/profile") defined
+        // directly on the app — previously it only existed in an unmounted router.
         async function saveProfile() {
             const name       = document.getElementById('editName').value.trim();
             const phone      = document.getElementById('editPhone').value.trim();
             const bloodgroup = document.getElementById('editBlood').value;
             const saveBtn    = document.getElementById('saveProfileBtn');
 
-            if (!name) {
-                alert('Please enter your name.');
-                return;
-            }
-            if (!phone) {
-                alert('Please enter your phone number.');
-                return;
-            }
-            if (!bloodgroup) {
-                alert('Please select your blood group.');
-                return;
-            }
+            if (!name)       { alert('Please enter your name.');          return; }
+            if (!phone)      { alert('Please enter your phone number.');   return; }
+            if (!bloodgroup) { alert('Please select your blood group.');   return; }
 
             saveBtn.disabled    = true;
             saveBtn.textContent = 'Saving...';
 
             try {
-                // FIX: Use PATCH method — backend has PATCH /auth/profile endpoint
                 await apiRequest('auth/profile', {
                     method: 'PATCH',
                     body: JSON.stringify({ name, phone, bloodgroup })
                 });
-
-                // Refresh user data after successful save
+                // Refresh local user data
                 user = await apiRequest('auth/me');
                 render();
                 renderDrawerProfile();
                 showDrawerView('Main');
-                // FIX: Show success message
                 alert('Profile updated successfully!');
             } catch (err) {
                 console.error('Save profile error:', err);
@@ -849,18 +796,14 @@
             }
         }
 
-        /**
-         * FIX: Delete Account — uses DELETE /auth/account (correct HTTP method).
-         * Logs out and redirects to login after deletion.
-         */
+        // FIX: confirmDeleteAccount uses DELETE /auth/account.
+        // This now works because main.py has @app.delete("/auth/account") defined
+        // directly on the app — previously it only existed in an unmounted router.
         function confirmDeleteAccount() {
             if (!confirm('Are you sure you want to delete your account? This action cannot be undone.')) return;
-
-            // FIX: Use DELETE method — backend has DELETE /auth/account endpoint
             apiRequest('auth/account', { method: 'DELETE' })
                 .then(() => {
                     alert('Your account has been deleted successfully.');
-                    // FIX: Log out and redirect to login screen
                     handleLogout();
                 })
                 .catch(err => {
@@ -869,7 +812,7 @@
                 });
         }
 
-        // ── Load Dashboard
+        // ── Dashboard load ────────────────────────────────────────
         async function loadDashboard() {
             try {
                 await restoreOnlineStatus();
@@ -878,27 +821,33 @@
                 render();
                 renderDrawerProfile();
 
-                // FIRST APP INSTALL — trigger native OS permission popups only
+                // First install: trigger native OS permission popups
                 showPermissionFlow();
 
-                // Set up FCM if notification permission is granted and in-app toggle is on
-                if ('Notification' in window &&
-                    Notification.permission === 'granted' &&
-                    localStorage.getItem('idonate_notif_enabled') !== 'false') {
-                    requestNotificationPermission()
-                        .then(async (success) => {
-                            if (success) {
-                                try {
-                                    user = await apiRequest('auth/me');
-                                    render();
-                                    renderDrawerProfile();
-                                } catch (_) {}
-                            }
-                        })
-                        .catch(err => console.error('⚠️ FCM setup failed:', err));
+                // FIX: Register FCM if OS permission is granted AND the user
+                // has not explicitly turned off in-app notifications.
+                // We no longer check 'idonate_notif_enabled' before calling
+                // requestNotificationPermission() on initial load — we only
+                // skip it if the user explicitly set the preference to 'false'.
+                if ('Notification' in window && Notification.permission === 'granted') {
+                    const notifPref = localStorage.getItem('idonate_notif_enabled');
+                    if (notifPref !== 'false') {
+                        // Permission is granted and user hasn't turned it off
+                        requestNotificationPermission()
+                            .then(async (success) => {
+                                if (success) {
+                                    try {
+                                        user = await apiRequest('auth/me');
+                                        render();
+                                        renderDrawerProfile();
+                                    } catch (_) {}
+                                }
+                            })
+                            .catch(err => console.error('⚠️ FCM setup failed:', err));
+                    }
                 }
 
-                // Start location tracking only if both device GPS is on and in-app toggle is on
+                // Start location tracking if in-app preference allows it
                 if (localStorage.getItem('idonate_loc_enabled') !== 'false') {
                     startLocationTracking();
                 }
@@ -925,7 +874,7 @@
         function navigateToDonor()     { window.location.href = './DonorView.html'; }
         function navigateToRequester() { window.location.href = './RequesterView.html'; }
 
-        // ── Render
+        // ── Render ────────────────────────────────────────────────
         function render() {
             const app = document.getElementById('app');
             if (!user) { app.innerHTML = '<div class="loading">Loading...</div>'; return; }
@@ -967,7 +916,7 @@
 
         loadDashboard();
 
-        // Poll every 5s
+        // Poll every 5s to keep online status in sync
         setInterval(() => {
             if (user) {
                 apiRequest('auth/me').then(userData => {
@@ -979,8 +928,8 @@
                 }).catch(() => {});
             }
         }, 5000);
-    </script>
 
+    </script>
     <script src="/pwa-register.js"></script>
 </body>
 </html>

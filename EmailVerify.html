@@ -61,6 +61,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;m
 </div>
 
 <script>
+// FIX: Use the JSON endpoint (/auth/verify-email-json) instead of the HTML
+// endpoint (/auth/verify-email). The HTML endpoint returns an HTMLResponse
+// which causes CORS/parse issues on some Android browsers when the status
+// is 4xx. The JSON endpoint returns a clean JSON object that is easy to
+// inspect, and raises proper HTTP errors with a JSON "detail" field.
 const API_BASE = 'https://idonate-backend-hy7w.onrender.com';
 
 function showState(name) {
@@ -84,65 +89,38 @@ async function verifyToken() {
   }
 
   try {
-    /*
-     * FIX: The backend /auth/verify-email returns an HTML page (HTMLResponse),
-     * not JSON. We must:
-     *   1. Use redirect:'follow' so fetch doesn't break on any redirect.
-     *   2. Check res.ok (status 200-299).
-     *   3. Read the text body and look for known success/error markers
-     *      rather than trying to parse JSON or using a fragile regex.
-     *   4. Never assume a non-ok status means network failure.
-     */
+    // FIX: Call /auth/verify-email-json — returns JSON, not HTML.
+    // This avoids the fragile HTML regex parsing that failed on some browsers.
     const res = await fetch(
-      `${API_BASE}/auth/verify-email?token=${encodeURIComponent(token)}`,
-      { method: 'GET', redirect: 'follow' }
+      `${API_BASE}/auth/verify-email-json?token=${encodeURIComponent(token)}`,
+      { method: 'GET' }
     );
 
-    const text = await res.text();
+    // Always read the body — even on error, we want the detail message.
+    let json = {};
+    try { json = await res.json(); } catch (_) {}
 
-    if (res.ok) {
-      // Backend returns HTML with "verified successfully" on success
-      // Check the HTML content to be sure it's not an error page
-      const lowerText = text.toLowerCase();
-      if (
-        lowerText.includes('verified successfully') ||
-        lowerText.includes('you can now log in') ||
-        lowerText.includes('email verification') && !lowerText.includes('invalid') && !lowerText.includes('expired')
-      ) {
-        showState('Success');
-        let secs = 3;
-        const cd = document.getElementById('countdown');
-        const timer = setInterval(() => {
-          secs--;
-          cd.textContent = secs;
-          if (secs <= 0) {
-            clearInterval(timer);
-            window.location.replace('./Login.html');
-          }
-        }, 1000);
-      } else {
-        // Response was 200 but content looks like an error — extract message
-        const match = text.match(/<div class="msg">([^<]+)<\/div>/) ||
-                      text.match(/<div[^>]*class="[^"]*msg[^"]*"[^>]*>([^<]+)<\/div>/);
-        showError(match ? match[1].trim() : 'Verification could not be completed. Please register again.');
-      }
-    } else {
-      // Non-200: try to extract message from returned HTML
-      let msg = 'The verification link is invalid or has expired. Please register again.';
-      try {
-        const match = text.match(/<div class="msg">([^<]+)<\/div>/) ||
-                      text.match(/<div[^>]*class="[^"]*msg[^"]*"[^>]*>([^<]+)<\/div>/);
-        if (match) msg = match[1].trim();
-        // Also try JSON (in case the backend changes)
-        else {
-          const json = JSON.parse(text);
-          if (json.detail) msg = json.detail;
+    if (res.ok && json.success) {
+      // Verified successfully — start countdown to Login
+      showState('Success');
+      let secs = 3;
+      const cd = document.getElementById('countdown');
+      const timer = setInterval(() => {
+        secs--;
+        cd.textContent = secs;
+        if (secs <= 0) {
+          clearInterval(timer);
+          window.location.replace('./Login.html');
         }
-      } catch (_) {}
+      }, 1000);
+    } else {
+      // Backend returned an error — show the detail message from JSON
+      const msg = json.detail || 'The verification link is invalid or has expired. Please register again.';
       showError(msg);
     }
 
   } catch (err) {
+    // Network-level failure (no response at all)
     console.error('Verification network error:', err);
     showError('Unable to connect to the server. Please check your connection and try again.');
   }
